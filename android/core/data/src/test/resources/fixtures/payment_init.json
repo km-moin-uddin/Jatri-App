@@ -1,0 +1,1 @@
+{"success":true,"data":{"payment_id":"c2b554ee-07e5-438d-aea0-b66d483822d3","checkout_url":"http://localhost:8000/api/v1/payments/mock/checkout/c2b554ee-07e5-438d-aea0-b66d483822d3","amount":286000,"status":"initiated"},"error":null}

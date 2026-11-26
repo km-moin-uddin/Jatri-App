@@ -40,6 +40,15 @@ class Settings(BaseSettings):
     # import Fernet; print(Fernet.generate_key().decode())"`. The dev default is derived from secret_key.
     data_key: str | None = None
 
+    # Payments. "mock" = built-in sandbox checkout page (no credentials); "sslcommerz" = SSLCommerz.
+    payment_gateway: str = "mock"
+    sslcommerz_store_id: str | None = None
+    sslcommerz_store_password: str | None = None  # secret: set in the deploy platform, never commit
+    sslcommerz_sandbox: bool = True
+    # Public URL of this API (gateways call back here) and where the browser returns to the app.
+    public_base_url: str = "http://localhost:8000"
+    app_return_url: str = "jatri://payment/return"
+
     # Booking
     hold_minutes: int = 10
     max_bus_seats: int = 4
@@ -62,4 +71,8 @@ def get_settings() -> Settings:
             raise RuntimeError("JATRI_DATA_KEY must be set in production")
         if not settings.redis_url:
             raise RuntimeError("JATRI_REDIS_URL must be set in production")
+        if settings.payment_gateway == "mock":
+            raise RuntimeError("The mock payment gateway is not allowed in production")
+        if settings.payment_gateway == "sslcommerz" and settings.sslcommerz_sandbox:
+            raise RuntimeError("Turn off JATRI_SSLCOMMERZ_SANDBOX in production")
     return settings

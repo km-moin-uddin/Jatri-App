@@ -18,7 +18,7 @@ from app.core.security import now
 from app.models import Booking, BookingPassenger, BookingSegment, User
 from app.providers.base import BusTrip, ProviderError
 from app.providers.mock_bus import MockBusProvider
-from app.schemas.booking import BookingCreateIn, BookingOut, PassengerOut, SegmentOut
+from app.schemas.booking import BookingCreateIn, BookingOut, PassengerOut, SegmentOut, TicketInfo
 from app.schemas.bus import BusTripOut, SeatMapOut, SeatOut, StopPointOut
 from app.services.cache import KeyValueStore, seat_key
 
@@ -332,7 +332,7 @@ async def cancel_hold(
     return booking
 
 
-def booking_out(b: Booking) -> BookingOut:
+def booking_out(b: Booking, ticket=None) -> BookingOut:
     return BookingOut(
         id=b.id,
         booking_ref=b.booking_ref,
@@ -347,6 +347,7 @@ def booking_out(b: Booking) -> BookingOut:
         contact_phone=b.contact_phone,
         contact_email=b.contact_email,
         created_at=b.created_at,
+        ticket=TicketInfo(qr_payload=ticket.qr_payload, pdf_url=ticket.pdf_url, issued_at=ticket.issued_at) if ticket else None,
         segments=[
             SegmentOut(
                 trip_id=s.trip_id,
@@ -366,6 +367,7 @@ def booking_out(b: Booking) -> BookingOut:
         passengers=[
             PassengerOut(
                 full_name=p.full_name,
+                ticket_number=p.ticket_number,
                 type=p.type,
                 gender=p.gender,
                 age=p.age,
@@ -375,3 +377,17 @@ def booking_out(b: Booking) -> BookingOut:
             for p in b.passengers
         ],
     )
+
+
+async def ticket_of(db: AsyncSession, booking: Booking):
+    from app.models import Ticket
+
+    return await db.scalar(select(Ticket).where(Ticket.booking_id == booking.id))
+
+
+async def sweep_expired_holds(db: AsyncSession, provider: MockBusProvider, store: KeyValueStore) -> int:
+    """Background job: cancel every unpaid hold past its deadline and free its seats."""
+    rows = (await db.scalars(select(Booking).where(Booking.status == "held", Booking.hold_expires_at < now()))).all()
+    for b in rows:
+        await expire_if_needed(db, provider, store, b)
+    return len(rows)
