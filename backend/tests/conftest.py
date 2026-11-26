@@ -17,7 +17,9 @@ from app.db.base import Base  # noqa: E402
 from app.db.session import engine  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import Location  # noqa: E402
+from app.providers.mock_bus import MockBusProvider, get_bus_provider  # noqa: E402
 from app.seed import load_locations  # noqa: E402
+from app.services.cache import MemoryStore, RedisStore, get_store  # noqa: E402
 
 
 class FakeSms:
@@ -55,10 +57,26 @@ def sms() -> FakeSms:
 
 
 @pytest.fixture
-async def client(db_schema, settings, sms):
+async def store():
+    """Fresh in-memory store, or a real Redis when JATRI_TEST_REDIS_URL is set (as in CI)."""
+    url = os.environ.get("JATRI_TEST_REDIS_URL")
+    if url:
+        s = RedisStore(url)
+        await s._redis.flushdb()
+        yield s
+        await s._redis.aclose()
+    else:
+        yield MemoryStore()
+
+
+@pytest.fixture
+async def client(db_schema, settings, sms, store):
     app = create_app()
+    provider = MockBusProvider()
     app.dependency_overrides[get_settings] = lambda: settings
     app.dependency_overrides[sms_sender] = lambda: sms
+    app.dependency_overrides[get_store] = lambda: store
+    app.dependency_overrides[get_bus_provider] = lambda: provider
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
 

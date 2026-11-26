@@ -1,15 +1,18 @@
-# Local development stack: API + PostgreSQL + Redis (Redis is used from Phase 3: search cache, seat locks).
+# Local development stack: API + PostgreSQL + Redis (search cache, seat locks).
 services:
   api:
     build: .
     env_file: .env
     environment:
       JATRI_DATABASE_URL: postgresql+asyncpg://jatri:jatri@db:5432/jatri
+      JATRI_REDIS_URL: redis://redis:6379/0
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
 
   db:
     image: postgres:17

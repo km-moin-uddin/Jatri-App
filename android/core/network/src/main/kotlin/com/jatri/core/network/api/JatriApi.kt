@@ -2,6 +2,11 @@ package com.jatri.core.network.api
 
 import com.jatri.core.network.model.ApiEnvelope
 import com.jatri.core.network.model.AuthResponse
+import com.jatri.core.network.model.BookingCreateRequest
+import com.jatri.core.network.model.BookingDto
+import com.jatri.core.network.model.BusSearchRequest
+import com.jatri.core.network.model.BusTripDto
+import com.jatri.core.network.model.SeatMapDto
 import com.jatri.core.network.model.LocationDto
 import com.jatri.core.network.model.OtpSendRequest
 import com.jatri.core.network.model.OtpSendResponse
@@ -14,8 +19,10 @@ import kotlinx.serialization.json.JsonElement
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /** Backend `/api/v1`. Every call returns the `{success, data, error}` envelope. */
@@ -43,4 +50,25 @@ interface JatriApi {
 
     @GET("locations")
     suspend fun locations(@Query("type") type: String? = null, @Query("q") q: String? = null): ApiEnvelope<List<LocationDto>>
+
+    @POST("buses/search")
+    suspend fun searchBuses(@Body body: BusSearchRequest): ApiEnvelope<List<BusTripDto>>
+
+    @GET("buses/{tripId}/seats")
+    suspend fun busSeats(@Path("tripId") tripId: String): ApiEnvelope<SeatMapDto>
+
+    @POST("bookings")
+    suspend fun createBooking(
+        @Body body: BookingCreateRequest,
+        @Header("Idempotency-Key") idempotencyKey: String,
+    ): ApiEnvelope<BookingDto>
+
+    @GET("bookings")
+    suspend fun bookings(): ApiEnvelope<List<BookingDto>>
+
+    @GET("bookings/{id}")
+    suspend fun booking(@Path("id") id: String): ApiEnvelope<BookingDto>
+
+    @POST("bookings/{id}/cancel")
+    suspend fun cancelBooking(@Path("id") id: String): ApiEnvelope<BookingDto>
 }

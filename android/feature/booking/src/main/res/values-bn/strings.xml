@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="booking_phase">Phase 3 (যাত্রীর ফর্ম ও বুকিং হোল্ড)</string>
     <string name="booking_title">যাত্রীর তথ্য</string>
     <string name="booking_passenger">যাত্রী %s</string>
     <string name="booking_full_name">পুরো নাম (এনআইডি/পাসপোর্ট অনুযায়ী)</string>
@@ -11,4 +10,23 @@
     <string name="booking_email">ইমেইল (ই-টিকিটের জন্য)</string>
     <string name="booking_saved_traveller">সংরক্ষিত যাত্রী বেছে নিন</string>
     <string name="booking_continue">যাচাই ও পেমেন্ট</string>
+    <string name="booking_age">বয়স</string>
+    <string name="booking_male">পুরুষ</string>
+    <string name="booking_female">নারী</string>
+    <string name="booking_other">অন্যান্য</string>
+    <string name="booking_seat">সিট %s</string>
+    <string name="booking_ladies_seat">মহিলা সিট</string>
+    <string name="booking_name_error">পুরো নাম লিখুন</string>
+    <string name="booking_age_error">সঠিক বয়স লিখুন</string>
+    <string name="booking_phone_error">১১ সংখ্যার সঠিক মোবাইল নম্বর দিন</string>
+    <string name="booking_email_error">সঠিক ইমেইল ঠিকানা দিন</string>
+    <string name="booking_gender_error">লিঙ্গ বেছে নিন</string>
+    <string name="booking_hold_note">এই ধাপের পর পেমেন্টের জন্য আপনার সিট ১০ মিনিট সংরক্ষিত থাকবে।</string>
+    <string name="booking_nid_optional">এনআইডি নম্বর (ঐচ্ছিক)</string>
+    <string name="booking_nid_error">এনআইডি ১০, ১৩ বা ১৭ সংখ্যার হতে হবে</string>
+    <string name="booking_total">%sটি সিটের মোট ভাড়া</string>
+    <string name="booking_price_changed_title">ভাড়া পরিবর্তন হয়েছে</string>
+    <string name="booking_ok">ঠিক আছে</string>
+    <string name="booking_choose_again">আবার সিট বেছে নিন</string>
+    <string name="booking_preview_phase">Phase 5–6 (ফ্লাইট ও ট্রেনের যাত্রী ফর্ম)</string>
 </resources>

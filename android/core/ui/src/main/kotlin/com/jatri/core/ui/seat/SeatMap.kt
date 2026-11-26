@@ -71,7 +71,8 @@ fun SeatMap(
                         } else {
                             val isSelected = seat.number in selected
                             val limitReached = selected.size >= maxSelectable && !isSelected
-                            SeatCell(seat, isSelected, enabled = seat.state != SeatState.BOOKED && !limitReached) { onSeatToggle(seat) }
+                            val taken = seat.state == SeatState.BOOKED || seat.state == SeatState.HELD
+                            SeatCell(seat, isSelected, enabled = !taken && !limitReached) { onSeatToggle(seat) }
                         }
                     }
                 }
@@ -87,14 +88,15 @@ private fun SeatCell(seat: Seat, isSelected: Boolean, enabled: Boolean, onToggle
     val primary = MaterialTheme.colorScheme.primary
     val (container, content, border) = when {
         isSelected -> Triple(primary, MaterialTheme.colorScheme.onPrimary, primary)
-        seat.state == SeatState.BOOKED -> Triple(MaterialTheme.colorScheme.surfaceVariant, JatriTheme.colors.textSecondary, Color.Transparent)
+        seat.state == SeatState.BOOKED || seat.state == SeatState.HELD ->
+            Triple(MaterialTheme.colorScheme.surfaceVariant, JatriTheme.colors.textSecondary, Color.Transparent)
         seat.state == SeatState.LADIES -> Triple(LadiesColor.copy(alpha = 0.10f), LadiesColor, LadiesColor)
         else -> Triple(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.outline)
     }
     val stateLabel = stringResource(
         when {
             isSelected -> R.string.ui_seat_selected
-            seat.state == SeatState.BOOKED -> R.string.ui_seat_booked
+            seat.state == SeatState.BOOKED || seat.state == SeatState.HELD -> R.string.ui_seat_booked
             seat.state == SeatState.LADIES -> R.string.ui_seat_ladies
             else -> R.string.ui_seat_available
         },

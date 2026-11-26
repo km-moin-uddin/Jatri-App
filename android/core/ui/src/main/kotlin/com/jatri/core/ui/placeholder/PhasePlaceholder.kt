@@ -76,7 +76,7 @@ fun PhasePlaceholderScreen(
 }
 
 @Composable
-fun PhaseBanner(phase: String, modifier: Modifier = Modifier) {
+fun PhaseBanner(phase: String, modifier: Modifier = Modifier, body: String? = null) {
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -88,7 +88,7 @@ fun PhaseBanner(phase: String, modifier: Modifier = Modifier) {
             Spacer(Modifier.width(Spacing.xs))
             Column {
                 Text(stringResource(R.string.ui_placeholder_title, phase), style = MaterialTheme.typography.titleSmall)
-                Text(stringResource(R.string.ui_placeholder_body), style = MaterialTheme.typography.bodySmall)
+                Text(body ?: stringResource(R.string.ui_placeholder_body), style = MaterialTheme.typography.bodySmall)
             }
         }
     }

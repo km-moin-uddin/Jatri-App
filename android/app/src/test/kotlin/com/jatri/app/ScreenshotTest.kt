@@ -52,6 +52,13 @@ import com.jatri.feature.payment.PaymentResultScreen
 import com.jatri.feature.payment.ReviewPayScreen
 import com.jatri.feature.trips.TripsScreen
 import com.jatri.core.model.AppLanguage
+import com.jatri.core.model.Booking
+import com.jatri.core.model.BookingPassenger
+import com.jatri.core.model.BookingSegment
+import com.jatri.core.model.BookingStatus
+import com.jatri.core.model.Gender
+import com.jatri.core.model.Money
+import com.jatri.core.model.StopPoint
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -172,7 +179,31 @@ abstract class ScreenshotTest(private val name: String, private val dark: Boolea
         }
     }
 
-    @Test fun reviewPay() = shot("06_review_pay") { ReviewPayScreen(onBack = {}, onPaid = {}) }
+    @Test fun reviewPay() = shot("06_review_pay") {
+        val trip = MockContent.busTrips(today.plusDays(1), dhakaCox.from, dhakaCox.to).first()
+        val point = StopPoint("p", "Kalabagan", "কলাবাগান", trip.departAt)
+        ReviewPayScreen(
+            onBack = {},
+            onPaid = {},
+            secondsLeft = 9 * 60 + 12,
+            onCancel = {},
+            booking = Booking(
+                id = "b1", ref = "JTW4US", mode = TravelMode.BUS, status = BookingStatus.HELD, holdExpiresAt = null,
+                baseFare = trip.price * 2, serviceCharge = Money.taka(60), discount = Money.ZERO, total = trip.price * 2 + Money.taka(60),
+                contactPhone = "01712345678", contactEmail = null,
+                segments = listOf(
+                    BookingSegment(
+                        trip.operatorName, trip.coachNumber, trip.from.id, trip.to.id, trip.departAt, trip.arriveAt, "ac",
+                        listOf("A1", "A3"), point, point.copy(nameEn = "Kolatoli", nameBn = "কলাতলী"),
+                    ),
+                ),
+                passengers = listOf(
+                    BookingPassenger("রহিম উদ্দিন", Gender.MALE, 34, "A1", "••••••7890"),
+                    BookingPassenger("Karima Begum", Gender.FEMALE, null, "A3", null),
+                ),
+            ),
+        )
+    }
 
     @Test fun paymentSuccess() = shot("07_payment_success") {
         PaymentResultScreen(success = true, onRetry = {}, onViewTrips = {}, onGoHome = {})

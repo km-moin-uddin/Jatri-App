@@ -1,4 +1,4 @@
-# Lints and tests the FastAPI backend against a real PostgreSQL.
+# Lints and tests the FastAPI backend against real PostgreSQL and Redis.
 name: Backend
 
 on:
@@ -26,6 +26,9 @@ jobs:
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U jatri" --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -36,7 +39,8 @@ jobs:
         env:
           JATRI_DATABASE_URL: postgresql+asyncpg://jatri:jatri@localhost:5432/jatri_test
         run: uv run alembic upgrade head && uv run alembic downgrade base
-      - name: Tests (PostgreSQL)
+      - name: Tests (PostgreSQL + Redis)
         env:
           JATRI_TEST_DATABASE_URL: postgresql+asyncpg://jatri:jatri@localhost:5432/jatri_test
+          JATRI_TEST_REDIS_URL: redis://localhost:6379/15
         run: uv run pytest -q

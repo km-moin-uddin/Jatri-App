@@ -5,6 +5,11 @@ import com.jatri.core.model.AppException
 import com.jatri.core.network.api.JatriApi
 import com.jatri.core.network.model.ApiEnvelope
 import com.jatri.core.network.model.AuthResponse
+import com.jatri.core.network.model.BookingCreateRequest
+import com.jatri.core.network.model.BookingDto
+import com.jatri.core.network.model.BusSearchRequest
+import com.jatri.core.network.model.BusTripDto
+import com.jatri.core.network.model.SeatMapDto
 import com.jatri.core.network.model.LocationDto
 import com.jatri.core.network.model.OtpSendRequest
 import com.jatri.core.network.model.OtpSendResponse
@@ -80,6 +85,39 @@ class MockJatriApi @Inject constructor() : JatriApi {
         users.remove(user.phone)
         refreshTokens.values.removeAll { it == user.phone }
         return ApiEnvelope(true, null)
+    }
+
+    private val bus = MockBus()
+
+    override suspend fun searchBuses(body: BusSearchRequest): ApiEnvelope<List<BusTripDto>> {
+        delay(LATENCY)
+        return ApiEnvelope(true, bus.search(body.fromId, body.toId, body.date, body.coachType))
+    }
+
+    override suspend fun busSeats(tripId: String): ApiEnvelope<SeatMapDto> {
+        delay(LATENCY / 2)
+        return ApiEnvelope(true, bus.seatMap(tripId))
+    }
+
+    override suspend fun createBooking(body: BookingCreateRequest, idempotencyKey: String): ApiEnvelope<BookingDto> {
+        delay(LATENCY)
+        return ApiEnvelope(true, bus.create(body, idempotencyKey, currentUser().phone))
+    }
+
+    override suspend fun bookings(): ApiEnvelope<List<BookingDto>> {
+        currentUser()
+        return ApiEnvelope(true, bus.list())
+    }
+
+    override suspend fun booking(id: String): ApiEnvelope<BookingDto> {
+        currentUser()
+        return ApiEnvelope(true, bus.get(id))
+    }
+
+    override suspend fun cancelBooking(id: String): ApiEnvelope<BookingDto> {
+        currentUser()
+        delay(LATENCY / 2)
+        return ApiEnvelope(true, bus.cancel(id))
     }
 
     /** Empty: the app keeps its bundled seed list when the server has nothing to add. */

@@ -12,7 +12,10 @@ import kotlinx.serialization.Serializable
 data class BusResultsDestination(val fromId: String, val toId: String, val date: String, val coach: String)
 
 @Serializable
-data class BusSeatsDestination(val tripId: String, val fromId: String, val toId: String, val date: String)
+data class BusSeatsDestination(val tripId: String)
+
+/** What the seat screen hands to the passenger form. */
+data class BusSelection(val tripId: String, val seats: List<String>, val boardingPointId: String, val droppingPointId: String)
 
 fun NavController.navigateToBusResults(query: SearchQuery) = navigate(
     BusResultsDestination(
@@ -23,11 +26,11 @@ fun NavController.navigateToBusResults(query: SearchQuery) = navigate(
     ),
 )
 
-fun NavGraphBuilder.busScreens(navController: NavController, onContinueToPassengers: () -> Unit) {
+fun NavGraphBuilder.busScreens(navController: NavController, onContinueToPassengers: (BusSelection) -> Unit) {
     composable<BusResultsDestination> {
         BusResultsRoute(
             onBack = { navController.popBackStack() },
-            onTripClick = { trip, args -> navController.navigate(BusSeatsDestination(trip.id, args.fromId, args.toId, args.date)) },
+            onTripClick = { trip -> navController.navigate(BusSeatsDestination(trip.id)) },
         )
     }
     composable<BusSeatsDestination> {

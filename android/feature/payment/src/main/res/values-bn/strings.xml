@@ -5,7 +5,6 @@
     <string name="pay_hold_timer">%s সময়ের জন্য সিট সংরক্ষিত</string>
     <string name="pay_price_details">মূল্যের বিস্তারিত</string>
     <string name="pay_base_fare">মূল ভাড়া</string>
-    <string name="pay_taxes">কর ও ফি</string>
     <string name="pay_service_charge">সার্ভিস চার্জ</string>
     <string name="pay_discount">ছাড়</string>
     <string name="pay_total">মোট</string>
@@ -29,4 +28,14 @@
     <string name="pay_pnr">পিএনআর</string>
     <string name="pay_qr">টিকিটের কিউআর কোড</string>
     <string name="pay_sample_route">ঢাকা → কক্সবাজার</string>
+    <string name="pay_trip">যাত্রা</string>
+    <string name="pay_passengers">যাত্রী</string>
+    <string name="pay_hold_expired_title">সময় শেষ</string>
+    <string name="pay_hold_expired_body">সময়মতো পেমেন্ট না হওয়ায় আপনার সিট ছেড়ে দেওয়া হয়েছে। আবার সিট বেছে নিন।</string>
+    <string name="pay_search_again">আবার সিট বেছে নিন</string>
+    <string name="pay_cancel_booking">এই বুকিং বাতিল করুন</string>
+    <string name="pay_ref">বুকিং %s</string>
+    <string name="pay_seats">সিট: %s</string>
+    <string name="pay_board_drop">%1$s → %2$s</string>
+    <string name="pay_demo_note">আপনার সিট সত্যিই সংরক্ষিত আছে। পেমেন্ট আপাতত ডেমো, কোনো টাকা কাটা হবে না।</string>
 </resources>

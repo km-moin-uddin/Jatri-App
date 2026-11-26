@@ -3,8 +3,9 @@
 One Android app to search, compare, book and pay for **flight, bus and train tickets in Bangladesh**.
 "Jatri" is a working name.
 
-> **Status: Phase 2 (Auth) is done.** Phase 1 (foundation and the v2 "soft neutral" style) and
-> Phase 2 (phone OTP login, tokens, profile, FastAPI backend) are built. The project structure, design system, navigation for all
+> **Status: Phase 3 (Bus) is done.** Built so far: Phase 1 (foundation and the v2 "soft neutral"
+> style), Phase 2 (phone OTP login, tokens, profile, FastAPI backend) and Phase 3 (bus search,
+> seat map, passenger form and a real 10-minute booking hold). The project structure, design system, navigation for all
 > screens, Bangla/English and light/dark themes are in place. Search results, seat maps and payments
 > show **sample data** until their phases are built (see [What is mocked](#what-is-mocked)).
 
@@ -72,6 +73,30 @@ The first launch shows onboarding (choose Bangla or English), then Home. Walk th
 cities, then Search, a result, a seat or class, passenger details, Review & pay, and the success
 screen. Every step in that flow can be reached.
 
+## Phase 3 — bus booking
+
+- **Provider adapter pattern** on the backend: a `BusProvider` interface (`search`, `get_details`,
+  `get_seats`, `hold`, `confirm`, `cancel`, `get_status`) with a **mock provider** behind it. An authorised
+  bus aggregator or operator API plugs in later without touching the app.
+- **Search** (`POST /buses/search`) is cached in Redis for 5 minutes. The **seat map** (`GET /buses/{id}/seats`)
+  shows seats other people are holding right now.
+- **Booking hold** (`POST /bookings`):
+  - The live trip, price and seats are re-checked first. A different price returns `price_changed`.
+  - Ladies seats can only be booked for women.
+  - Seats are locked in Redis all-or-nothing, so two people can never hold the same seat.
+  - The hold lasts 10 minutes and then expires on its own.
+  - An `Idempotency-Key` header stops double holds when a request is retried.
+  - Only the owner can see a booking.
+  - NID is encrypted at rest and shown masked (`••••••7890`).
+- **App flow**:
+  1. Results with date pills and retry on error.
+  2. Seat map with boarding and dropping points.
+  3. Passenger form (name, gender, age, optional NID, contact). The first name is pre-filled from the profile.
+  4. Review & pay shows the real booking, price breakdown and the server's countdown.
+  5. When the hold expires, a dialog sends the user back to choose seats.
+- **Tests**: 31 backend tests (on SQLite + memory store and on PostgreSQL + Redis). Android tests now
+  include a **contract test** that runs real backend responses through the app's mappers.
+
 ## Phase 2 — login & accounts
 
 - **Backend** (`backend/`): FastAPI, async SQLAlchemy, PostgreSQL, Alembic migrations, seed
@@ -126,9 +151,9 @@ to `10.0.2.2` and `localhost`. Release builds are HTTPS-only.
 | Area | Phase 1 behaviour | Becomes real in |
 |---|---|---|
 | SMS gateway | Backend prints the OTP to its log; the APK's mock backend uses 123456 | Before release |
-| Bus results, seat map | `MockContent` with placeholder operators ("Sample Paribahan") | Phase 3 |
-| Passenger form | Layout preview with disabled fields | Phase 3 |
-| Review & pay, payment result | Sample price breakdown, working 10:00 hold timer, no real payment | Phase 4 |
+| Bus trips & seats | Real API flow, **mock bus provider** with placeholder operators ("Sample Paribahan") | When an authorised bus API is connected |
+| Payment | Review shows the real held booking; paying is simulated, no money moves | Phase 4 |
+| Flight / train passenger form | Layout preview with disabled fields | Phases 5–6 |
 | Flight results, fare rules | `MockContent` with placeholder airlines ("Sample Air") | Phase 5 |
 | Train results | `MockContent` ("Sample Express") | Phase 6 |
 | My Trips, ticket detail | One sample ticket, clearly labelled | Phase 7 |
@@ -193,4 +218,12 @@ big bold left-aligned headlines.
 
 সার্ভার ছাড়াও APK ফোনে চলে। ডেমো মোডে OTP সবসময় **123456**।
 
-**পরের ধাপ:** Phase 3। এতে বাস মডিউল আসবে: সার্চ, সিট ম্যাপ, যাত্রীর ফর্ম আর বুকিং হোল্ড।
+**Phase 3 সম্পন্ন:**
+- বাস সার্চ।
+- সিট ম্যাপ, সাথে ওঠার ও নামার স্থান।
+- যাত্রীর ফর্ম।
+- ১০ মিনিটের আসল সিট হোল্ড। একই সিট দুজন একসাথে ধরে রাখতে পারবে না।
+
+বাস কোম্পানির ডেটা এখনো নমুনা (mock provider)।
+
+**পরের ধাপ:** Phase 4। এতে পেমেন্ট গেটওয়ে (স্যান্ডবক্স), ই-টিকিট, QR আর PDF আসবে।

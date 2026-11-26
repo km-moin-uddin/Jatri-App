@@ -28,6 +28,15 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.jatri.core.common.format.DateTimeFormats
+import com.jatri.core.designsystem.component.ErrorState
+import com.jatri.core.designsystem.component.LoadingState
+import com.jatri.core.model.Booking
+import com.jatri.core.ui.text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -62,61 +71,122 @@ import kotlinx.coroutines.delay
 
 private enum class PayMethod(val label: Int) { BKASH(R.string.pay_bkash), NAGAD(R.string.pay_nagad), ROCKET(R.string.pay_rocket), CARD(R.string.pay_card) }
 
-private const val HOLD_SECONDS = 10 * 60
-
-// MOCK price breakdown (2 bus seats). Real amounts come from the booking hold in Phase 3/4.
-private val baseFare = Money.taka(2800)
-private val taxes = Money.taka(0)
-private val serviceCharge = Money.taka(60)
-private val discount = Money.taka(150)
-private val total = baseFare + taxes + serviceCharge - discount
+// SAMPLE numbers for the flight/train preview (no booking yet). Bus bookings show real ones.
+private val sampleBase = Money.taka(2800)
+private val sampleService = Money.taka(60)
+private val sampleDiscount = Money.taka(150)
+private const val SAMPLE_HOLD_SECONDS = 10 * 60
 
 @Composable
-fun ReviewPayScreen(onBack: () -> Unit, onPaid: (success: Boolean) -> Unit) {
+internal fun ReviewPayRoute(
+    onBack: () -> Unit,
+    onPaid: (success: Boolean) -> Unit,
+    onHoldGone: () -> Unit,
+    viewModel: ReviewPayViewModel = hiltViewModel(),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    if (viewModel.bookingId == null) {
+        ReviewPayScreen(onBack = onBack, onPaid = onPaid)
+        return
+    }
+    val booking = state.booking
+    when {
+        state.loading -> Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) { LoadingState() }
+        booking == null -> Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
+            ErrorState(onRetry = viewModel::retry, message = state.error?.text())
+        }
+        else -> ReviewPayScreen(
+            onBack = onBack,
+            onPaid = onPaid,
+            booking = booking,
+            secondsLeft = state.secondsLeft,
+            onCancel = { viewModel.cancel(onHoldGone) },
+            cancelling = state.cancelling,
+        )
+    }
+    if (state.expired && booking != null) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text(stringResource(R.string.pay_hold_expired_title)) },
+            text = { Text(stringResource(R.string.pay_hold_expired_body)) },
+            confirmButton = { TextButton(onClick = onBack) { Text(stringResource(R.string.pay_search_again)) } },
+        )
+    }
+}
+
+/**
+ * Review & pay. With a [booking] it shows the real hold: trip, passengers, price breakdown and the
+ * server's countdown. Payment itself is still simulated until the gateway sandbox (Phase 4).
+ */
+@Composable
+fun ReviewPayScreen(
+    onBack: () -> Unit,
+    onPaid: (success: Boolean) -> Unit,
+    booking: Booking? = null,
+    secondsLeft: Int? = null,
+    onCancel: (() -> Unit)? = null,
+    cancelling: Boolean = false,
+) {
     val lang = JatriTheme.language
     var method by rememberSaveable { mutableStateOf(PayMethod.BKASH) }
     var agreed by rememberSaveable { mutableStateOf(false) }
-    var secondsLeft by rememberSaveable { mutableIntStateOf(HOLD_SECONDS) }
-    LaunchedEffect(secondsLeft) {
-        if (secondsLeft > 0) {
-            delay(1_000)
-            secondsLeft -= 1
+    var sampleLeft by rememberSaveable { mutableIntStateOf(SAMPLE_HOLD_SECONDS) }
+    if (booking == null) {
+        LaunchedEffect(sampleLeft) {
+            if (sampleLeft > 0) {
+                delay(1_000)
+                sampleLeft -= 1
+            }
         }
     }
+    val left = secondsLeft ?: sampleLeft
+    val base = booking?.baseFare ?: sampleBase
+    val service = booking?.serviceCharge ?: sampleService
+    val discount = booking?.discount ?: sampleDiscount
+    val total = booking?.total ?: (sampleBase + sampleService - sampleDiscount)
     Scaffold(
-        topBar = { JatriTopAppBar(title = stringResource(R.string.pay_review_title), onBack = onBack) },
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            JatriTopAppBar(
+                title = stringResource(R.string.pay_review_title),
+                subtitle = booking?.let { stringResource(R.string.pay_ref, it.ref) },
+                onBack = onBack,
+            )
+        },
         bottomBar = {
             PriceSummaryBar(
                 label = stringResource(R.string.pay_total),
                 price = total.format(lang),
                 buttonText = stringResource(R.string.pay_button, total.format(lang)),
                 onClick = { onPaid(true) },
-                enabled = agreed && secondsLeft > 0,
+                enabled = agreed && left > 0,
             )
         },
     ) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(Spacing.screen),
+            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = Spacing.screen),
             verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
-            val mmss = "%02d:%02d".format(secondsLeft / 60, secondsLeft % 60).localizeDigits(lang)
+            val mmss = "%02d:%02d".format(left / 60, left % 60).localizeDigits(lang)
             StatusChip(
                 text = stringResource(R.string.pay_hold_timer, mmss),
-                tone = if (secondsLeft < 120) StatusTone.Danger else StatusTone.Warning,
+                tone = if (left < 120) StatusTone.Danger else StatusTone.Warning,
                 icon = JatriIcons.Time,
             )
-            PhaseBanner(stringResource(R.string.pay_phase))
+            PhaseBanner(stringResource(R.string.pay_phase), body = if (booking != null) stringResource(R.string.pay_demo_note) else null)
+            booking?.let { TripSummary(it) }
             JatriCard {
                 Text(stringResource(R.string.pay_price_details), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(Spacing.xs))
-                PriceRow(stringResource(R.string.pay_base_fare), baseFare.format(lang))
-                PriceRow(stringResource(R.string.pay_taxes), taxes.format(lang))
-                PriceRow(stringResource(R.string.pay_service_charge), serviceCharge.format(lang))
-                PriceRow(stringResource(R.string.pay_discount), (Money.ZERO - discount).format(lang), JatriTheme.colors.success)
+                PriceRow(stringResource(R.string.pay_base_fare), base.format(lang))
+                PriceRow(stringResource(R.string.pay_service_charge), service.format(lang))
+                if (discount != Money.ZERO) {
+                    PriceRow(stringResource(R.string.pay_discount), (Money.ZERO - discount).format(lang), JatriTheme.colors.success)
+                }
                 HorizontalDivider(Modifier.padding(vertical = Spacing.xs), color = JatriTheme.colors.divider)
                 PriceRow(stringResource(R.string.pay_total), total.format(lang), bold = true)
             }
-            JatriTextField(value = "JATRI150", onValueChange = {}, label = stringResource(R.string.pay_promo), enabled = false)
+            JatriTextField(value = "", onValueChange = {}, label = stringResource(R.string.pay_promo), enabled = false)
             JatriCard {
                 Text(stringResource(R.string.pay_method), style = MaterialTheme.typography.titleMedium)
                 Column(Modifier.selectableGroup()) {
@@ -146,11 +216,49 @@ fun ReviewPayScreen(onBack: () -> Unit, onPaid: (success: Boolean) -> Unit) {
                 Spacer(Modifier.width(Spacing.xs))
                 Text(stringResource(R.string.pay_terms), style = MaterialTheme.typography.bodyMedium)
             }
+            if (onCancel != null) {
+                JatriTextButton(
+                    text = stringResource(R.string.pay_cancel_booking),
+                    onClick = { if (!cancelling) onCancel() },
+                    color = JatriTheme.colors.danger,
+                )
+            }
             JatriTextButton(
                 text = stringResource(R.string.pay_simulate_failure),
                 onClick = { onPaid(false) },
                 color = JatriTheme.colors.textSecondary,
             )
+            Spacer(Modifier.height(Spacing.md))
+        }
+    }
+}
+
+@Composable
+private fun TripSummary(booking: Booking) {
+    val lang = JatriTheme.language
+    val seg = booking.segments.firstOrNull() ?: return
+    JatriCard {
+        Text(stringResource(R.string.pay_trip), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(Spacing.xs))
+        Text("${seg.carrier} · ${seg.number}", style = MaterialTheme.typography.bodyLarge)
+        Text(
+            DateTimeFormats.shortDate(seg.departAt.toLocalDate(), lang) + " · " +
+                DateTimeFormats.time(seg.departAt, lang) + " – " + DateTimeFormats.time(seg.arriveAt, lang),
+            style = MaterialTheme.typography.bodyMedium,
+            color = JatriTheme.colors.textSecondary,
+        )
+        if (seg.boardingPoint != null && seg.droppingPoint != null) {
+            Text(
+                stringResource(R.string.pay_board_drop, seg.boardingPoint!!.name(lang), seg.droppingPoint!!.name(lang)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = JatriTheme.colors.textSecondary,
+            )
+        }
+        Text(stringResource(R.string.pay_seats, seg.seatNumbers.joinToString(", ")), style = MaterialTheme.typography.bodyMedium)
+        HorizontalDivider(Modifier.padding(vertical = Spacing.xs), color = JatriTheme.colors.divider)
+        Text(stringResource(R.string.pay_passengers), style = MaterialTheme.typography.titleSmall)
+        booking.passengers.forEach { p ->
+            Text("${p.seatNo.orEmpty()} · ${p.fullName}", style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

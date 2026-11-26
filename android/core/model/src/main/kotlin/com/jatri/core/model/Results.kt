@@ -22,6 +22,16 @@ data class FlightOffer(
     val duration: Duration get() = Duration.between(departAt, arriveAt)
 }
 
+/** A boarding or dropping counter, with the coach's time there. */
+data class StopPoint(
+    val id: String,
+    val nameEn: String,
+    val nameBn: String,
+    val time: LocalDateTime,
+) {
+    fun name(language: AppLanguage) = if (language == AppLanguage.BANGLA) nameBn else nameEn
+}
+
 /** One bus trip in search results. */
 data class BusTrip(
     val id: String,
@@ -36,6 +46,8 @@ data class BusTrip(
     val boardingPoint: String,
     val seatsAvailable: Int,
     val price: Money,
+    val boardingPoints: List<StopPoint> = emptyList(),
+    val droppingPoints: List<StopPoint> = emptyList(),
 )
 
 /** Seat availability and fare for one class of a train. */
@@ -58,7 +70,8 @@ data class TrainTrip(
     val classes: List<TrainClassFare>,
 )
 
-enum class SeatState { AVAILABLE, SELECTED, BOOKED, LADIES }
+/** HELD = someone else is paying for it right now (shown like booked). */
+enum class SeatState { AVAILABLE, SELECTED, BOOKED, LADIES, HELD }
 
 data class Seat(val number: String, val state: SeatState)
 
@@ -67,7 +80,17 @@ data class Seat(val number: String, val state: SeatState)
  * A 2+2 coach row looks like `[A1, A2, null, A3, A4]`.
  */
 data class SeatLayout(val rows: List<List<Seat?>>) {
+    fun find(number: String): Seat? = rows.asSequence().flatten().filterNotNull().firstOrNull { it.number == number }
+
     companion object {
         const val MAX_SEATS_PER_BOOKING = 4
     }
 }
+
+/** Seat map for one trip, plus the numbers needed to price a booking. */
+data class BusSeatMap(
+    val trip: BusTrip,
+    val layout: SeatLayout,
+    val maxSelectable: Int,
+    val serviceChargePerSeat: Money,
+)

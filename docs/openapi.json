@@ -395,6 +395,333 @@
                 }
             }
         },
+        "/api/v1/buses/search": {
+            "post": {
+                "tags": [
+                    "bus"
+                ],
+                "summary": "Search",
+                "description": "Results are cached for a few minutes; live price and seats are re-checked at booking time.",
+                "operationId": "search_api_v1_buses_search_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BusSearchIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_list_BusTripOut__"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/buses/{trip_id}/seats": {
+            "get": {
+                "tags": [
+                    "bus"
+                ],
+                "summary": "Seats",
+                "operationId": "seats_api_v1_buses__trip_id__seats_get",
+                "parameters": [
+                    {
+                        "name": "trip_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Trip Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_SeatMapOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings": {
+            "post": {
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Create",
+                "description": "Holds the seats for `hold_minutes` (status `held`). Send an `Idempotency-Key` header so a\nretried request returns the same booking instead of holding seats twice.",
+                "operationId": "create_api_v1_bookings_post",
+                "parameters": [
+                    {
+                        "name": "idempotency-key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "maxLength": 64
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Idempotency-Key"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BookingCreateIn"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_BookingOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "List Bookings",
+                "operationId": "list_bookings_api_v1_bookings_get",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_list_BookingOut__"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings/{booking_id}": {
+            "get": {
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Get",
+                "operationId": "get_api_v1_bookings__booking_id__get",
+                "parameters": [
+                    {
+                        "name": "booking_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Booking Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_BookingOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings/{booking_id}/cancel": {
+            "post": {
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Cancel",
+                "description": "Phase 3: releases an unpaid hold. Paid bookings get cancellation + refund in Phase 7.",
+                "operationId": "cancel_api_v1_bookings__booking_id__cancel_post",
+                "parameters": [
+                    {
+                        "name": "booking_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Booking Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_BookingOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "tags": [
@@ -461,6 +788,331 @@
                 ],
                 "title": "AuthOut"
             },
+            "BookingCreateIn": {
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "const": "bus",
+                        "title": "Mode",
+                        "default": "bus"
+                    },
+                    "trip_id": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "title": "Trip Id"
+                    },
+                    "seats": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "maxItems": 4,
+                        "minItems": 1,
+                        "title": "Seats"
+                    },
+                    "boarding_point_id": {
+                        "type": "string",
+                        "maxLength": 60,
+                        "title": "Boarding Point Id"
+                    },
+                    "dropping_point_id": {
+                        "type": "string",
+                        "maxLength": 60,
+                        "title": "Dropping Point Id"
+                    },
+                    "passengers": {
+                        "items": {
+                            "$ref": "#/components/schemas/PassengerIn"
+                        },
+                        "type": "array",
+                        "maxItems": 4,
+                        "minItems": 1,
+                        "title": "Passengers"
+                    },
+                    "contact_phone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 10,
+                        "title": "Contact Phone"
+                    },
+                    "contact_email": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Contact Email"
+                    },
+                    "expected_total": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Expected Total",
+                        "description": "Total (paisa) the app showed; a different live price returns price_changed"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "trip_id",
+                    "seats",
+                    "boarding_point_id",
+                    "dropping_point_id",
+                    "passengers",
+                    "contact_phone"
+                ],
+                "title": "BookingCreateIn"
+            },
+            "BookingOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "booking_ref": {
+                        "type": "string",
+                        "title": "Booking Ref"
+                    },
+                    "mode": {
+                        "type": "string",
+                        "title": "Mode"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    },
+                    "hold_expires_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Hold Expires At"
+                    },
+                    "base_fare": {
+                        "type": "integer",
+                        "title": "Base Fare"
+                    },
+                    "service_charge": {
+                        "type": "integer",
+                        "title": "Service Charge"
+                    },
+                    "discount": {
+                        "type": "integer",
+                        "title": "Discount"
+                    },
+                    "total_amount": {
+                        "type": "integer",
+                        "title": "Total Amount"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "title": "Currency"
+                    },
+                    "contact_phone": {
+                        "type": "string",
+                        "title": "Contact Phone"
+                    },
+                    "contact_email": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Contact Email"
+                    },
+                    "segments": {
+                        "items": {
+                            "$ref": "#/components/schemas/SegmentOut"
+                        },
+                        "type": "array",
+                        "title": "Segments"
+                    },
+                    "passengers": {
+                        "items": {
+                            "$ref": "#/components/schemas/PassengerOut"
+                        },
+                        "type": "array",
+                        "title": "Passengers"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "booking_ref",
+                    "mode",
+                    "status",
+                    "hold_expires_at",
+                    "base_fare",
+                    "service_charge",
+                    "discount",
+                    "total_amount",
+                    "currency",
+                    "contact_phone",
+                    "contact_email",
+                    "segments",
+                    "passengers",
+                    "created_at"
+                ],
+                "title": "BookingOut"
+            },
+            "BusSearchIn": {
+                "properties": {
+                    "from_id": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "title": "From Id",
+                        "examples": [
+                            "bus_dhaka"
+                        ]
+                    },
+                    "to_id": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "title": "To Id",
+                        "examples": [
+                            "bus_coxsbazar"
+                        ]
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Date"
+                    },
+                    "coach_type": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "ac",
+                                    "non_ac",
+                                    "sleeper"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Coach Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "from_id",
+                    "to_id",
+                    "date"
+                ],
+                "title": "BusSearchIn"
+            },
+            "BusTripOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "operator_name": {
+                        "type": "string",
+                        "title": "Operator Name"
+                    },
+                    "operator_logo_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Operator Logo Url"
+                    },
+                    "coach_number": {
+                        "type": "string",
+                        "title": "Coach Number"
+                    },
+                    "coach_type": {
+                        "type": "string",
+                        "title": "Coach Type"
+                    },
+                    "from_id": {
+                        "type": "string",
+                        "title": "From Id"
+                    },
+                    "to_id": {
+                        "type": "string",
+                        "title": "To Id"
+                    },
+                    "depart_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Depart At"
+                    },
+                    "arrive_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Arrive At"
+                    },
+                    "fare": {
+                        "type": "integer",
+                        "title": "Fare",
+                        "description": "Per seat, in paisa"
+                    },
+                    "seats_available": {
+                        "type": "integer",
+                        "title": "Seats Available"
+                    },
+                    "boarding_points": {
+                        "items": {
+                            "$ref": "#/components/schemas/StopPointOut"
+                        },
+                        "type": "array",
+                        "title": "Boarding Points"
+                    },
+                    "dropping_points": {
+                        "items": {
+                            "$ref": "#/components/schemas/StopPointOut"
+                        },
+                        "type": "array",
+                        "title": "Dropping Points"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "operator_name",
+                    "coach_number",
+                    "coach_type",
+                    "from_id",
+                    "to_id",
+                    "depart_at",
+                    "arrive_at",
+                    "fare",
+                    "seats_available",
+                    "boarding_points",
+                    "dropping_points"
+                ],
+                "title": "BusTripOut"
+            },
             "Envelope_AuthOut_": {
                 "properties": {
                     "success": {
@@ -493,6 +1145,39 @@
                     "success"
                 ],
                 "title": "Envelope[AuthOut]"
+            },
+            "Envelope_BookingOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/BookingOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[BookingOut]"
             },
             "Envelope_NoneType_": {
                 "properties": {
@@ -553,6 +1238,39 @@
                     "success"
                 ],
                 "title": "Envelope[OtpSendOut]"
+            },
+            "Envelope_SeatMapOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/SeatMapOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[SeatMapOut]"
             },
             "Envelope_TokenPair_": {
                 "properties": {
@@ -619,6 +1337,80 @@
                     "success"
                 ],
                 "title": "Envelope[UserOut]"
+            },
+            "Envelope_list_BookingOut__": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/BookingOut"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Data"
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[list[BookingOut]]"
+            },
+            "Envelope_list_BusTripOut__": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/BusTripOut"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Data"
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[list[BusTripOut]]"
             },
             "Envelope_list_LocationOut__": {
                 "properties": {
@@ -812,6 +1604,121 @@
                 ],
                 "title": "OtpVerifyIn"
             },
+            "PassengerIn": {
+                "properties": {
+                    "full_name": {
+                        "type": "string",
+                        "maxLength": 80,
+                        "minLength": 2,
+                        "title": "Full Name"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female",
+                            "other"
+                        ],
+                        "title": "Gender"
+                    },
+                    "age": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "maximum": 120.0,
+                                "minimum": 1.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Age"
+                    },
+                    "seat_no": {
+                        "type": "string",
+                        "maxLength": 10,
+                        "title": "Seat No"
+                    },
+                    "document_no": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^\\d{10}$|^\\d{13}$|^\\d{17}$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Document No"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "full_name",
+                    "gender",
+                    "seat_no"
+                ],
+                "title": "PassengerIn"
+            },
+            "PassengerOut": {
+                "properties": {
+                    "full_name": {
+                        "type": "string",
+                        "title": "Full Name"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "title": "Gender"
+                    },
+                    "age": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Age"
+                    },
+                    "seat_no": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Seat No"
+                    },
+                    "document_masked": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Document Masked"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "full_name",
+                    "type",
+                    "gender",
+                    "age",
+                    "seat_no",
+                    "document_masked"
+                ],
+                "title": "PassengerOut"
+            },
             "RefreshIn": {
                 "properties": {
                     "refresh_token": {
@@ -826,6 +1733,186 @@
                     "refresh_token"
                 ],
                 "title": "RefreshIn"
+            },
+            "SeatMapOut": {
+                "properties": {
+                    "trip": {
+                        "$ref": "#/components/schemas/BusTripOut"
+                    },
+                    "layout": {
+                        "type": "string",
+                        "title": "Layout"
+                    },
+                    "rows": {
+                        "items": {
+                            "items": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/components/schemas/SeatOut"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ]
+                            },
+                            "type": "array"
+                        },
+                        "type": "array",
+                        "title": "Rows"
+                    },
+                    "max_selectable": {
+                        "type": "integer",
+                        "title": "Max Selectable"
+                    },
+                    "service_charge_per_seat": {
+                        "type": "integer",
+                        "title": "Service Charge Per Seat"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "trip",
+                    "layout",
+                    "rows",
+                    "max_selectable",
+                    "service_charge_per_seat"
+                ],
+                "title": "SeatMapOut"
+            },
+            "SeatOut": {
+                "properties": {
+                    "number": {
+                        "type": "string",
+                        "title": "Number"
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "booked",
+                            "ladies",
+                            "held"
+                        ],
+                        "title": "State"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "number",
+                    "state"
+                ],
+                "title": "SeatOut"
+            },
+            "SegmentOut": {
+                "properties": {
+                    "trip_id": {
+                        "type": "string",
+                        "title": "Trip Id"
+                    },
+                    "carrier": {
+                        "type": "string",
+                        "title": "Carrier"
+                    },
+                    "number": {
+                        "type": "string",
+                        "title": "Number"
+                    },
+                    "from_id": {
+                        "type": "string",
+                        "title": "From Id"
+                    },
+                    "to_id": {
+                        "type": "string",
+                        "title": "To Id"
+                    },
+                    "depart_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Depart At"
+                    },
+                    "arrive_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Arrive At"
+                    },
+                    "travel_class": {
+                        "type": "string",
+                        "title": "Travel Class"
+                    },
+                    "seat_numbers": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Seat Numbers"
+                    },
+                    "boarding_point": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Boarding Point"
+                    },
+                    "dropping_point": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Dropping Point"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "trip_id",
+                    "carrier",
+                    "number",
+                    "from_id",
+                    "to_id",
+                    "depart_at",
+                    "arrive_at",
+                    "travel_class",
+                    "seat_numbers"
+                ],
+                "title": "SegmentOut"
+            },
+            "StopPointOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "name_en": {
+                        "type": "string",
+                        "title": "Name En"
+                    },
+                    "name_bn": {
+                        "type": "string",
+                        "title": "Name Bn"
+                    },
+                    "time": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Time"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "name_en",
+                    "name_bn",
+                    "time"
+                ],
+                "title": "StopPointOut"
             },
             "TokenPair": {
                 "properties": {
