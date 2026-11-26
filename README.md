@@ -13,7 +13,7 @@ One Android app to search, compare, book and pay for **flight, bus and train tic
 | ![](docs/screenshots/phase1/bn_light_01_home.png) | ![](docs/screenshots/phase1/en_light_01_home.png) | ![](docs/screenshots/phase1/bn_dark_01_home.png) |
 | ![](docs/screenshots/phase1/bn_light_05_seat_map.png) | ![](docs/screenshots/phase1/en_light_04_flight_train_cards.png) | ![](docs/screenshots/phase1/bn_dark_06_review_pay.png) |
 
-All 39 screenshots are in [`docs/screenshots/phase1`](docs/screenshots/phase1). They are rendered on the
+All 42 screenshots are in [`docs/screenshots/phase1`](docs/screenshots/phase1). They are rendered on the
 JVM by Roborazzi, not on a phone.
 
 ## Repository layout
