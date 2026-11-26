@@ -6,6 +6,9 @@ import com.jatri.core.network.model.BookingCreateRequest
 import com.jatri.core.network.model.BookingDto
 import com.jatri.core.network.model.BusTripDto
 import com.jatri.core.network.model.PassengerOutDto
+import com.jatri.core.network.model.PaymentInitDto
+import com.jatri.core.network.model.PaymentStatusDto
+import com.jatri.core.network.model.TicketDto
 import com.jatri.core.network.model.SeatDto
 import com.jatri.core.network.model.SeatMapDto
 import com.jatri.core.network.model.SegmentDto
@@ -23,6 +26,9 @@ import kotlin.random.Random
  * pricing rules, seat rules and error codes; exact times and booked seats differ), used when the
  * APK runs without a server.
  */
+/** Checkout URLs with this scheme are the in-app demo gateway (no browser). */
+const val MOCK_CHECKOUT_SCHEME = "jatri-demo-checkout://"
+
 internal class MockBus {
     private val bd = ZoneOffset.ofHours(6)
     private val operators = listOf("Sample Paribahan", "Demo Travels", "Test Express", "Night Coach Demo", "Mock Lines")
@@ -158,7 +164,14 @@ internal class MockBus {
                 ),
             ),
             passengers = body.passengers.map {
-                PassengerOutDto(it.fullName.trim(), if ((it.age ?: 30) >= 12) "adult" else "child", it.gender, it.age, it.seatNo, it.documentNo?.let { d -> "•".repeat(d.length - 4) + d.takeLast(4) })
+                PassengerOutDto(
+                    fullName = it.fullName.trim(),
+                    type = if ((it.age ?: 30) >= 12) "adult" else "child",
+                    gender = it.gender,
+                    age = it.age,
+                    seatNo = it.seatNo,
+                    documentMasked = it.documentNo?.let { d -> "•".repeat(d.length - 4) + d.takeLast(4) },
+                )
             },
             createdAt = OffsetDateTime.now(ZoneOffset.UTC).toString(),
         )
@@ -184,9 +197,48 @@ internal class MockBus {
         return b.copy(status = "cancelled").also { bookings[id] = it }
     }
 
+    private val payments = mutableMapOf<String, PaymentStatusDto>()
+    private val paymentAmounts = mutableMapOf<String, Long>()
+
+    fun initPayment(bookingId: String): PaymentInitDto {
+        val b = get(bookingId)
+        if (b.status != "held") {
+            throw api("booking_not_payable", "This booking can no longer be paid. Please choose seats again.", "এই বুকিংয়ের পেমেন্ট আর করা যাবে না। আবার সিট বেছে নিন।")
+        }
+        val id = UUID.randomUUID().toString()
+        payments[id] = PaymentStatusDto(id, "initiated", null, b.id, b.status, b.bookingRef)
+        paymentAmounts[id] = b.totalAmount
+        return PaymentInitDto(id, "$MOCK_CHECKOUT_SCHEME$id", b.totalAmount, "initiated")
+    }
+
+    fun paymentStatus(id: String): PaymentStatusDto {
+        val p = payments[id] ?: throw api("payment_not_found", "Payment not found.", "পেমেন্ট পাওয়া যায়নি।")
+        return p.copy(bookingStatus = get(p.bookingId).status)
+    }
+
+    /** What the backend's verified callback does: confirm the hold and issue the ticket. */
+    fun completePayment(id: String, success: Boolean) {
+        val p = payments[id] ?: return
+        if (p.status != "initiated") return
+        if (!success) {
+            payments[id] = p.copy(status = "failed", failureReason = "declined")
+            return
+        }
+        val b = get(p.bookingId)
+        val pnr = "PNR-" + id.take(8).uppercase()
+        bookings[b.id] = b.copy(
+            status = "ticketed",
+            holdExpiresAt = null,
+            passengers = b.passengers.mapIndexed { i, pass -> pass.copy(ticketNumber = "$pnr-${i + 1}") },
+            ticket = TicketDto(qrPayload = "JT1.${b.bookingRef}.${b.id.replace("-", "")}.demo", pdfUrl = "", issuedAt = OffsetDateTime.now(ZoneOffset.UTC).toString()),
+        )
+        release(b.id)
+        payments[id] = p.copy(status = "success", bookingStatus = "ticketed")
+    }
+
     private fun expireHolds() {
         val now = OffsetDateTime.now()
-        bookings.values.filter { it.status == "held" && OffsetDateTime.parse(it.holdExpiresAt).isBefore(now) }.forEach {
+        bookings.values.filter { it.status == "held" && it.holdExpiresAt != null && OffsetDateTime.parse(it.holdExpiresAt).isBefore(now) }.forEach {
             release(it.id)
             bookings[it.id] = it.copy(status = "cancelled")
         }

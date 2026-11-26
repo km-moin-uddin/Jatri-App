@@ -73,11 +73,13 @@ async def store():
 async def client(db_schema, settings, sms, store):
     app = create_app()
     provider = MockBusProvider()
+    app.state.test_provider = provider
     app.dependency_overrides[get_settings] = lambda: settings
     app.dependency_overrides[sms_sender] = lambda: sms
     app.dependency_overrides[get_store] = lambda: store
     app.dependency_overrides[get_bus_provider] = lambda: provider
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        c.app = app
         yield c
 
 

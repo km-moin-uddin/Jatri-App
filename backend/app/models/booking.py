@@ -72,3 +72,31 @@ class BookingPassenger(IdMixin, Base):
     ticket_number: Mapped[str | None] = mapped_column(String(40))
 
     booking: Mapped[Booking] = relationship(back_populates="passengers")
+
+
+class Payment(IdMixin, Base):
+    """One payment attempt for a booking. Status only moves forward; callbacks are idempotent."""
+
+    __tablename__ = "payments"
+    __table_args__ = (UniqueConstraint("booking_id", "idempotency_key", name="uq_payments_booking_idempotency"),)
+
+    booking_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("bookings.id", ondelete="CASCADE"), index=True)
+    gateway: Mapped[str] = mapped_column(String(20))
+    method: Mapped[str] = mapped_column(String(20))  # bkash | nagad | rocket | card
+    amount: Mapped[int] = mapped_column(BigInteger)  # paisa
+    # initiated | success | failed | cancelled | refund_pending | refunded
+    status: Mapped[str] = mapped_column(String(16), index=True)
+    gateway_session: Mapped[str | None] = mapped_column(String(120))
+    gateway_txn_id: Mapped[str | None] = mapped_column(String(120), index=True)
+    failure_reason: Mapped[str | None] = mapped_column(String(60))
+    raw_response: Mapped[dict] = mapped_column(JSON, default=dict)
+    idempotency_key: Mapped[str | None] = mapped_column(String(64))
+
+
+class Ticket(IdMixin, Base):
+    __tablename__ = "tickets"
+
+    booking_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("bookings.id", ondelete="CASCADE"), unique=True)
+    qr_payload: Mapped[str] = mapped_column(String(200))
+    pdf_url: Mapped[str] = mapped_column(String(200))
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

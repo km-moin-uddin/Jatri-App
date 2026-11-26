@@ -64,6 +64,8 @@ class MockBusProvider:
 
     def __init__(self) -> None:
         self._holds: dict[str, str] = {}  # provider_ref -> status
+        self._hold_seats: dict[str, tuple[str, list[str]]] = {}  # provider_ref -> (trip_id, seats)
+        self._sold: dict[str, set[str]] = {}  # trip_id -> seats sold through us
 
     @staticmethod
     def _trip_id(from_id: str, to_id: str, on: date, index: int) -> str:
@@ -146,7 +148,12 @@ class MockBusProvider:
         if not parsed:
             return None
         trip = self._build(*parsed)
-        return self._layout(*parsed, trip.coach_type)
+        layout = self._layout(*parsed, trip.coach_type)
+        sold = self._sold.get(trip_id, set())
+        if not sold:
+            return layout
+        rows = [[Seat(s.number, "booked") if s and s.number in sold else s for s in row] for row in layout.rows]
+        return SeatLayout(trip_id=layout.trip_id, layout=layout.layout, rows=rows)
 
     async def hold(self, trip_id: str, seats: list[str], expires_at: datetime) -> HoldResult:
         layout = await self.get_seats(trip_id)
@@ -159,11 +166,17 @@ class MockBusProvider:
             )
         ref = "MOCK-" + secrets.token_hex(4).upper()
         self._holds[ref] = "held"
+        self._hold_seats[ref] = (trip_id, list(seats))
         return HoldResult(ref, expires_at)
 
     async def confirm(self, provider_ref: str) -> str:
+        """Turns a hold into a sold ticket. Returns the operator's ticket/PNR number."""
+        if self._holds.get(provider_ref) not in ("held", "confirmed"):
+            raise ProviderError("hold_not_found", "The operator could not find this hold.", "অপারেটর এই হোল্ডটি খুঁজে পায়নি।")
+        trip_id, seats = self._hold_seats.get(provider_ref, ("", []))
+        self._sold.setdefault(trip_id, set()).update(seats)
         self._holds[provider_ref] = "confirmed"
-        return provider_ref
+        return provider_ref.replace("MOCK-", "PNR-")
 
     async def cancel(self, provider_ref: str) -> None:
         self._holds[provider_ref] = "cancelled"

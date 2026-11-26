@@ -14,6 +14,10 @@ import com.jatri.core.network.model.LocationDto
 import com.jatri.core.network.model.OtpSendRequest
 import com.jatri.core.network.model.OtpSendResponse
 import com.jatri.core.network.model.OtpVerifyRequest
+import com.jatri.core.network.model.PaymentInitDto
+import com.jatri.core.network.model.PaymentInitRequest
+import com.jatri.core.network.model.PaymentStatusDto
+import okhttp3.ResponseBody
 import com.jatri.core.network.model.RefreshRequest
 import com.jatri.core.network.model.TokenPairDto
 import com.jatri.core.network.model.UserDto
@@ -118,6 +122,28 @@ class MockJatriApi @Inject constructor() : JatriApi {
         currentUser()
         delay(LATENCY / 2)
         return ApiEnvelope(true, bus.cancel(id))
+    }
+
+    override suspend fun initPayment(body: PaymentInitRequest, idempotencyKey: String): ApiEnvelope<PaymentInitDto> {
+        currentUser()
+        delay(LATENCY)
+        return ApiEnvelope(true, bus.initPayment(body.bookingId))
+    }
+
+    override suspend fun paymentStatus(id: String): ApiEnvelope<PaymentStatusDto> {
+        currentUser()
+        delay(LATENCY / 2)
+        return ApiEnvelope(true, bus.paymentStatus(id))
+    }
+
+    /** The demo backend has no PDF renderer; the real server generates it. */
+    override suspend fun ticketPdf(bookingId: String): ResponseBody =
+        throw api("pdf_unavailable", "The PDF ticket needs the real server. Your QR ticket works.", "পিডিএফ টিকিটের জন্য আসল সার্ভার লাগবে। আপনার কিউআর টিকিট কাজ করবে।")
+
+    /** Stands in for the gateway's server-to-server callback (demo gateway only). */
+    suspend fun completeDemoPayment(paymentId: String, success: Boolean) {
+        delay(LATENCY)
+        bus.completePayment(paymentId, success)
     }
 
     /** Empty: the app keeps its bundled seed list when the server has nothing to add. */

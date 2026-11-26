@@ -38,4 +38,20 @@
     <string name="pay_seats">Seats: %s</string>
     <string name="pay_board_drop">%1$s → %2$s</string>
     <string name="pay_demo_note">Your seats are really held. Payment itself is a demo for now: no money will be taken.</string>
+    <string name="pay_processing_title">Confirming your payment</string>
+    <string name="pay_processing_body">We\'re checking with the payment service. Please don\'t close the app.</string>
+    <string name="pay_demo_gateway_title">Demo payment gateway</string>
+    <string name="pay_demo_gateway_body">Sandbox: no real money moves. Choose what the gateway should answer.</string>
+    <string name="pay_demo_pay">Pay %s</string>
+    <string name="pay_demo_fail">Fail the payment</string>
+    <string name="pay_refund_title">Payment received, ticket not issued</string>
+    <string name="pay_refund_body">The operator couldn\'t confirm your seats. Your money will be refunded to the same account automatically.</string>
+    <string name="pay_slow_title">Still waiting</string>
+    <string name="pay_slow_body">The bank has not answered yet. If money was taken, your ticket will appear in My Trips as soon as it is confirmed.</string>
+    <string name="pay_check_again">Check again</string>
+    <string name="pay_download_pdf">PDF ticket</string>
+    <string name="pay_share">Share</string>
+    <string name="pay_ticket_no">Ticket no. %s</string>
+    <string name="pay_no_pdf_app">No app found to open PDF files.</string>
+    <string name="pay_ok">OK</string>
 </resources>

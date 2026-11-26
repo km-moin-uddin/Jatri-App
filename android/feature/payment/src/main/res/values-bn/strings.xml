@@ -38,4 +38,20 @@
     <string name="pay_seats">সিট: %s</string>
     <string name="pay_board_drop">%1$s → %2$s</string>
     <string name="pay_demo_note">আপনার সিট সত্যিই সংরক্ষিত আছে। পেমেন্ট আপাতত ডেমো, কোনো টাকা কাটা হবে না।</string>
+    <string name="pay_processing_title">পেমেন্ট নিশ্চিত করা হচ্ছে</string>
+    <string name="pay_processing_body">পেমেন্ট সার্ভিসের সাথে যাচাই করা হচ্ছে। অনুগ্রহ করে অ্যাপ বন্ধ করবেন না।</string>
+    <string name="pay_demo_gateway_title">ডেমো পেমেন্ট গেটওয়ে</string>
+    <string name="pay_demo_gateway_body">স্যান্ডবক্স: কোনো আসল টাকা কাটা হবে না। গেটওয়ে কী উত্তর দেবে তা বেছে নিন।</string>
+    <string name="pay_demo_pay">%s পেমেন্ট করুন</string>
+    <string name="pay_demo_fail">পেমেন্ট ব্যর্থ করুন</string>
+    <string name="pay_refund_title">পেমেন্ট হয়েছে, টিকিট দেওয়া যায়নি</string>
+    <string name="pay_refund_body">অপারেটর আপনার সিট নিশ্চিত করতে পারেনি। আপনার টাকা একই অ্যাকাউন্টে স্বয়ংক্রিয়ভাবে ফেরত যাবে।</string>
+    <string name="pay_slow_title">এখনো অপেক্ষা চলছে</string>
+    <string name="pay_slow_body">ব্যাংক এখনো উত্তর দেয়নি। টাকা কাটা হয়ে থাকলে নিশ্চিত হওয়ামাত্র টিকিট আমার যাত্রায় দেখাবে।</string>
+    <string name="pay_check_again">আবার দেখুন</string>
+    <string name="pay_download_pdf">পিডিএফ টিকিট</string>
+    <string name="pay_share">শেয়ার</string>
+    <string name="pay_ticket_no">টিকিট নং %s</string>
+    <string name="pay_no_pdf_app">পিডিএফ খোলার মতো কোনো অ্যাপ পাওয়া যায়নি।</string>
+    <string name="pay_ok">ঠিক আছে</string>
 </resources>

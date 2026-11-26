@@ -52,11 +52,18 @@ class SegmentOut(BaseModel):
 
 class PassengerOut(BaseModel):
     full_name: str
+    ticket_number: str | None = None
     type: str
     gender: str
     age: int | None
     seat_no: str | None
     document_masked: str | None
+
+
+class TicketInfo(BaseModel):
+    qr_payload: str
+    pdf_url: str
+    issued_at: datetime
 
 
 class BookingOut(BaseModel):
@@ -75,3 +82,4 @@ class BookingOut(BaseModel):
     segments: list[SegmentOut]
     passengers: list[PassengerOut]
     created_at: datetime
+    ticket: TicketInfo | None = None
