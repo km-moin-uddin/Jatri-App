@@ -36,6 +36,8 @@ import com.jatri.core.common.format.DateTimeFormats
 import com.jatri.core.designsystem.component.ErrorState
 import com.jatri.core.designsystem.component.LoadingState
 import com.jatri.core.model.Booking
+import com.jatri.core.model.PaymentMethod
+import com.jatri.core.model.PaymentStart
 import com.jatri.core.ui.text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -69,7 +71,12 @@ import com.jatri.core.model.Money
 import com.jatri.core.ui.placeholder.PhaseBanner
 import kotlinx.coroutines.delay
 
-private enum class PayMethod(val label: Int) { BKASH(R.string.pay_bkash), NAGAD(R.string.pay_nagad), ROCKET(R.string.pay_rocket), CARD(R.string.pay_card) }
+private enum class PayMethod(val label: Int, val model: PaymentMethod) {
+    BKASH(R.string.pay_bkash, PaymentMethod.BKASH),
+    NAGAD(R.string.pay_nagad, PaymentMethod.NAGAD),
+    ROCKET(R.string.pay_rocket, PaymentMethod.ROCKET),
+    CARD(R.string.pay_card, PaymentMethod.CARD),
+}
 
 // SAMPLE numbers for the flight/train preview (no booking yet). Bus bookings show real ones.
 private val sampleBase = Money.taka(2800)
@@ -81,10 +88,19 @@ private const val SAMPLE_HOLD_SECONDS = 10 * 60
 internal fun ReviewPayRoute(
     onBack: () -> Unit,
     onPaid: (success: Boolean) -> Unit,
+    onPaymentStarted: (PaymentStart, demo: Boolean) -> Unit,
     onHoldGone: () -> Unit,
     viewModel: ReviewPayViewModel = hiltViewModel(),
+    payments: PaymentLauncher = rememberPaymentLauncher(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    state.payError?.let { e ->
+        AlertDialog(
+            onDismissRequest = viewModel::dismissPayError,
+            text = { Text(e.text()) },
+            confirmButton = { TextButton(onClick = viewModel::dismissPayError) { Text(stringResource(R.string.pay_try_again)) } },
+        )
+    }
     if (viewModel.bookingId == null) {
         ReviewPayScreen(onBack = onBack, onPaid = onPaid)
         return
@@ -102,6 +118,14 @@ internal fun ReviewPayRoute(
             secondsLeft = state.secondsLeft,
             onCancel = { viewModel.cancel(onHoldGone) },
             cancelling = state.cancelling,
+            paying = state.paying,
+            onPay = { method ->
+                viewModel.pay(method) { start ->
+                    val demo = payments.isDemo(start.checkoutUrl)
+                    if (!demo) payments.openCheckout(start.checkoutUrl)
+                    onPaymentStarted(start, demo)
+                }
+            },
         )
     }
     if (state.expired && booking != null) {
@@ -126,6 +150,8 @@ fun ReviewPayScreen(
     secondsLeft: Int? = null,
     onCancel: (() -> Unit)? = null,
     cancelling: Boolean = false,
+    onPay: ((PaymentMethod) -> Unit)? = null,
+    paying: Boolean = false,
 ) {
     val lang = JatriTheme.language
     var method by rememberSaveable { mutableStateOf(PayMethod.BKASH) }
@@ -158,8 +184,9 @@ fun ReviewPayScreen(
                 label = stringResource(R.string.pay_total),
                 price = total.format(lang),
                 buttonText = stringResource(R.string.pay_button, total.format(lang)),
-                onClick = { onPaid(true) },
+                onClick = { if (onPay != null) onPay(method.model) else onPaid(true) },
                 enabled = agreed && left > 0,
+                loading = paying,
             )
         },
     ) { padding ->
@@ -223,11 +250,14 @@ fun ReviewPayScreen(
                     color = JatriTheme.colors.danger,
                 )
             }
-            JatriTextButton(
-                text = stringResource(R.string.pay_simulate_failure),
-                onClick = { onPaid(false) },
-                color = JatriTheme.colors.textSecondary,
-            )
+            if (onPay == null) {
+                // Preview only. Real bookings use the gateway's own fail option.
+                JatriTextButton(
+                    text = stringResource(R.string.pay_simulate_failure),
+                    onClick = { onPaid(false) },
+                    color = JatriTheme.colors.textSecondary,
+                )
+            }
             Spacer(Modifier.height(Spacing.md))
         }
     }

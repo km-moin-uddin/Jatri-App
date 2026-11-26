@@ -50,6 +50,8 @@ import com.jatri.feature.home.HomeUiState
 import com.jatri.feature.offers.OffersScreen
 import com.jatri.feature.payment.PaymentResultScreen
 import com.jatri.feature.payment.ReviewPayScreen
+import com.jatri.feature.payment.TicketResultScreen
+import com.jatri.core.model.Ticket
 import com.jatri.feature.trips.TripsScreen
 import com.jatri.core.model.AppLanguage
 import com.jatri.core.model.Booking
@@ -207,6 +209,30 @@ abstract class ScreenshotTest(private val name: String, private val dark: Boolea
 
     @Test fun paymentSuccess() = shot("07_payment_success") {
         PaymentResultScreen(success = true, onRetry = {}, onViewTrips = {}, onGoHome = {})
+    }
+
+    @Test fun eTicket() = shot("07b_e_ticket") {
+        val trip = MockContent.busTrips(today.plusDays(1), dhakaCox.from, dhakaCox.to).first()
+        val point = StopPoint("p", "Kalabagan", "কলাবাগান", trip.departAt.minusMinutes(15))
+        TicketResultScreen(
+            booking = Booking(
+                id = "b1", ref = "JTW6FX", mode = TravelMode.BUS, status = BookingStatus.TICKETED, holdExpiresAt = null,
+                baseFare = trip.price * 2, serviceCharge = Money.taka(60), discount = Money.ZERO, total = trip.price * 2 + Money.taka(60),
+                contactPhone = "01712345678", contactEmail = null,
+                segments = listOf(
+                    BookingSegment(trip.operatorName, trip.coachNumber, trip.from.id, trip.to.id, trip.departAt, trip.arriveAt, "ac", listOf("A2", "A3"), point, null),
+                ),
+                passengers = listOf(
+                    BookingPassenger("রহিম উদ্দিন", Gender.MALE, 34, "A2", null, "PNR-1A2B3C4D-1"),
+                    BookingPassenger("Karima Begum", Gender.FEMALE, null, "A3", null, "PNR-1A2B3C4D-2"),
+                ),
+                ticket = Ticket("JT1.JTW6FX.fc371ebba14b4d51af63ae46e00e19b4.Qm9vZ3Vz", "/api/v1/tickets/b1/pdf", java.time.Instant.EPOCH),
+            ),
+            from = dhakaCox.from,
+            to = dhakaCox.to,
+            pdfBusy = false,
+            onOpenPdf = {}, onSharePdf = {}, onViewTrips = {}, onGoHome = {},
+        )
     }
 
     @Test fun trips() = shot("08_trips") { TripsScreen(onSearchTickets = {}, onTicketClick = {}) }

@@ -5,6 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.jatri.core.data.repository.BookingRepository
+import com.jatri.core.data.repository.PaymentRepository
+import com.jatri.core.model.PaymentMethod
+import com.jatri.core.model.PaymentStart
+import java.util.UUID
 import com.jatri.core.model.AppError
 import com.jatri.core.model.AppException
 import com.jatri.core.model.Booking
@@ -23,6 +27,8 @@ import java.time.Duration
 import javax.inject.Inject
 
 data class ReviewPayUiState(
+    val paying: Boolean = false,
+    val payError: AppError? = null,
     val loading: Boolean = false,
     val booking: Booking? = null,
     val secondsLeft: Int = 0,
@@ -35,6 +41,7 @@ data class ReviewPayUiState(
 class ReviewPayViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val bookings: BookingRepository,
+    private val payments: PaymentRepository,
     private val clock: Clock,
 ) : ViewModel() {
     val bookingId: String? = savedStateHandle.toRoute<ReviewPayDestination>().bookingId
@@ -76,6 +83,24 @@ class ReviewPayViewModel @Inject constructor(
             delay(1_000)
         }
     }
+
+    /** Starts a payment; each tap is a new attempt (a failed one can't be reused). */
+    fun pay(method: PaymentMethod, onStarted: (PaymentStart) -> Unit) {
+        val id = bookingId ?: return
+        if (_state.value.paying) return
+        viewModelScope.launch {
+            _state.update { it.copy(paying = true, payError = null) }
+            try {
+                onStarted(payments.start(id, method, UUID.randomUUID().toString()))
+            } catch (e: AppException) {
+                _state.update { it.copy(payError = e.error) }
+            } finally {
+                _state.update { it.copy(paying = false) }
+            }
+        }
+    }
+
+    fun dismissPayError() = _state.update { it.copy(payError = null) }
 
     fun cancel(onDone: () -> Unit) {
         val id = bookingId ?: return onDone()

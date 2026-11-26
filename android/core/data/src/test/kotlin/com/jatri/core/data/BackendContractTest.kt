@@ -69,3 +69,31 @@ class BackendContractTest {
         assertEquals("••••••7890", b.passengers[0].documentMasked)
     }
 }
+
+class PaymentContractTest {
+    private val json = NetworkModule.providesJson()
+    private fun read(name: String) = javaClass.getResource("/fixtures/$name")!!.readText()
+
+    @Test
+    fun `payment init, status and ticketed booking from the real backend`() {
+        val init = json.decodeFromString(
+            ApiEnvelope.serializer(com.jatri.core.network.model.PaymentInitDto.serializer()), read("payment_init.json"),
+        ).data!!
+        assertTrue(init.checkoutUrl.startsWith("http"))
+        assertEquals("initiated", init.status)
+
+        val status = json.decodeFromString(
+            ApiEnvelope.serializer(com.jatri.core.network.model.PaymentStatusDto.serializer()), read("payment_status.json"),
+        ).data!!
+        assertEquals("success", status.status)
+        assertEquals("ticketed", status.bookingStatus)
+
+        val booking = json.decodeFromString(ApiEnvelope.serializer(BookingDto.serializer()), read("booking_ticketed.json")).data!!.toModel()
+        assertEquals(BookingStatus.TICKETED, booking.status)
+        assertEquals(null, booking.holdExpiresAt)
+        val ticket = booking.ticket!!
+        assertTrue(ticket.qrPayload.startsWith("JT1.${booking.ref}."))
+        assertTrue(ticket.pdfUrl.endsWith("/pdf"))
+        assertTrue(booking.passengers.all { it.ticketNumber != null })
+    }
+}

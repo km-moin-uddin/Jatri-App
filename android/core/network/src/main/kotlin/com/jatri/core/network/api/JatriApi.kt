@@ -9,6 +9,9 @@ import com.jatri.core.network.model.BusTripDto
 import com.jatri.core.network.model.SeatMapDto
 import com.jatri.core.network.model.LocationDto
 import com.jatri.core.network.model.OtpSendRequest
+import com.jatri.core.network.model.PaymentInitDto
+import com.jatri.core.network.model.PaymentInitRequest
+import com.jatri.core.network.model.PaymentStatusDto
 import com.jatri.core.network.model.OtpSendResponse
 import com.jatri.core.network.model.OtpVerifyRequest
 import com.jatri.core.network.model.RefreshRequest
@@ -24,6 +27,8 @@ import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Streaming
+import okhttp3.ResponseBody
 
 /** Backend `/api/v1`. Every call returns the `{success, data, error}` envelope. */
 interface JatriApi {
@@ -71,4 +76,18 @@ interface JatriApi {
 
     @POST("bookings/{id}/cancel")
     suspend fun cancelBooking(@Path("id") id: String): ApiEnvelope<BookingDto>
+
+    @POST("payments/init")
+    suspend fun initPayment(
+        @Body body: PaymentInitRequest,
+        @Header("Idempotency-Key") idempotencyKey: String,
+    ): ApiEnvelope<PaymentInitDto>
+
+    @GET("payments/{id}/status")
+    suspend fun paymentStatus(@Path("id") id: String): ApiEnvelope<PaymentStatusDto>
+
+    /** Raw PDF bytes (not an envelope). */
+    @Streaming
+    @GET("tickets/{bookingId}/pdf")
+    suspend fun ticketPdf(@Path("bookingId") bookingId: String): ResponseBody
 }

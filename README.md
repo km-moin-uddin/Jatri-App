@@ -3,18 +3,18 @@
 One Android app to search, compare, book and pay for **flight, bus and train tickets in Bangladesh**.
 "Jatri" is a working name.
 
-> **Status: Phase 3 (Bus) is done.** Built so far: Phase 1 (foundation and the v2 "soft neutral"
-> style), Phase 2 (phone OTP login, tokens, profile, FastAPI backend) and Phase 3 (bus search,
-> seat map, passenger form and a real 10-minute booking hold). The project structure, design system, navigation for all
-> screens, Bangla/English and light/dark themes are in place. Search results, seat maps and payments
-> show **sample data** until their phases are built (see [What is mocked](#what-is-mocked)).
+> **Status: Phase 4 (Payments) is done.** Built so far:
+> - Phase 1: foundation and the v2 "soft neutral" style.
+> - Phase 2: phone OTP login and the FastAPI backend.
+> - Phase 3: bus search, seat map and booking hold.
+> - Phase 4: payment gateway sandbox, verified callbacks, e-ticket with QR and PDF.
 
 | Bangla · light | English · light | Bangla · dark |
 |---|---|---|
 | ![](docs/screenshots/phase1/bn_light_01_home.png) | ![](docs/screenshots/phase1/en_light_01_home.png) | ![](docs/screenshots/phase1/bn_dark_01_home.png) |
 | ![](docs/screenshots/phase1/bn_light_05_seat_map.png) | ![](docs/screenshots/phase1/en_light_04_flight_train_cards.png) | ![](docs/screenshots/phase1/bn_dark_06_review_pay.png) |
 
-All 42 screenshots are in [`docs/screenshots/phase1`](docs/screenshots/phase1). They are rendered on the
+All 45 screenshots are in [`docs/screenshots/phase1`](docs/screenshots/phase1). They are rendered on the
 JVM by Roborazzi, not on a phone.
 
 ## Download the app
@@ -72,6 +72,33 @@ cd android
 The first launch shows onboarding (choose Bangla or English), then Home. Walk through it: pick
 cities, then Search, a result, a seat or class, passenger details, Review & pay, and the success
 screen. Every step in that flow can be reached.
+
+## Phase 4 — payments & e-tickets
+
+- **PaymentGateway adapter** with two implementations:
+  - **SSLCommerz** (bKash, Nagad, Rocket, cards; sandbox first). The IPN callback is confirmed with
+    SSLCommerz's Order Validation API before anything is trusted.
+  - A **mock gateway** that hosts its own checkout page, for testing without credentials. Production
+    refuses to start with it.
+- **Flow**:
+  1. "Pay" opens the gateway in a Chrome Custom Tab.
+  2. The gateway calls the server directly (server to server).
+  3. The server checks the signature and the amount, confirms with the bus provider, and issues the
+     ticket: `ticketed`.
+  4. The browser returns to the app via `jatri://payment/return`, and the app shows the e-ticket.
+  - The app's own "success" is never trusted. Replayed or forged callbacks change nothing.
+- **Failure handling**:
+  - A failed payment leaves the seats held, so the user can try again.
+  - A wrong amount is rejected.
+  - If the operator refuses after the money is taken, the booking is marked `failed` and the payment
+    `refund_pending`, with an alert in the logs.
+- **E-ticket**:
+  - The QR is signed (HMAC), so it can't be forged.
+  - The A5 **PDF is in Bangla + English** (HarfBuzz shaping, [sample](docs/screenshots/phase4/ticket_pdf_sample.png)).
+  - The app downloads the PDF once and keeps it offline; it can be opened or shared.
+- **Background worker** (ARQ): releases unpaid holds every minute.
+- **Demo APK**: the in-app demo gateway shows a "Pay / Fail" sheet, so the whole flow works on a phone
+  without a server. Only the PDF needs the real backend.
 
 ## Phase 3 — bus booking
 
@@ -152,7 +179,8 @@ to `10.0.2.2` and `localhost`. Release builds are HTTPS-only.
 |---|---|---|
 | SMS gateway | Backend prints the OTP to its log; the APK's mock backend uses 123456 | Before release |
 | Bus trips & seats | Real API flow, **mock bus provider** with placeholder operators ("Sample Paribahan") | When an authorised bus API is connected |
-| Payment | Review shows the real held booking; paying is simulated, no money moves | Phase 4 |
+| Payment gateway | Mock gateway by default; SSLCommerz adapter needs a sandbox store id/password | When you create the SSLCommerz sandbox account |
+| PDF in the demo APK | The demo backend has no PDF renderer (QR ticket works) | Works with the real backend |
 | Flight / train passenger form | Layout preview with disabled fields | Phases 5–6 |
 | Flight results, fare rules | `MockContent` with placeholder airlines ("Sample Air") | Phase 5 |
 | Train results | `MockContent` ("Sample Express") | Phase 6 |
@@ -226,4 +254,10 @@ big bold left-aligned headlines.
 
 বাস কোম্পানির ডেটা এখনো নমুনা (mock provider)।
 
-**পরের ধাপ:** Phase 4। এতে পেমেন্ট গেটওয়ে (স্যান্ডবক্স), ই-টিকিট, QR আর PDF আসবে।
+**Phase 4 সম্পন্ন:**
+- পেমেন্ট গেটওয়ে স্যান্ডবক্স: SSLCommerz-এর মাধ্যমে বিকাশ, নগদ, রকেট আর কার্ড, সাথে একটা ডেমো গেটওয়ে।
+- সার্ভার নিজে পেমেন্ট যাচাই করে।
+- স্বাক্ষর করা QR সহ ই-টিকিট।
+- বাংলা PDF টিকিট।
+
+**পরের ধাপ:** Phase 5। এতে ফ্লাইট মডিউল আসবে।

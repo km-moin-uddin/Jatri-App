@@ -50,6 +50,10 @@ uv run ruff check .
 | POST | `/bookings` | Holds seats for 10 min (`held`). Send `Idempotency-Key`; pass `expected_total` to detect price changes |
 | GET | `/bookings`, `/bookings/{id}` | Your bookings only (others get 404). Expired holds turn `cancelled` |
 | POST | `/bookings/{id}/cancel` | Releases an unpaid hold (paid cancellations + refunds: Phase 7) |
+| POST | `/payments/init` | `{booking_id, method}` → `checkout_url` to open in a browser tab. `Idempotency-Key` supported |
+| POST | `/payments/callback/{gateway}` | Server-to-server (IPN). Verified, idempotent; success → confirm → ticket |
+| GET | `/payments/{id}/status` | What the app polls after the gateway page |
+| GET | `/tickets/{booking_id}/pdf` | Bangla/English A5 PDF with the signed QR (owner only) |
 
 The full OpenAPI spec is at `/api/v1/openapi.json`; a copy is in [`docs/openapi.json`](../docs/openapi.json).
 
@@ -61,6 +65,26 @@ The full OpenAPI spec is at `/api/v1/openapi.json`; a copy is in [`docs/openapi.
 - Errors never include stack traces or personal data.
 - NID / passport numbers are encrypted at rest (`JATRI_DATA_KEY`, Fernet) and only shown masked.
 - Seat locks are atomic in Redis (Lua script): a booking gets all its seats or none.
+- Payments: only a verified gateway callback marks a payment paid. The amount must match, a callback
+  can't be replayed, and the payment row is locked while it's processed.
+- Ticket QR payloads are HMAC-signed (`verify_qr`), so counters can check them offline.
+
+## Background worker
+
+```bash
+uv run arq app.worker.WorkerSettings   # releases unpaid holds every minute
+```
+
+docker-compose starts it as the `worker` service.
+
+## Payments: SSLCommerz sandbox
+
+1. Create a sandbox store at SSLCommerz's developer site.
+2. Set `JATRI_PAYMENT_GATEWAY=sslcommerz`, `JATRI_SSLCOMMERZ_STORE_ID` and
+   `JATRI_SSLCOMMERZ_STORE_PASSWORD` (put the password in your deploy platform's secrets, never in git).
+3. Set `JATRI_PUBLIC_BASE_URL` to an HTTPS URL that SSLCommerz can reach, so the IPN arrives.
+
+Without these, `JATRI_PAYMENT_GATEWAY=mock` serves a sandbox checkout page at `/api/v1/payments/mock/checkout/{id}`.
 
 ## What is still placeholder
 
@@ -68,6 +92,7 @@ The full OpenAPI spec is at `/api/v1/openapi.json`; a copy is in [`docs/openapi.
   adapter plugs into `app/services/sms.py`.
 - **Bus data** comes from `MockBusProvider` (placeholder operators). An authorised bus API
   implements the same `BusProvider` interface.
-- **Hold expiry** happens when a booking or seat map is read, and the Redis lock TTL frees seats on its
-  own. A periodic cleanup job arrives with the background worker in Phase 4.
+- **SSLCommerz** is tested against a fake SSLCommerz server, but not yet against the real sandbox,
+  because that needs a sandbox account.
+- **Refunds** are only flagged (`refund_pending` + an alert log). The refund job comes in Phase 7.
 - **OTP rate limiting** still uses PostgreSQL. It can move to Redis too.

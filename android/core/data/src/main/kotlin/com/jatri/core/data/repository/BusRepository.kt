@@ -16,6 +16,7 @@ import com.jatri.core.model.SeatLayout
 import com.jatri.core.model.SeatState
 import com.jatri.core.model.StopPoint
 import com.jatri.core.model.TravelMode
+import com.jatri.core.model.Ticket
 import com.jatri.core.network.api.JatriApi
 import com.jatri.core.network.apiCall
 import com.jatri.core.network.model.BookingCreateRequest
@@ -178,6 +179,8 @@ internal fun BookingDto.toModel() = Booking(
             age = it.age,
             seatNo = it.seatNo,
             documentMasked = it.documentMasked,
+            ticketNumber = it.ticketNumber,
         )
     },
+    ticket = ticket?.let { Ticket(it.qrPayload, it.pdfUrl, parseInstant(it.issuedAt)) },
 )

@@ -722,6 +722,240 @@
                 }
             }
         },
+        "/api/v1/payments/init": {
+            "post": {
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Init",
+                "description": "Starts a payment for a held booking and returns the gateway page to open in a browser tab.",
+                "operationId": "init_api_v1_payments_init_post",
+                "parameters": [
+                    {
+                        "name": "idempotency-key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "maxLength": 64
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Idempotency-Key"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PaymentInitIn"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_PaymentInitOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payments/callback/{gateway_name}": {
+            "post": {
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Callback",
+                "description": "Server-to-server notification from the gateway (IPN). This, not the app, decides if a payment succeeded.",
+                "operationId": "callback_api_v1_payments_callback__gateway_name__post",
+                "parameters": [
+                    {
+                        "name": "gateway_name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Gateway Name"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_PaymentStatusOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payments/{payment_id}/status": {
+            "get": {
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Status",
+                "operationId": "status_api_v1_payments__payment_id__status_get",
+                "parameters": [
+                    {
+                        "name": "payment_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Payment Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_PaymentStatusOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tickets/{booking_id}/pdf": {
+            "get": {
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Ticket Pdf",
+                "operationId": "ticket_pdf_api_v1_tickets__booking_id__pdf_get",
+                "parameters": [
+                    {
+                        "name": "booking_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Booking Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/pdf": {}
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "tags": [
@@ -955,6 +1189,16 @@
                         "type": "string",
                         "format": "date-time",
                         "title": "Created At"
+                    },
+                    "ticket": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TicketInfo"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     }
                 },
                 "type": "object",
@@ -1238,6 +1482,72 @@
                     "success"
                 ],
                 "title": "Envelope[OtpSendOut]"
+            },
+            "Envelope_PaymentInitOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/PaymentInitOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[PaymentInitOut]"
+            },
+            "Envelope_PaymentStatusOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/PaymentStatusOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[PaymentStatusOut]"
             },
             "Envelope_SeatMapOut_": {
                 "properties": {
@@ -1666,6 +1976,17 @@
                         "type": "string",
                         "title": "Full Name"
                     },
+                    "ticket_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ticket Number"
+                    },
                     "type": {
                         "type": "string",
                         "title": "Type"
@@ -1718,6 +2039,107 @@
                     "document_masked"
                 ],
                 "title": "PassengerOut"
+            },
+            "PaymentInitIn": {
+                "properties": {
+                    "booking_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Booking Id"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "bkash",
+                            "nagad",
+                            "rocket",
+                            "card"
+                        ],
+                        "title": "Method"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "booking_id",
+                    "method"
+                ],
+                "title": "PaymentInitIn"
+            },
+            "PaymentInitOut": {
+                "properties": {
+                    "payment_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Payment Id"
+                    },
+                    "checkout_url": {
+                        "type": "string",
+                        "title": "Checkout Url"
+                    },
+                    "amount": {
+                        "type": "integer",
+                        "title": "Amount"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "payment_id",
+                    "checkout_url",
+                    "amount",
+                    "status"
+                ],
+                "title": "PaymentInitOut"
+            },
+            "PaymentStatusOut": {
+                "properties": {
+                    "payment_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Payment Id"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    },
+                    "failure_reason": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Failure Reason"
+                    },
+                    "booking_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Booking Id"
+                    },
+                    "booking_status": {
+                        "type": "string",
+                        "title": "Booking Status"
+                    },
+                    "booking_ref": {
+                        "type": "string",
+                        "title": "Booking Ref"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "payment_id",
+                    "status",
+                    "failure_reason",
+                    "booking_id",
+                    "booking_status",
+                    "booking_ref"
+                ],
+                "title": "PaymentStatusOut"
             },
             "RefreshIn": {
                 "properties": {
@@ -1913,6 +2335,30 @@
                     "time"
                 ],
                 "title": "StopPointOut"
+            },
+            "TicketInfo": {
+                "properties": {
+                    "qr_payload": {
+                        "type": "string",
+                        "title": "Qr Payload"
+                    },
+                    "pdf_url": {
+                        "type": "string",
+                        "title": "Pdf Url"
+                    },
+                    "issued_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Issued At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "qr_payload",
+                    "pdf_url",
+                    "issued_at"
+                ],
+                "title": "TicketInfo"
             },
             "TokenPair": {
                 "properties": {

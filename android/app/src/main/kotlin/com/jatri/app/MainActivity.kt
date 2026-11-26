@@ -1,6 +1,7 @@
 package com.jatri.app
 
 import android.graphics.Color
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
@@ -21,6 +22,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.jatri.app.ui.JatriApp
 import com.jatri.core.common.network.NetworkMonitor
 import com.jatri.core.data.repository.AuthRepository
+import com.jatri.core.data.repository.PaymentReturnEvents
 import com.jatri.core.model.SessionState
 import com.jatri.core.designsystem.theme.JatriTheme
 import com.jatri.core.model.AppLanguage
@@ -42,11 +44,14 @@ class MainActivity : AppCompatActivity() {
 
     @Inject lateinit var authRepository: AuthRepository
 
+    @Inject lateinit var paymentReturns: PaymentReturnEvents
+
     private val viewModel: MainActivityViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
+        handlePaymentReturn(intent)
         // Keep the splash until settings are read (DataStore is fast, well under the ~1 s budget).
         splash.setKeepOnScreenCondition { viewModel.uiState.value is MainUiState.Loading }
 
@@ -83,6 +88,19 @@ class MainActivity : AppCompatActivity() {
                     isLoggedIn = { authRepository.session.value is SessionState.LoggedIn },
                 )
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handlePaymentReturn(intent)
+    }
+
+    /** jatri://payment/return?payment_id=… : the payment screen re-checks the status at once. */
+    private fun handlePaymentReturn(intent: Intent?) {
+        val data = intent?.data ?: return
+        if (data.scheme == "jatri" && data.host == "payment") {
+            data.getQueryParameter("payment_id")?.takeIf { it.isNotBlank() }?.let(paymentReturns::onReturn)
         }
     }
 

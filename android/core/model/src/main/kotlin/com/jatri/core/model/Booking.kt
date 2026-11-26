@@ -24,7 +24,11 @@ data class BookingPassenger(
     val age: Int?,
     val seatNo: String?,
     val documentMasked: String?,
+    val ticketNumber: String? = null,
 )
+
+/** The e-ticket. [qrPayload] is signed by the server, so counters can check it offline. */
+data class Ticket(val qrPayload: String, val pdfUrl: String, val issuedAt: Instant)
 
 data class Booking(
     val id: String,
@@ -40,6 +44,23 @@ data class Booking(
     val contactEmail: String?,
     val segments: List<BookingSegment>,
     val passengers: List<BookingPassenger>,
+    val ticket: Ticket? = null,
+)
+
+enum class PaymentMethod { BKASH, NAGAD, ROCKET, CARD }
+
+enum class PaymentStatus { INITIATED, SUCCESS, FAILED, CANCELLED, REFUND_PENDING, REFUNDED }
+
+/** A started payment: open [checkoutUrl] (gateway page), then watch the status. */
+data class PaymentStart(val paymentId: String, val checkoutUrl: String, val amount: Money)
+
+data class PaymentState(
+    val paymentId: String,
+    val status: PaymentStatus,
+    val failureReason: String?,
+    val bookingId: String,
+    val bookingStatus: BookingStatus,
+    val bookingRef: String,
 )
 
 /** What the passenger form sends to hold seats. */

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Downloaded e-tickets (filesDir/tickets), kept for offline use. -->
+    <files-path name="tickets" path="tickets/" />
+</paths>

@@ -5,6 +5,8 @@ import com.jatri.core.data.repository.BookingRepository
 import com.jatri.core.data.repository.BusRepository
 import com.jatri.core.data.repository.NetworkBookingRepository
 import com.jatri.core.data.repository.NetworkBusRepository
+import com.jatri.core.data.repository.NetworkPaymentRepository
+import com.jatri.core.data.repository.PaymentRepository
 import com.jatri.core.data.repository.DataStoreUserSettingsRepository
 import com.jatri.core.data.repository.DefaultAuthRepository
 import com.jatri.core.data.repository.HomeContentRepository
@@ -31,6 +33,7 @@ internal abstract class DataModule {
     @Binds abstract fun bindsAuthRepository(impl: DefaultAuthRepository): AuthRepository
     @Binds abstract fun bindsBusRepository(impl: NetworkBusRepository): BusRepository
     @Binds abstract fun bindsBookingRepository(impl: NetworkBookingRepository): BookingRepository
+    @Binds abstract fun bindsPaymentRepository(impl: NetworkPaymentRepository): PaymentRepository
 
     companion object {
         @Provides fun providesClock(): Clock = Clock.systemDefaultZone()

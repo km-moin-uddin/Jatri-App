@@ -89,6 +89,7 @@ data class SegmentDto(
 @Serializable
 data class PassengerOutDto(
     @SerialName("full_name") val fullName: String,
+    @SerialName("ticket_number") val ticketNumber: String? = null,
     val type: String,
     val gender: String,
     val age: Int? = null,
@@ -113,4 +114,36 @@ data class BookingDto(
     val segments: List<SegmentDto>,
     val passengers: List<PassengerOutDto>,
     @SerialName("created_at") val createdAt: String,
+    val ticket: TicketDto? = null,
+)
+
+@Serializable
+data class TicketDto(
+    @SerialName("qr_payload") val qrPayload: String,
+    @SerialName("pdf_url") val pdfUrl: String,
+    @SerialName("issued_at") val issuedAt: String,
+)
+
+@Serializable
+data class PaymentInitRequest(
+    @SerialName("booking_id") val bookingId: String,
+    val method: String,
+)
+
+@Serializable
+data class PaymentInitDto(
+    @SerialName("payment_id") val paymentId: String,
+    @SerialName("checkout_url") val checkoutUrl: String,
+    val amount: Long,
+    val status: String,
+)
+
+@Serializable
+data class PaymentStatusDto(
+    @SerialName("payment_id") val paymentId: String,
+    val status: String,
+    @SerialName("failure_reason") val failureReason: String? = null,
+    @SerialName("booking_id") val bookingId: String,
+    @SerialName("booking_status") val bookingStatus: String,
+    @SerialName("booking_ref") val bookingRef: String,
 )
