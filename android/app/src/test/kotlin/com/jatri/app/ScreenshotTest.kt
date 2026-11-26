@@ -37,7 +37,12 @@ import com.jatri.core.ui.result.ResultsScaffold
 import com.jatri.core.ui.result.TrainResultCard
 import com.jatri.core.ui.seat.SeatMap
 import com.jatri.feature.account.AccountScreen
+import com.jatri.feature.auth.FormState
 import com.jatri.feature.auth.LoginScreen
+import com.jatri.feature.auth.OtpScreen
+import com.jatri.core.model.AppError
+import com.jatri.core.model.SessionState
+import com.jatri.core.model.User
 import com.jatri.feature.auth.OnboardingScreen
 import com.jatri.feature.home.HomeActions
 import com.jatri.feature.home.HomeScreen
@@ -102,7 +107,27 @@ abstract class ScreenshotTest(private val name: String, private val dark: Boolea
         OnboardingScreen(language = if (name.startsWith("bn")) AppLanguage.BANGLA else AppLanguage.ENGLISH, onLanguageChange = {}, onFinish = {})
     }
 
-    @Test fun login() = shot("02_login") { LoginScreen(onBack = {}, onCodeSent = {}, onContinueAsGuest = {}) }
+    @Test fun login() = shot("02_login") {
+        LoginScreen(state = FormState(), onBack = {}, onSubmit = {}, onPhoneEdited = {}, onContinueAsGuest = {})
+    }
+
+    @Test fun otpError() = shot("02b_otp_error") {
+        OtpScreen(
+            phone = "01712345678",
+            code = "000000",
+            state = FormState(error = AppError.Api("otp_invalid", "The code is not correct.", "কোডটি সঠিক নয়।")),
+            secondsLeft = 42,
+            showDemoHint = true,
+            onCodeChange = {}, onVerify = {}, onResend = {}, onBack = {},
+        )
+    }
+
+    @Test fun accountLoggedIn() = shot("10b_account_logged_in") {
+        AccountScreen(
+            UserSettings(), {}, {}, {}, {}, {}, {}, {},
+            session = SessionState.LoggedIn(User("u1", "01712345678", "Rahim Uddin", null, AppLanguage.BANGLA)),
+        )
+    }
 
     @Test fun busResults() = shot("03_bus_results") {
         ResultsScaffold(

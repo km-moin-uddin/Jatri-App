@@ -34,4 +34,20 @@
     <string name="account_faq2_a">বাতিলের আগেই ভাড়ার নিয়ম অনুযায়ী সঠিক রিফান্ডের পরিমাণ দেখানো হবে। টাকা একই পেমেন্ট পদ্ধতিতে ফেরত যাবে।</string>
     <string name="account_faq3_q">ট্রেনের টিকিটে এনআইডি কেন লাগে?</string>
     <string name="account_faq3_a">বাংলাদেশ রেলওয়ে নিবন্ধিত এনআইডির বিপরীতে টিকিট দেয়, তাই প্রত্যেক প্রাপ্তবয়স্ক যাত্রীর এনআইডি লাগবে।</string>
+    <string name="account_profile">প্রোফাইল</string>
+    <string name="account_edit_profile">প্রোফাইল সম্পাদনা</string>
+    <string name="account_no_name">আপনার নাম যোগ করুন</string>
+    <string name="account_logout">লগআউট</string>
+    <string name="account_logout_confirm">এই ফোন থেকে যাত্রী অ্যাপে লগআউট করবেন?</string>
+    <string name="account_delete">অ্যাকাউন্ট মুছে ফেলুন</string>
+    <string name="account_delete_title">অ্যাকাউন্ট মুছে ফেলবেন?</string>
+    <string name="account_delete_body">আপনার প্রোফাইল ও সংরক্ষিত তথ্য মুছে যাবে। এটি আর ফেরানো যাবে না।</string>
+    <string name="account_delete_confirm">মুছে ফেলুন</string>
+    <string name="account_name">পুরো নাম</string>
+    <string name="account_email">ইমেইল (ঐচ্ছিক)</string>
+    <string name="account_email_error">সঠিক ইমেইল ঠিকানা দিন</string>
+    <string name="account_save">সংরক্ষণ করুন</string>
+    <string name="account_phone">মোবাইল নম্বর</string>
+    <string name="account_section_account">অ্যাকাউন্ট</string>
+    <string name="account_name_required">অনুগ্রহ করে আপনার নাম লিখুন</string>
 </resources>

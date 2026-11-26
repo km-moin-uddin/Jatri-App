@@ -1,0 +1,991 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Jatri API",
+        "description": "Flight, bus and train ticket booking for Bangladesh. All responses use the `{success, data, error}` envelope.",
+        "version": "0.2.0"
+    },
+    "paths": {
+        "/api/v1/auth/otp/send": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Send Otp",
+                "operationId": "send_otp_api_v1_auth_otp_send_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpSendIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_OtpSendOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/otp/verify": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Verify Otp",
+                "operationId": "verify_otp_api_v1_auth_otp_verify_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OtpVerifyIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_AuthOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh",
+                "operationId": "refresh_api_v1_auth_refresh_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_TokenPair_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout",
+                "operationId": "logout_api_v1_auth_logout_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LogoutIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NoneType_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/me": {
+            "get": {
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Get Me",
+                "operationId": "get_me_api_v1_me_get",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_UserOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Update Me",
+                "operationId": "update_me_api_v1_me_patch",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserUpdateIn"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_UserOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Delete Me",
+                "description": "In-app account deletion (Google Play requirement). Personal data is removed; bookings that\nmust be kept for accounting will be anonymised here once they exist (Phase 3+).",
+                "operationId": "delete_me_api_v1_me_delete",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NoneType_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/locations": {
+            "get": {
+                "tags": [
+                    "locations"
+                ],
+                "summary": "List Locations",
+                "operationId": "list_locations_api_v1_locations_get",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "enum": [
+                                        "airport",
+                                        "bus_city",
+                                        "station"
+                                    ],
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Type"
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "maxLength": 50
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Q"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_list_LocationOut__"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "tags": [
+                    "meta"
+                ],
+                "summary": "Health",
+                "operationId": "health_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ApiError": {
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "title": "Code"
+                    },
+                    "message_en": {
+                        "type": "string",
+                        "title": "Message En"
+                    },
+                    "message_bn": {
+                        "type": "string",
+                        "title": "Message Bn"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "code",
+                    "message_en",
+                    "message_bn"
+                ],
+                "title": "ApiError"
+            },
+            "AuthOut": {
+                "properties": {
+                    "tokens": {
+                        "$ref": "#/components/schemas/TokenPair"
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/UserOut"
+                    },
+                    "is_new_user": {
+                        "type": "boolean",
+                        "title": "Is New User"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "tokens",
+                    "user",
+                    "is_new_user"
+                ],
+                "title": "AuthOut"
+            },
+            "Envelope_AuthOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/AuthOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[AuthOut]"
+            },
+            "Envelope_NoneType_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "type": "null",
+                        "title": "Data"
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[NoneType]"
+            },
+            "Envelope_OtpSendOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/OtpSendOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[OtpSendOut]"
+            },
+            "Envelope_TokenPair_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TokenPair"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[TokenPair]"
+            },
+            "Envelope_UserOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/UserOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[UserOut]"
+            },
+            "Envelope_list_LocationOut__": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/LocationOut"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Data"
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[list[LocationOut]]"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "LocationOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type"
+                    },
+                    "code": {
+                        "type": "string",
+                        "title": "Code"
+                    },
+                    "name_en": {
+                        "type": "string",
+                        "title": "Name En"
+                    },
+                    "name_bn": {
+                        "type": "string",
+                        "title": "Name Bn"
+                    },
+                    "city_en": {
+                        "type": "string",
+                        "title": "City En"
+                    },
+                    "city_bn": {
+                        "type": "string",
+                        "title": "City Bn"
+                    },
+                    "country": {
+                        "type": "string",
+                        "title": "Country"
+                    },
+                    "is_popular": {
+                        "type": "boolean",
+                        "title": "Is Popular"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "type",
+                    "code",
+                    "name_en",
+                    "name_bn",
+                    "city_en",
+                    "city_bn",
+                    "country",
+                    "is_popular"
+                ],
+                "title": "LocationOut"
+            },
+            "LogoutIn": {
+                "properties": {
+                    "refresh_token": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "minLength": 20,
+                        "title": "Refresh Token"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "refresh_token"
+                ],
+                "title": "LogoutIn"
+            },
+            "OtpSendIn": {
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 10,
+                        "title": "Phone",
+                        "examples": [
+                            "01712345678"
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "phone"
+                ],
+                "title": "OtpSendIn"
+            },
+            "OtpSendOut": {
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "title": "Phone"
+                    },
+                    "expires_in": {
+                        "type": "integer",
+                        "title": "Expires In"
+                    },
+                    "resend_after": {
+                        "type": "integer",
+                        "title": "Resend After"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "phone",
+                    "expires_in",
+                    "resend_after"
+                ],
+                "title": "OtpSendOut"
+            },
+            "OtpVerifyIn": {
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 10,
+                        "title": "Phone"
+                    },
+                    "code": {
+                        "type": "string",
+                        "pattern": "^\\d{4,8}$",
+                        "title": "Code"
+                    },
+                    "device_info": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Device Info"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "phone",
+                    "code"
+                ],
+                "title": "OtpVerifyIn"
+            },
+            "RefreshIn": {
+                "properties": {
+                    "refresh_token": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "minLength": 20,
+                        "title": "Refresh Token"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "refresh_token"
+                ],
+                "title": "RefreshIn"
+            },
+            "TokenPair": {
+                "properties": {
+                    "access_token": {
+                        "type": "string",
+                        "title": "Access Token"
+                    },
+                    "refresh_token": {
+                        "type": "string",
+                        "title": "Refresh Token"
+                    },
+                    "token_type": {
+                        "type": "string",
+                        "title": "Token Type",
+                        "default": "bearer"
+                    },
+                    "expires_in": {
+                        "type": "integer",
+                        "title": "Expires In"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "access_token",
+                    "refresh_token",
+                    "expires_in"
+                ],
+                "title": "TokenPair"
+            },
+            "UserOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "title": "Phone"
+                    },
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "email": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Email"
+                    },
+                    "language": {
+                        "type": "string",
+                        "title": "Language"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "phone",
+                    "name",
+                    "email",
+                    "language"
+                ],
+                "title": "UserOut"
+            },
+            "UserUpdateIn": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 80,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "email": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Email"
+                    },
+                    "language": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^(bn|en)$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Language"
+                    }
+                },
+                "type": "object",
+                "title": "UserUpdateIn"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    },
+                    "input": {
+                        "title": "Input"
+                    },
+                    "ctx": {
+                        "type": "object",
+                        "title": "Context"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    }
+}

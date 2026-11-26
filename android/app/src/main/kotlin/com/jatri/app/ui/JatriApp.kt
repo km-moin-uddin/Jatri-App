@@ -33,7 +33,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination
@@ -74,7 +77,7 @@ import com.jatri.feature.trips.navigation.tripsScreens
 import kotlinx.coroutines.flow.map
 
 @Composable
-fun JatriApp(startDestination: Any, networkMonitor: NetworkMonitor) {
+fun JatriApp(startDestination: Any, networkMonitor: NetworkMonitor, isLoggedIn: () -> Boolean) {
     val navController = rememberNavController()
     val offlineFlow = remember(networkMonitor) { networkMonitor.isOnline.map { !it } }
     val isOffline by offlineFlow.collectAsStateWithLifecycle(initialValue = false)
@@ -93,14 +96,28 @@ fun JatriApp(startDestination: Any, networkMonitor: NetworkMonitor) {
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             OfflineBanner(visible = isOffline)
-            JatriNavHost(navController, startDestination)
+            JatriNavHost(navController, startDestination, isLoggedIn)
         }
     }
 }
 
 @Composable
-private fun JatriNavHost(navController: NavHostController, startDestination: Any) {
-    val toPassengers = { navController.navigateToPassengerDetails() }
+private fun JatriNavHost(navController: NavHostController, startDestination: Any, isLoggedIn: () -> Boolean) {
+    // Searching works as a guest; booking needs an account. After logging in, carry on to the form.
+    var bookingAfterLogin by rememberSaveable { mutableStateOf(false) }
+    val toPassengers = {
+        if (isLoggedIn()) {
+            navController.navigateToPassengerDetails()
+        } else {
+            bookingAfterLogin = true
+            navController.navigateToLogin()
+        }
+    }
+    val leaveAuth = {
+        navController.popBackStack<LoginDestination>(inclusive = true)
+        if (bookingAfterLogin && isLoggedIn()) navController.navigateToPassengerDetails()
+        bookingAfterLogin = false
+    }
     NavHost(navController = navController, startDestination = startDestination) {
         onboardingScreen(
             onFinished = {
@@ -109,8 +126,8 @@ private fun JatriNavHost(navController: NavHostController, startDestination: Any
         )
         authFlow(
             navController = navController,
-            onAuthFinished = { navController.popBackStack<LoginDestination>(inclusive = true) },
-            onContinueAsGuest = { navController.popBackStack<LoginDestination>(inclusive = true) },
+            onAuthFinished = { leaveAuth() },
+            onContinueAsGuest = { leaveAuth() },
         )
         homeScreen(
             onSearch = { navController.navigateToResults(it) },

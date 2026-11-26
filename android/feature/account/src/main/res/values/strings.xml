@@ -34,4 +34,20 @@
     <string name="account_faq2_a">Before you cancel we show the exact refund amount from the fare rules. Money goes back to the same payment method.</string>
     <string name="account_faq3_q">Why is NID needed for train tickets?</string>
     <string name="account_faq3_a">Bangladesh Railway issues tickets against a registered NID, so each adult passenger must give one.</string>
+    <string name="account_profile">Profile</string>
+    <string name="account_edit_profile">Edit profile</string>
+    <string name="account_no_name">Add your name</string>
+    <string name="account_logout">Log out</string>
+    <string name="account_logout_confirm">Log out of Jatri on this phone?</string>
+    <string name="account_delete">Delete account</string>
+    <string name="account_delete_title">Delete your account?</string>
+    <string name="account_delete_body">Your profile and saved details will be removed. This cannot be undone.</string>
+    <string name="account_delete_confirm">Delete</string>
+    <string name="account_name">Full name</string>
+    <string name="account_email">Email (optional)</string>
+    <string name="account_email_error">Enter a valid email address</string>
+    <string name="account_save">Save</string>
+    <string name="account_phone">Mobile number</string>
+    <string name="account_section_account">Account</string>
+    <string name="account_name_required">Please enter your name</string>
 </resources>

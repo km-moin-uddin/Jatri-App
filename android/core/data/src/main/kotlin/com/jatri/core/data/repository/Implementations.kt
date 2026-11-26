@@ -3,6 +3,9 @@ package com.jatri.core.data.repository
 import com.jatri.core.data.seed.MockContent
 import com.jatri.core.data.seed.SeedLocations
 import com.jatri.core.database.dao.RecentSearchDao
+import com.jatri.core.network.api.JatriApi
+import com.jatri.core.network.apiCall
+import com.jatri.core.network.model.LocationDto
 import com.jatri.core.database.model.RecentSearchEntity
 import com.jatri.core.datastore.UserPreferencesDataSource
 import com.jatri.core.model.AppLanguage
@@ -17,6 +20,7 @@ import com.jatri.core.model.ThemeMode
 import com.jatri.core.model.TravelMode
 import com.jatri.core.model.UserSettings
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.time.Clock
@@ -24,13 +28,48 @@ import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Seed-list implementation. Replaced by `GET /locations` (with this list as fallback) in Phase 2. */
+/**
+ * Locations from `GET /locations`, with the bundled seed list shown first and kept as the
+ * offline fallback. Ids are shared (e.g. `air_DAC`) so saved searches always resolve.
+ */
 @Singleton
-internal class SeedLocationRepository @Inject constructor() : LocationRepository {
-    override fun observeLocations(type: LocationType): Flow<List<Location>> =
-        flowOf(SeedLocations.all.filter { it.type == type })
+internal class NetworkLocationRepository @Inject constructor(
+    private val api: JatriApi,
+) : LocationRepository {
+    private val fromServer = java.util.concurrent.ConcurrentHashMap<LocationType, List<Location>>()
 
-    override suspend fun getById(id: String): Location? = SeedLocations.byId[id]
+    override fun observeLocations(type: LocationType): Flow<List<Location>> = flow {
+        val seed = SeedLocations.all.filter { it.type == type }
+        emit(fromServer[type] ?: seed)
+        if (fromServer[type] == null) {
+            val remote = runCatching { apiCall { api.locations(type = type.apiName()) } }.getOrNull()
+                ?.mapNotNull { it.toModel() }
+                .orEmpty()
+            if (remote.isNotEmpty()) {
+                fromServer[type] = remote
+                emit(remote)
+            }
+        }
+    }
+
+    override suspend fun getById(id: String): Location? =
+        fromServer.values.asSequence().flatten().firstOrNull { it.id == id } ?: SeedLocations.byId[id]
+
+    private fun LocationType.apiName() = when (this) {
+        LocationType.AIRPORT -> "airport"
+        LocationType.BUS_CITY -> "bus_city"
+        LocationType.STATION -> "station"
+    }
+
+    private fun LocationDto.toModel(): Location? {
+        val t = when (type) {
+            "airport" -> LocationType.AIRPORT
+            "bus_city" -> LocationType.BUS_CITY
+            "station" -> LocationType.STATION
+            else -> return null
+        }
+        return Location(id, t, code, nameEn, nameBn, cityEn, cityBn, country, isPopular)
+    }
 }
 
 @Singleton

@@ -87,4 +87,5 @@
     <string name="ui_change_search">খোঁজ পরিবর্তন করুন</string>
     <string name="ui_results_count">%sটি অপশন পাওয়া গেছে</string>
     <string name="ui_available_trips">যাত্রার অপশন</string>
+    <string name="ui_error_network">ইন্টারনেট সংযোগ নেই। সংযোগ দেখে আবার চেষ্টা করুন।</string>
 </resources>

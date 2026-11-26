@@ -29,7 +29,7 @@
     <string name="auth_resend_in">%s পরে আবার কোড পাঠানো যাবে</string>
     <string name="auth_resend">আবার কোড পাঠান</string>
     <string name="auth_change_number">নম্বর পরিবর্তন করুন</string>
-    <string name="auth_dev_otp_note">ডেভেলপমেন্ট বিল্ড: Phase 2 পর্যন্ত যেকোনো ৬ সংখ্যার কোড কাজ করবে।</string>
+    <string name="auth_dev_otp_note">ডেমো মোড (সার্ভার ছাড়া): কোড 123456 দিন।</string>
 
     <string name="auth_name_title">আপনাকে কী নামে ডাকব?</string>
     <string name="auth_name_body">এনআইডি বা পাসপোর্টে যে নাম আছে, সেটিই লিখুন।</string>

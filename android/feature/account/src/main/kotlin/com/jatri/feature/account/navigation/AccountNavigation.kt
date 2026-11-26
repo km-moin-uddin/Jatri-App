@@ -8,6 +8,7 @@ import com.jatri.feature.account.AccountRoute
 import com.jatri.feature.account.AccountSubPage
 import com.jatri.feature.account.AccountSubPageScreen
 import com.jatri.feature.account.HelpScreen
+import com.jatri.feature.account.ProfileRoute
 import kotlinx.serialization.Serializable
 
 @Serializable data object AccountDestination
@@ -29,7 +30,11 @@ fun NavGraphBuilder.accountScreens(
     }
     composable<AccountSubPageDestination> { entry ->
         val page = entry.toRoute<AccountSubPageDestination>().page
-        AccountSubPageScreen(page = page, onBack = { navController.popBackStack() })
+        if (page == AccountSubPage.PROFILE) {
+            ProfileRoute(onBack = { navController.popBackStack() })
+        } else {
+            AccountSubPageScreen(page = page, onBack = { navController.popBackStack() })
+        }
     }
     composable<HelpDestination> { HelpScreen(onBack = { navController.popBackStack() }) }
 }

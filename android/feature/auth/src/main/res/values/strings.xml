@@ -29,7 +29,7 @@
     <string name="auth_resend_in">Resend code in %s</string>
     <string name="auth_resend">Resend code</string>
     <string name="auth_change_number">Change number</string>
-    <string name="auth_dev_otp_note">Development build: any 6-digit code works until Phase 2.</string>
+    <string name="auth_dev_otp_note">Demo mode (no server): use code 123456.</string>
 
     <string name="auth_name_title">What should we call you?</string>
     <string name="auth_name_body">Use your name as it appears on your NID or passport.</string>

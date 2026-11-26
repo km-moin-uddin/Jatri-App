@@ -48,6 +48,19 @@ import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jatri.core.designsystem.component.JatriCard
+import com.jatri.core.designsystem.component.JatriCtaButton
+import com.jatri.core.designsystem.component.JatriSmallButton
+import com.jatri.core.designsystem.component.JatriTextField
+import com.jatri.core.common.format.localizeDigits
+import com.jatri.core.model.SessionState
+import com.jatri.core.model.User
+import com.jatri.core.ui.text
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import com.jatri.core.designsystem.component.JatriOutlinedButton
 import com.jatri.core.designsystem.component.JatriPrimaryButton
 import com.jatri.core.designsystem.component.JatriTopAppBar
@@ -73,6 +86,16 @@ internal fun AccountRoute(
     viewModel: AccountViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val session by viewModel.session.collectAsStateWithLifecycle()
+    val busy by viewModel.busy.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    error?.let { e ->
+        AlertDialog(
+            onDismissRequest = viewModel::dismissError,
+            text = { Text(e.text()) },
+            confirmButton = { TextButton(onClick = viewModel::dismissError) { Text(stringResource(R.string.account_cancel)) } },
+        )
+    }
     AccountScreen(
         settings = settings,
         onLoginClick = onLoginClick,
@@ -82,10 +105,15 @@ internal fun AccountRoute(
         onLanguageChange = viewModel::setLanguage,
         onThemeChange = viewModel::setTheme,
         onPushChange = viewModel::setNotifications,
+        session = session,
+        onEditProfile = { onOpenPage(AccountSubPage.PROFILE) },
+        onLogout = viewModel::logout,
+        onDeleteAccount = viewModel::deleteAccount,
+        busy = busy,
     )
 }
 
-private enum class AccountDialog { NONE, LANGUAGE, THEME }
+private enum class AccountDialog { NONE, LANGUAGE, THEME, LOGOUT, DELETE }
 
 @Composable
 fun AccountScreen(
@@ -97,6 +125,11 @@ fun AccountScreen(
     onLanguageChange: (AppLanguage) -> Unit,
     onThemeChange: (ThemeMode) -> Unit,
     onPushChange: (Boolean) -> Unit,
+    session: SessionState = SessionState.LoggedOut,
+    onEditProfile: () -> Unit = {},
+    onLogout: () -> Unit = {},
+    onDeleteAccount: () -> Unit = {},
+    busy: Boolean = false,
 ) {
     var dialog by rememberSaveable { mutableStateOf(AccountDialog.NONE) }
     Scaffold(topBar = { JatriTopAppBar(title = stringResource(R.string.account_title)) }) { padding ->
@@ -104,7 +137,11 @@ fun AccountScreen(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(Spacing.screen),
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            GuestCard(onLoginClick)
+            when (session) {
+                is SessionState.LoggedIn -> ProfileCard(session.user, onEditProfile)
+                SessionState.Unknown -> Unit
+                SessionState.LoggedOut -> GuestCard(onLoginClick)
+            }
 
             SettingsGroup(stringResource(R.string.account_section_travel)) {
                 SettingsRow(JatriIcons.Group, stringResource(R.string.account_saved_travellers)) { onOpenPage(AccountSubPage.SAVED_TRAVELLERS) }
@@ -129,6 +166,18 @@ fun AccountScreen(
                 SettingsRow(JatriIcons.Policy, stringResource(R.string.account_privacy)) { onOpenPage(AccountSubPage.PRIVACY) }
                 SettingsRow(JatriIcons.Document, stringResource(R.string.account_terms)) { onOpenPage(AccountSubPage.TERMS) }
             }
+
+            if (session is SessionState.LoggedIn) {
+                SettingsGroup(stringResource(R.string.account_section_account)) {
+                    SettingsRow(JatriIcons.Logout, stringResource(R.string.account_logout)) { dialog = AccountDialog.LOGOUT }
+                    SettingsRow(
+                        JatriIcons.Delete,
+                        stringResource(R.string.account_delete),
+                        danger = true,
+                    ) { dialog = AccountDialog.DELETE }
+                }
+            }
+            Spacer(Modifier.height(Spacing.xl))
         }
     }
 
@@ -149,6 +198,25 @@ fun AccountScreen(
             onSelect = { onThemeChange(it); dialog = AccountDialog.NONE },
             onDismiss = { dialog = AccountDialog.NONE },
         )
+        AccountDialog.LOGOUT -> AlertDialog(
+            onDismissRequest = { dialog = AccountDialog.NONE },
+            text = { Text(stringResource(R.string.account_logout_confirm)) },
+            confirmButton = {
+                TextButton(onClick = { dialog = AccountDialog.NONE; onLogout() }) { Text(stringResource(R.string.account_logout)) }
+            },
+            dismissButton = { TextButton(onClick = { dialog = AccountDialog.NONE }) { Text(stringResource(R.string.account_cancel)) } },
+        )
+        AccountDialog.DELETE -> AlertDialog(
+            onDismissRequest = { dialog = AccountDialog.NONE },
+            title = { Text(stringResource(R.string.account_delete_title)) },
+            text = { Text(stringResource(R.string.account_delete_body)) },
+            confirmButton = {
+                TextButton(onClick = { dialog = AccountDialog.NONE; onDeleteAccount() }, enabled = !busy) {
+                    Text(stringResource(R.string.account_delete_confirm), color = JatriTheme.colors.danger)
+                }
+            },
+            dismissButton = { TextButton(onClick = { dialog = AccountDialog.NONE }) { Text(stringResource(R.string.account_cancel)) } },
+        )
         AccountDialog.NONE -> Unit
     }
 }
@@ -161,6 +229,32 @@ private fun themeLabel(mode: ThemeMode) = stringResource(
         ThemeMode.DARK -> R.string.account_theme_dark
     },
 )
+
+@Composable
+private fun ProfileCard(user: User, onEdit: () -> Unit) {
+    val lang = JatriTheme.language
+    JatriCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(56.dp).background(MaterialTheme.colorScheme.primary, CircleShape), contentAlignment = Alignment.Center) {
+                Text(
+                    user.name?.trim()?.firstOrNull()?.uppercase() ?: "?",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                )
+            }
+            Spacer(Modifier.width(Spacing.sm))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    user.name ?: stringResource(R.string.account_no_name),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = if (user.name == null) JatriTheme.colors.textSecondary else MaterialTheme.colorScheme.onSurface,
+                )
+                Text("+88 ${user.phone}".localizeDigits(lang), style = MaterialTheme.typography.bodyMedium, color = JatriTheme.colors.textSecondary)
+            }
+            JatriSmallButton(text = stringResource(R.string.account_edit_profile), onClick = onEdit)
+        }
+    }
+}
 
 @Composable
 private fun GuestCard(onLoginClick: () -> Unit) {
@@ -194,14 +288,15 @@ private fun SettingsGroup(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun SettingsRow(icon: ImageVector, title: String, value: String? = null, onClick: () -> Unit) {
+private fun SettingsRow(icon: ImageVector, title: String, value: String? = null, danger: Boolean = false, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(onClick = onClick).padding(horizontal = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        val tint = if (danger) JatriTheme.colors.danger else MaterialTheme.colorScheme.primary
+        Icon(icon, contentDescription = null, tint = tint)
         Spacer(Modifier.width(Spacing.md))
-        Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Text(title, style = MaterialTheme.typography.bodyLarge, color = if (danger) tint else MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         if (value != null) {
             Text(value, style = MaterialTheme.typography.bodyMedium, color = JatriTheme.colors.textSecondary)
             Spacer(Modifier.width(Spacing.xxs))
@@ -259,6 +354,45 @@ private fun <T> ChoiceDialog(
         confirmButton = {},
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.account_cancel)) } },
     )
+}
+
+@Composable
+internal fun ProfileRoute(onBack: () -> Unit, viewModel: ProfileViewModel = hiltViewModel()) {
+    val form by viewModel.form.collectAsStateWithLifecycle()
+    val lang = JatriTheme.language
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = { JatriTopAppBar(title = stringResource(R.string.account_profile), onBack = onBack) },
+    ) { padding ->
+        Column(
+            Modifier.fillMaxSize().padding(padding).imePadding().verticalScroll(rememberScrollState()).padding(Spacing.screen),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
+            JatriTextField(
+                value = form.name,
+                onValueChange = viewModel::onName,
+                label = stringResource(R.string.account_name),
+                error = if (form.nameError) stringResource(R.string.account_name_required) else null,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
+            )
+            JatriTextField(
+                value = form.email,
+                onValueChange = viewModel::onEmail,
+                label = stringResource(R.string.account_email),
+                error = if (form.emailError) stringResource(R.string.account_email_error) else null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Done),
+            )
+            JatriTextField(
+                value = "+88 ${form.phone}".localizeDigits(lang),
+                onValueChange = {},
+                label = stringResource(R.string.account_phone),
+                enabled = false,
+            )
+            form.error?.let { Text(it.text(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
+            Spacer(Modifier.height(Spacing.xs))
+            JatriCtaButton(text = stringResource(R.string.account_save), onClick = { viewModel.save(onBack) }, loading = form.saving)
+        }
+    }
 }
 
 @Composable

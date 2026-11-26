@@ -20,6 +20,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.jatri.app.ui.JatriApp
 import com.jatri.core.common.network.NetworkMonitor
+import com.jatri.core.data.repository.AuthRepository
+import com.jatri.core.model.SessionState
 import com.jatri.core.designsystem.theme.JatriTheme
 import com.jatri.core.model.AppLanguage
 import com.jatri.core.model.ThemeMode
@@ -37,6 +39,8 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
 
     @Inject lateinit var networkMonitor: NetworkMonitor
+
+    @Inject lateinit var authRepository: AuthRepository
 
     private val viewModel: MainActivityViewModel by viewModels()
 
@@ -73,7 +77,11 @@ class MainActivity : AppCompatActivity() {
                 onDispose {}
             }
             JatriTheme(darkTheme = dark) {
-                JatriApp(startDestination = start, networkMonitor = networkMonitor)
+                JatriApp(
+                    startDestination = start,
+                    networkMonitor = networkMonitor,
+                    isLoggedIn = { authRepository.session.value is SessionState.LoggedIn },
+                )
             }
         }
     }

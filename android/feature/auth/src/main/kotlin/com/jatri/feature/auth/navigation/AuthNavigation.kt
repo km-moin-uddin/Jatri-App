@@ -5,10 +5,10 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.jatri.feature.auth.LoginScreen
-import com.jatri.feature.auth.NameEntryScreen
+import com.jatri.feature.auth.LoginRoute
+import com.jatri.feature.auth.NameEntryRoute
 import com.jatri.feature.auth.OnboardingRoute
-import com.jatri.feature.auth.OtpScreen
+import com.jatri.feature.auth.OtpRoute
 import kotlinx.serialization.Serializable
 
 @Serializable data object OnboardingDestination
@@ -23,8 +23,8 @@ fun NavGraphBuilder.onboardingScreen(onFinished: () -> Unit) {
 }
 
 /**
- * Phone → OTP → name. Phase 1 is UI only: no SMS is sent and the OTP isn't checked
- * (wired to the backend in Phase 2).
+ * Phone → OTP → (new users only) name. Talks to the backend OTP endpoints, or to the mock backend in builds
+ * without a server.
  */
 fun NavGraphBuilder.authFlow(
     navController: NavController,
@@ -32,7 +32,7 @@ fun NavGraphBuilder.authFlow(
     onContinueAsGuest: () -> Unit,
 ) {
     composable<LoginDestination> {
-        LoginScreen(
+        LoginRoute(
             onBack = { navController.popBackStack() },
             onCodeSent = { phone -> navController.navigate(OtpDestination(phone)) },
             onContinueAsGuest = onContinueAsGuest,
@@ -40,13 +40,13 @@ fun NavGraphBuilder.authFlow(
     }
     composable<OtpDestination> { entry ->
         val route = entry.toRoute<OtpDestination>()
-        OtpScreen(
-            phone = route.phone,
+        OtpRoute(
             onBack = { navController.popBackStack() },
-            onVerified = { navController.navigate(NameEntryDestination(route.phone)) },
+            onVerified = { isNew -> if (isNew) navController.navigate(NameEntryDestination(route.phone)) else onAuthFinished() },
         )
     }
     composable<NameEntryDestination> {
-        NameEntryScreen(onBack = { navController.popBackStack() }, onDone = onAuthFinished)
+        // Back from the name step still leaves the user logged in; the name can be set later.
+        NameEntryRoute(onBack = onAuthFinished, onDone = onAuthFinished)
     }
 }

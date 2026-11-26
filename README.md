@@ -3,7 +3,8 @@
 One Android app to search, compare, book and pay for **flight, bus and train tickets in Bangladesh**.
 "Jatri" is a working name.
 
-> **Status: Phase 1 (Foundation) is done**, with the v2 "soft neutral" visual style. The project structure, design system, navigation for all
+> **Status: Phase 2 (Auth) is done.** Phase 1 (foundation and the v2 "soft neutral" style) and
+> Phase 2 (phone OTP login, tokens, profile, FastAPI backend) are built. The project structure, design system, navigation for all
 > screens, Bangla/English and light/dark themes are in place. Search results, seat maps and payments
 > show **sample data** until their phases are built (see [What is mocked](#what-is-mocked)).
 
@@ -12,7 +13,7 @@ One Android app to search, compare, book and pay for **flight, bus and train tic
 | ![](docs/screenshots/phase1/bn_light_01_home.png) | ![](docs/screenshots/phase1/en_light_01_home.png) | ![](docs/screenshots/phase1/bn_dark_01_home.png) |
 | ![](docs/screenshots/phase1/bn_light_05_seat_map.png) | ![](docs/screenshots/phase1/en_light_04_flight_train_cards.png) | ![](docs/screenshots/phase1/bn_dark_06_review_pay.png) |
 
-All 36 screenshots are in [`docs/screenshots/phase1`](docs/screenshots/phase1). They are rendered on the
+All 39 screenshots are in [`docs/screenshots/phase1`](docs/screenshots/phase1). They are rendered on the
 JVM by Roborazzi, not on a phone.
 
 ## Repository layout
@@ -33,8 +34,9 @@ Jatri-App/
 │   │   └── data/            # Repositories + seed locations + clearly-marked mock content
 │   └── feature/             # auth, home, flight, bus, train, booking, payment,
 │                            # trips, offers, account, notifications
-├── backend/                 # FastAPI — starts in Phase 2
+├── backend/                 # FastAPI + PostgreSQL: auth, profile, locations (see backend/README.md)
 ├── design/                  # tokens.json, app icon SVG/PNG sources, font licences
+├── docs/openapi.json        # API spec exported from the backend
 └── docs/screenshots/
 ```
 
@@ -63,6 +65,34 @@ The first launch shows onboarding (choose Bangla or English), then Home. Walk th
 cities, then Search, a result, a seat or class, passenger details, Review & pay, and the success
 screen. Every step in that flow can be reached.
 
+## Phase 2 — login & accounts
+
+- **Backend** (`backend/`): FastAPI, async SQLAlchemy, PostgreSQL, Alembic migrations, seed
+  locations, Docker. It has 17 tests and passes on both SQLite and PostgreSQL. See [backend/README.md](backend/README.md).
+- **Login**: phone number → 6-digit OTP → name (new users only). Errors come from the server in
+  Bangla and English. The SMS Retriever API fills the code in automatically, with no SMS permission.
+- **Tokens**: a 15-minute access token and a 30-day refresh token. Both are stored in one blob encrypted
+  with AES-256-GCM, using an Android Keystore key that can't be exported. On a 401 the app refreshes
+  once and retries. If the refresh fails, the user is logged out.
+- **Account**: profile card, edit name and email, log out (works offline), and delete account
+  (Google Play requirement).
+- **Booking needs login**: guests can search freely. "Continue" to the passenger form asks
+  them to log in, then carries on.
+- **Locations** come from `GET /locations`, with the bundled list as the offline fallback.
+
+### Mock backend vs real backend
+
+The APK works on any phone **without a server**: by default it uses a built-in mock backend that
+follows the same rules (the OTP is always **123456**). To use the real API:
+
+```bash
+cd android
+./gradlew :app:assembleDebug -Pjatri.useMockApi=false -Pjatri.apiBaseUrl=http://10.0.2.2:8000/api/v1/
+```
+
+`10.0.2.2` is your computer as seen from the Android emulator. Debug builds allow plain HTTP only
+to `10.0.2.2` and `localhost`. Release builds are HTTPS-only.
+
 ## Phase 1 — what's built
 
 - **Design system**: Material 3 light/dark colour schemes (dynamic colour off), bundled fonts
@@ -88,8 +118,7 @@ screen. Every step in that flow can be reached.
 
 | Area | Phase 1 behaviour | Becomes real in |
 |---|---|---|
-| Login / OTP | UI only. No SMS is sent and any 6-digit code works | Phase 2 |
-| Locations | Bundled seed list (15 airports, 20 bus cities, 19 stations) | Phase 2 (`GET /locations`) |
+| SMS gateway | Backend prints the OTP to its log; the APK's mock backend uses 123456 | Before release |
 | Bus results, seat map | `MockContent` with placeholder operators ("Sample Paribahan") | Phase 3 |
 | Passenger form | Layout preview with disabled fields | Phase 3 |
 | Review & pay, payment result | Sample price breakdown, working 10:00 hold timer, no real payment | Phase 4 |
@@ -149,4 +178,12 @@ big bold left-aligned headlines.
 
 **চালানোর নিয়ম:** Android Studio-তে `android/` ফোল্ডার খুলে Run চাপুন। অথবা কমান্ড লাইনে `cd android && ./gradlew :app:assembleDebug` চালান।
 
-**পরের ধাপ:** Phase 2। এতে ফোন নম্বর ও OTP দিয়ে লগইন, প্রোফাইল, টোকেন সংরক্ষণ আর FastAPI ব্যাকএন্ডের শুরু হবে।
+**Phase 2 সম্পন্ন:**
+- ফোন নম্বর ও OTP দিয়ে লগইন।
+- এনক্রিপ্ট করা টোকেন, মেয়াদ শেষ হলে নিজে থেকে রিফ্রেশ।
+- প্রোফাইল সম্পাদনা, লগআউট আর অ্যাকাউন্ট মুছে ফেলার সুবিধা।
+- FastAPI + PostgreSQL ব্যাকএন্ড।
+
+সার্ভার ছাড়াও APK ফোনে চলে। ডেমো মোডে OTP সবসময় **123456**।
+
+**পরের ধাপ:** Phase 3। এতে বাস মডিউল আসবে: সার্চ, সিট ম্যাপ, যাত্রীর ফর্ম আর বুকিং হোল্ড।
