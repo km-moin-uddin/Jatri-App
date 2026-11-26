@@ -7,11 +7,12 @@ from fastapi import APIRouter, Depends, Form, Header, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from app.api.deps import AppSettings, CurrentUser, DbSession
-from app.api.v1.buses import BusProviderDep, StoreDep
+from app.api.v1.buses import StoreDep
 from app.core.envelope import AppError, ok
 from app.models import Booking, Payment
 from app.payments import get_gateway
 from app.payments.mock import MockGateway
+from app.providers.registry import ProvidersDep
 from app.schemas.common import Envelope
 from app.schemas.payment import PaymentInitIn, PaymentInitOut, PaymentStatusOut
 from app.services import payment as service
@@ -33,7 +34,7 @@ async def init(
     user: CurrentUser,
     db: DbSession,
     gateway: Gateway,
-    provider: BusProviderDep,
+    provider: ProvidersDep,
     store: StoreDep,
     idempotency_key: Annotated[str | None, Header(max_length=64)] = None,
 ):
@@ -48,7 +49,7 @@ async def callback(
     request: Request,
     db: DbSession,
     gateway: Gateway,
-    provider: BusProviderDep,
+    provider: ProvidersDep,
     store: StoreDep,
     settings: AppSettings,
 ):
@@ -62,7 +63,7 @@ async def callback(
 
 
 @router.get("/payments/{payment_id}/status", response_model=Envelope[PaymentStatusOut])
-async def status(payment_id: uuid.UUID, user: CurrentUser, db: DbSession, provider: BusProviderDep, store: StoreDep):
+async def status(payment_id: uuid.UUID, user: CurrentUser, db: DbSession, provider: ProvidersDep, store: StoreDep):
     payment, booking = await service.payment_status(db, provider, store, user, payment_id)
     return ok(_status_out(payment, booking))
 
@@ -79,7 +80,7 @@ async def browser_return(gateway_name: str, request: Request, settings: AppSetti
 
 
 @router.get("/tickets/{booking_id}/pdf", response_class=Response, responses={200: {"content": {"application/pdf": {}}}})
-async def ticket_pdf(booking_id: uuid.UUID, user: CurrentUser, db: DbSession, provider: BusProviderDep, store: StoreDep):
+async def ticket_pdf(booking_id: uuid.UUID, user: CurrentUser, db: DbSession, provider: ProvidersDep, store: StoreDep):
     booking, ticket = await service.ticket_for(db, provider, store, user, booking_id)
     pdf = render_pdf(booking, ticket.qr_payload)
     return Response(
@@ -153,7 +154,7 @@ async def mock_complete(
     payment_id: uuid.UUID,
     result: Annotated[str, Form()],
     db: DbSession,
-    provider: BusProviderDep,
+    provider: ProvidersDep,
     store: StoreDep,
     settings: AppSettings,
 ):

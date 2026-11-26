@@ -1,0 +1,94 @@
+{
+ "success": true,
+ "data": {
+  "id": "311fe071-2cab-416e-9299-4431954a1143",
+  "booking_ref": "JTHUQM",
+  "mode": "flight",
+  "status": "held",
+  "hold_expires_at": "2026-11-26T17:07:41.296527Z",
+  "base_fare": 11812000,
+  "taxes": 2620000,
+  "service_charge": 40000,
+  "discount": 0,
+  "total_amount": 14472000,
+  "currency": "BDT",
+  "contact_phone": "01712345678",
+  "contact_email": "demo@example.com",
+  "segments": [
+   {
+    "trip_id": "mf~DAC.DXB.20261216_DXB.DAC.20261223~1.1.0~economy~0~saver",
+    "carrier": "Test Wings",
+    "number": "T3 398",
+    "from_id": "air_DAC",
+    "to_id": "air_DXB",
+    "depart_at": "2026-12-16T01:10:00+06:00",
+    "arrive_at": "2026-12-16T04:40:00+04:00",
+    "travel_class": "economy",
+    "seat_numbers": [],
+    "boarding_point": null,
+    "dropping_point": null,
+    "slice_index": 0,
+    "from_code": "DAC",
+    "to_code": "DXB",
+    "aircraft": "Boeing 787-9",
+    "baggage": "20 kg"
+   },
+   {
+    "trip_id": "mf~DAC.DXB.20261216_DXB.DAC.20261223~1.1.0~economy~0~saver",
+    "carrier": "Sample Air",
+    "number": "S1 805",
+    "from_id": "air_DXB",
+    "to_id": "air_DAC",
+    "depart_at": "2026-12-23T08:10:00+04:00",
+    "arrive_at": "2026-12-23T15:40:00+06:00",
+    "travel_class": "economy",
+    "seat_numbers": [],
+    "boarding_point": null,
+    "dropping_point": null,
+    "slice_index": 1,
+    "from_code": "DXB",
+    "to_code": "DAC",
+    "aircraft": "Boeing 787-9",
+    "baggage": "20 kg"
+   }
+  ],
+  "passengers": [
+   {
+    "full_name": "RAHIM UDDIN",
+    "ticket_number": null,
+    "type": "adult",
+    "gender": "male",
+    "age": 38,
+    "seat_no": null,
+    "document_masked": "•••••4567",
+    "date_of_birth": "1988-02-11",
+    "nationality": "BD"
+   },
+   {
+    "full_name": "NUSRAT JAHAN",
+    "ticket_number": null,
+    "type": "child",
+    "gender": "female",
+    "age": 8,
+    "seat_no": null,
+    "document_masked": "••••4321",
+    "date_of_birth": "2018-07-01",
+    "nationality": "BD"
+   }
+  ],
+  "created_at": "2026-11-26T16:57:41.288578Z",
+  "ticket": null,
+  "cabin": "economy",
+  "fare_brand": "saver",
+  "fare_rules": {
+   "refundable": false,
+   "refund_fee": null,
+   "change_fee": 600000,
+   "deadline_hours": 24,
+   "checked_baggage_kg": 20,
+   "cabin_baggage_kg": 7,
+   "no_show": "forfeit"
+  }
+ },
+ "error": null
+}

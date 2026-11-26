@@ -15,7 +15,7 @@ from app.core.security import now
 from app.models import Booking, Payment, Ticket, User
 from app.payments.base import CheckoutRequest, InvalidCallback
 from app.providers.base import ProviderError
-from app.providers.mock_bus import MockBusProvider
+from app.providers.registry import Providers
 from app.services.booking import BookingErrors, expire_if_needed, get_owned
 from app.services.cache import KeyValueStore, seat_key
 from app.services.ticket import qr_payload
@@ -56,14 +56,14 @@ class PaymentErrors:
 async def init_payment(
     db: AsyncSession,
     gateway,
-    provider: MockBusProvider,
+    providers: Providers,
     store: KeyValueStore,
     user: User,
     booking_id: uuid.UUID,
     method: str,
     idempotency_key: str | None,
 ) -> tuple[Payment, str]:
-    booking = await get_owned(db, provider, store, user, booking_id)
+    booking = await get_owned(db, providers, store, user, booking_id)
     if booking.status != "held":
         raise PaymentErrors.not_payable()
 
@@ -95,8 +95,8 @@ async def init_payment(
                 customer_name=user.name or "",
                 customer_phone=booking.contact_phone,
                 customer_email=booking.contact_email or user.email,
-                product_name=f"Bus ticket {seg.carrier} {booking.booking_ref}",
-                item_count=len(seg.seat_numbers),
+                product_name=f"{booking.mode.title()} ticket {seg.carrier} {booking.booking_ref}",
+                item_count=len(booking.passengers),
             )
         )
     except Exception as e:  # network / gateway refused
@@ -110,7 +110,7 @@ async def init_payment(
 
 
 async def process_callback(
-    db: AsyncSession, gateway, provider: MockBusProvider, store: KeyValueStore, settings: Settings, form: dict
+    db: AsyncSession, gateway, providers: Providers, store: KeyValueStore, settings: Settings, form: dict
 ) -> Payment:
     """Idempotent: a callback for a payment that already left `initiated` changes nothing."""
     try:
@@ -145,19 +145,19 @@ async def process_callback(
 
     payment.status = "success"
     booking = await db.get(Booking, payment.booking_id)
-    await _confirm_and_ticket(db, provider, store, settings, booking, payment)
+    await _confirm_and_ticket(db, providers, store, settings, booking, payment)
     await db.commit()
     return payment
 
 
 async def _confirm_and_ticket(
-    db: AsyncSession, provider: MockBusProvider, store: KeyValueStore, settings: Settings, booking: Booking, payment: Payment
+    db: AsyncSession, providers: Providers, store: KeyValueStore, settings: Settings, booking: Booking, payment: Payment
 ) -> None:
     if booking.status not in ("held", "cancelled"):
         return  # already confirmed by an earlier payment
     try:
         # Even if the hold just expired, try: the money is real, so get the seats if still possible.
-        pnr = await provider.confirm(booking.provider_booking_ref or "")
+        pnr = await providers.get(booking.provider).confirm(booking.provider_booking_ref or "")
     except ProviderError as e:
         booking.status = "failed"
         payment.status = "refund_pending"
@@ -167,8 +167,10 @@ async def _confirm_and_ticket(
     booking.status = "ticketed"
     booking.hold_expires_at = None
     booking.provider_booking_ref = pnr
+    provider = providers.get(booking.provider)
     for i, p in enumerate(booking.passengers):
-        p.ticket_number = f"{pnr}-{i + 1}"
+        # Airlines issue a 13-digit e-ticket number per passenger; bus operators number by seat.
+        p.ticket_number = provider.ticket_number(pnr, i) if hasattr(provider, "ticket_number") else f"{pnr}-{i + 1}"
     db.add(
         Ticket(
             booking_id=booking.id,
@@ -179,22 +181,25 @@ async def _confirm_and_ticket(
     )
     # Seats are sold now; the provider shows them as booked, so drop our temporary locks.
     for seg in booking.segments:
-        await store.release([seat_key(seg.trip_id, n) for n in seg.seat_numbers], str(booking.id))
+        if seg.seat_numbers:
+            await store.release([seat_key(seg.trip_id, n) for n in seg.seat_numbers], str(booking.id))
 
 
-async def payment_status(db: AsyncSession, provider, store, user: User, payment_id: uuid.UUID) -> tuple[Payment, Booking]:
+async def payment_status(
+    db: AsyncSession, providers: Providers, store, user: User, payment_id: uuid.UUID
+) -> tuple[Payment, Booking]:
     payment = await db.get(Payment, payment_id)
     if payment is None:
         raise PaymentErrors.not_found()
     booking = await db.get(Booking, payment.booking_id)
     if booking is None or booking.user_id != user.id:
         raise PaymentErrors.not_found()
-    booking = await expire_if_needed(db, provider, store, booking)
+    booking = await expire_if_needed(db, providers, store, booking)
     return payment, booking
 
 
-async def ticket_for(db: AsyncSession, provider, store, user: User, booking_id: uuid.UUID) -> tuple[Booking, Ticket]:
-    booking = await get_owned(db, provider, store, user, booking_id)
+async def ticket_for(db: AsyncSession, providers: Providers, store, user: User, booking_id: uuid.UUID) -> tuple[Booking, Ticket]:
+    booking = await get_owned(db, providers, store, user, booking_id)
     ticket = await db.scalar(select(Ticket).where(Ticket.booking_id == booking.id))
     if ticket is None:
         raise BookingErrors.not_found()

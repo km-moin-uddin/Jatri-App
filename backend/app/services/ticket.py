@@ -36,10 +36,25 @@ def _place_names() -> dict[str, tuple[str, str]]:
     return {r["key"]: (r["city_en"], r["city_bn"]) for r in load_locations()}
 
 
+def _aware(dt):
+    from datetime import UTC
+
+    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
+
+
 def _bd(dt) -> str:
     from datetime import timedelta, timezone
 
-    return dt.astimezone(timezone(timedelta(hours=_BD_OFFSET_HOURS))).strftime("%d %b %Y, %H:%M")
+    return _aware(dt).astimezone(timezone(timedelta(hours=_BD_OFFSET_HOURS))).strftime("%d %b %Y, %H:%M")
+
+
+def _airport_time(location_id: str, dt) -> str:
+    from app.providers.mock_flight import local_time
+
+    return local_time(location_id, _aware(dt)).strftime("%d %b %Y, %H:%M")
+
+
+_PAX_TYPE = {"adult": "Adult / প্রাপ্তবয়স্ক", "child": "Child / শিশু", "infant": "Infant / ইনফ্যান্ট"}
 
 
 def render_pdf(booking: Booking, payload: str) -> bytes:
@@ -71,6 +86,10 @@ def render_pdf(booking: Booking, payload: str) -> bytes:
     pdf.set_text_color(21, 24, 27)
     pdf.set_y(32)
 
+    if booking.mode == "flight":
+        # Title: the outbound journey (first flight's origin to the last flight of that journey).
+        out = [x for x in booking.segments if (x.extra or {}).get("slice_index", 0) == 0]
+        to_en, to_bn = names.get(out[-1].to_id, (out[-1].to_id, out[-1].to_id))
     pdf.set_font("Hind", "B", 16)
     pdf.multi_cell(w, 8, f"{from_en} - {to_en}", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("Hind", "", 12)
@@ -85,26 +104,57 @@ def render_pdf(booking: Booking, payload: str) -> bytes:
         pdf.set_text_color(21, 24, 27)
         pdf.multi_cell(w * 0.62, 6, value, new_x="LMARGIN", new_y="NEXT")
 
-    bp = (seg.extra or {}).get("boarding_point") or {}
-    dp = (seg.extra or {}).get("dropping_point") or {}
-    row("Booking ref / বুকিং", booking.booking_ref)
-    row("PNR", booking.provider_booking_ref or "-")
-    row("Operator / অপারেটর", f"{seg.carrier} ({seg.number})")
-    row("Departure / যাত্রা", _bd(seg.depart_at))
-    row("Arrival / পৌঁছানো", _bd(seg.arrive_at))
-    if bp:
-        row("Boarding / ওঠার স্থান", f"{bp.get('name_en', '')} · {bp.get('name_bn', '')}")
-    if dp:
-        row("Dropping / নামার স্থান", f"{dp.get('name_en', '')} · {dp.get('name_bn', '')}")
-    row("Seats / সিট", ", ".join(seg.seat_numbers))
-    row("Total paid / মোট", f"BDT {booking.total_amount // 100:,}")
-    pdf.ln(2)
+    if booking.mode == "flight":
+        details = booking.details or {}
+        rules = details.get("rules") or {}
+        row("Booking ref / বুকিং", booking.booking_ref)
+        row("Airline PNR / পিএনআর", booking.provider_booking_ref or "-")
+        cabin = str(details.get("cabin", seg.travel_class)).replace("_", " ").title()
+        row("Cabin / ক্লাস", f"{cabin} · {str(details.get('fare_brand', '')).title()}")
+        row("Baggage / ব্যাগেজ", f"{rules.get('checked_baggage_kg', '-')} kg + {rules.get('cabin_baggage_kg', '-')} kg cabin")
+        row("Total paid / মোট", f"BDT {booking.total_amount // 100:,}")
+        pdf.ln(2)
+        pdf.set_font("Hind", "B", 11)
+        pdf.cell(w, 7, "Flights / ফ্লাইট (local times / স্থানীয় সময়)", new_x="LMARGIN", new_y="NEXT")
+        for f in booking.segments:
+            ex = f.extra or {}
+            pdf.set_font("Hind", "B", 10)
+            pdf.multi_cell(w, 5.5, f"{f.number}  ·  {ex.get('from_code', '')} - {ex.get('to_code', '')}  ·  {f.carrier}",
+                           new_x="LMARGIN", new_y="NEXT")  # fmt: skip
+            pdf.set_font("Hind", "", 9)
+            pdf.multi_cell(w, 5, f"{_airport_time(f.from_id, f.depart_at)}  -  {_airport_time(f.to_id, f.arrive_at)}",
+                           new_x="LMARGIN", new_y="NEXT")  # fmt: skip
+        pdf.ln(2)
+        pdf.set_font("Hind", "B", 11)
+        pdf.cell(w, 7, "Passengers / যাত্রী", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("Hind", "", 10)
+        for p in booking.passengers:
+            pdf.multi_cell(w, 5.5, f"{p.full_name}  ·  {_PAX_TYPE.get(p.type, p.type)}", new_x="LMARGIN", new_y="NEXT")
+            if p.ticket_number:
+                pdf.set_text_color(91, 102, 112)
+                pdf.multi_cell(w, 5, f"E-ticket / ই-টিকিট: {p.ticket_number}", new_x="LMARGIN", new_y="NEXT")
+                pdf.set_text_color(21, 24, 27)
+    else:
+        bp = (seg.extra or {}).get("boarding_point") or {}
+        dp = (seg.extra or {}).get("dropping_point") or {}
+        row("Booking ref / বুকিং", booking.booking_ref)
+        row("PNR", booking.provider_booking_ref or "-")
+        row("Operator / অপারেটর", f"{seg.carrier} ({seg.number})")
+        row("Departure / যাত্রা", _bd(seg.depart_at))
+        row("Arrival / পৌঁছানো", _bd(seg.arrive_at))
+        if bp:
+            row("Boarding / ওঠার স্থান", f"{bp.get('name_en', '')} · {bp.get('name_bn', '')}")
+        if dp:
+            row("Dropping / নামার স্থান", f"{dp.get('name_en', '')} · {dp.get('name_bn', '')}")
+        row("Seats / সিট", ", ".join(seg.seat_numbers))
+        row("Total paid / মোট", f"BDT {booking.total_amount // 100:,}")
+        pdf.ln(2)
 
-    pdf.set_font("Hind", "B", 11)
-    pdf.cell(w, 7, "Passengers / যাত্রী", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Hind", "", 11)
-    for p in booking.passengers:
-        pdf.multi_cell(w, 6, f"{p.seat_no or '-'}  ·  {p.full_name}", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("Hind", "B", 11)
+        pdf.cell(w, 7, "Passengers / যাত্রী", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("Hind", "", 11)
+        for p in booking.passengers:
+            pdf.multi_cell(w, 6, f"{p.seat_no or '-'}  ·  {p.full_name}", new_x="LMARGIN", new_y="NEXT")
 
     # QR code
     buf = io.BytesIO()
@@ -116,5 +166,10 @@ def render_pdf(booking: Booking, payload: str) -> bytes:
     pdf.set_y(y + size + 1)
     pdf.set_font("Hind", "", 8)
     pdf.set_text_color(91, 102, 112)
-    pdf.multi_cell(w, 4, "Show this QR at the counter. কাউন্টারে এই কিউআর কোডটি দেখান।", align="C", new_x="LMARGIN", new_y="NEXT")
+    hint = (
+        "Show this at airline check-in with your ID. চেক-ইনের সময় পরিচয়পত্রসহ এটি দেখান।"
+        if booking.mode == "flight"
+        else "Show this QR at the counter. কাউন্টারে এই কিউআর কোডটি দেখান।"
+    )
+    pdf.multi_cell(w, 4, hint, align="C", new_x="LMARGIN", new_y="NEXT")
     return bytes(pdf.output())

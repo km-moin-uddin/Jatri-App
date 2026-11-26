@@ -159,7 +159,7 @@ async def test_sweeper_releases_expired_holds(client, sms, store):
     async with engine.begin() as conn:
         await conn.execute(update(Booking).values(hold_expires_at=datetime.now(UTC) - timedelta(minutes=1)))
     async with SessionLocal() as db:
-        assert await sweep_expired_holds(db, client.app.state.test_provider, store) == 1
+        assert await sweep_expired_holds(db, client.app.state.test_providers, store) == 1
     b = (await client.get(f"/api/v1/bookings/{booking['id']}", headers=auth(tokens))).json()["data"]
     assert b["status"] == "cancelled"
 
