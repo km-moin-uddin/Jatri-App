@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="flight_phase">Phase 5 (ফ্লাইট প্রোভাইডার স্যান্ডবক্স)</string>
+    <string name="flight_details_title">ভাড়ার বিস্তারিত</string>
+    <string name="flight_fare_rules">ভাড়ার নিয়ম</string>
+    <string name="flight_rule_change">তারিখ পরিবর্তন: ৳১,৫০০ + ভাড়ার পার্থক্য</string>
+    <string name="flight_rule_cancel">বাতিল: ২৪ ঘণ্টা আগে ৳২,০০০ ফি</string>
+    <string name="flight_rule_noshow">যাত্রা না করলে: রিফান্ড হবে না</string>
+    <string name="flight_continue">যাত্রীর তথ্য দিতে এগিয়ে যান</string>
+</resources>

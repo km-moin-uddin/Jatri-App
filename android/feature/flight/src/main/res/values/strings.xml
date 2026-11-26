@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="flight_phase">Phase 5 (flight provider sandbox)</string>
+    <string name="flight_details_title">Fare details</string>
+    <string name="flight_fare_rules">Fare rules</string>
+    <string name="flight_rule_change">Date change: ৳1,500 + fare difference</string>
+    <string name="flight_rule_cancel">Cancellation: ৳2,000 fee before 24 hours</string>
+    <string name="flight_rule_noshow">No-show: non-refundable</string>
+    <string name="flight_continue">Continue to passenger details</string>
+</resources>

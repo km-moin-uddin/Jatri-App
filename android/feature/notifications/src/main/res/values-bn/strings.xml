@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_title">নোটিফিকেশন</string>
+    <string name="notif_empty">এখনো কোনো নোটিফিকেশন নেই</string>
+    <string name="notif_empty_body">বুকিং, পেমেন্ট ও যাত্রার রিমাইন্ডার এখানে দেখাবে।</string>
+</resources>

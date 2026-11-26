@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="train_phase">Phase 6 (train module)</string>
+    <string name="train_seat_title">Coach &amp; seat</string>
+    <string name="train_seat_note">Coach and seat selection appears here when the railway partner supports it. Every adult passenger must give an NID.</string>
+    <string name="train_continue">Continue to passenger details</string>
+</resources>

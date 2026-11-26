@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="offers_title">Offers</string>
+    <string name="offers_copy">Copy code</string>
+    <string name="offers_copied">Code %s copied</string>
+    <string name="offers_valid_until">Valid until %s</string>
+    <string name="offers_empty">No offers right now</string>
+    <string name="offers_sample_note">Sample offers. Real promo codes are managed from the backend in Phase 8.</string>
+</resources>

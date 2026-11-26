@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_title">অ্যাকাউন্ট</string>
+    <string name="account_guest">অতিথি</string>
+    <string name="account_guest_body">টিকিট কিনতে ও যেকোনো ফোনে আপনার যাত্রা দেখতে লগইন করুন।</string>
+    <string name="account_login">লগইন / সাইন আপ</string>
+    <string name="account_section_travel">যাত্রা</string>
+    <string name="account_section_settings">সেটিংস</string>
+    <string name="account_section_support">সাহায্য ও নীতিমালা</string>
+    <string name="account_saved_travellers">সংরক্ষিত যাত্রী</string>
+    <string name="account_payment_history">পেমেন্টের ইতিহাস</string>
+    <string name="account_notifications">নোটিফিকেশন</string>
+    <string name="account_language">ভাষা</string>
+    <string name="account_theme">থিম</string>
+    <string name="account_theme_system">ফোনের মতো</string>
+    <string name="account_theme_light">লাইট</string>
+    <string name="account_theme_dark">ডার্ক</string>
+    <string name="account_push">যাত্রা ও অফারের নোটিফিকেশন</string>
+    <string name="account_help">সাহায্য ও প্রশ্নোত্তর</string>
+    <string name="account_privacy">গোপনীয়তা নীতি</string>
+    <string name="account_terms">শর্তাবলি</string>
+    <string name="account_cancel">বাতিল</string>
+    <string name="account_phase_profile">Phase 2 (লগইন ও প্রোফাইল)</string>
+    <string name="account_phase_travellers">Phase 8 (সংরক্ষিত যাত্রী)</string>
+    <string name="account_phase_payments">Phase 4 (পেমেন্ট)</string>
+    <string name="account_phase_legal">Phase 9 (রিলিজ)</string>
+    <string name="account_phase_help">Phase 7 (সাপোর্ট)</string>
+    <string name="account_call_hotline">হটলাইনে কল করুন</string>
+    <string name="account_live_chat">লাইভ চ্যাট (শিগগিরই আসছে)</string>
+    <string name="account_report_problem">সমস্যা জানান</string>
+    <string name="account_faq1_q">টিকিট কীভাবে পাব?</string>
+    <string name="account_faq1_a">পেমেন্টের পর ই-টিকিট আমার যাত্রায় দেখাবে এবং এসএমএস ও ইমেইলে পাঠানো হবে। ইন্টারনেট ছাড়াও এটি খোলা যাবে।</string>
+    <string name="account_faq2_q">রিফান্ড কীভাবে হয়?</string>
+    <string name="account_faq2_a">বাতিলের আগেই ভাড়ার নিয়ম অনুযায়ী সঠিক রিফান্ডের পরিমাণ দেখানো হবে। টাকা একই পেমেন্ট পদ্ধতিতে ফেরত যাবে।</string>
+    <string name="account_faq3_q">ট্রেনের টিকিটে এনআইডি কেন লাগে?</string>
+    <string name="account_faq3_a">বাংলাদেশ রেলওয়ে নিবন্ধিত এনআইডির বিপরীতে টিকিট দেয়, তাই প্রত্যেক প্রাপ্তবয়স্ক যাত্রীর এনআইডি লাগবে।</string>
+</resources>

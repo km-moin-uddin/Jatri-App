@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_title">Account</string>
+    <string name="account_guest">Guest</string>
+    <string name="account_guest_body">Log in to book tickets and see your trips on any phone.</string>
+    <string name="account_login">Log in / Sign up</string>
+    <string name="account_section_travel">Travel</string>
+    <string name="account_section_settings">Settings</string>
+    <string name="account_section_support">Help &amp; legal</string>
+    <string name="account_saved_travellers">Saved travellers</string>
+    <string name="account_payment_history">Payment history</string>
+    <string name="account_notifications">Notifications</string>
+    <string name="account_language">Language</string>
+    <string name="account_theme">Appearance</string>
+    <string name="account_theme_system">Same as phone</string>
+    <string name="account_theme_light">Light</string>
+    <string name="account_theme_dark">Dark</string>
+    <string name="account_push">Trip &amp; offer alerts</string>
+    <string name="account_help">Help &amp; FAQ</string>
+    <string name="account_privacy">Privacy policy</string>
+    <string name="account_terms">Terms &amp; conditions</string>
+    <string name="account_cancel">Cancel</string>
+    <string name="account_phase_profile">Phase 2 (login &amp; profile)</string>
+    <string name="account_phase_travellers">Phase 8 (saved travellers)</string>
+    <string name="account_phase_payments">Phase 4 (payments)</string>
+    <string name="account_phase_legal">Phase 9 (release)</string>
+    <string name="account_phase_help">Phase 7 (support)</string>
+    <string name="account_call_hotline">Call hotline</string>
+    <string name="account_live_chat">Live chat (coming soon)</string>
+    <string name="account_report_problem">Report a problem</string>
+    <string name="account_faq1_q">How do I get my ticket?</string>
+    <string name="account_faq1_a">After payment the e-ticket appears in My Trips and is sent by SMS and email. It opens without internet too.</string>
+    <string name="account_faq2_q">How do refunds work?</string>
+    <string name="account_faq2_a">Before you cancel we show the exact refund amount from the fare rules. Money goes back to the same payment method.</string>
+    <string name="account_faq3_q">Why is NID needed for train tickets?</string>
+    <string name="account_faq3_a">Bangladesh Railway issues tickets against a registered NID, so each adult passenger must give one.</string>
+</resources>

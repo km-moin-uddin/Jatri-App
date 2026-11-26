@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="trips_title">আমার যাত্রা</string>
+    <string name="trips_upcoming">আসন্ন</string>
+    <string name="trips_completed">সম্পন্ন</string>
+    <string name="trips_cancelled">বাতিল</string>
+    <string name="trips_empty_upcoming">কোনো আসন্ন যাত্রা নেই</string>
+    <string name="trips_empty_upcoming_body">আপনার কেনা টিকিট এখানে দেখাবে, ইন্টারনেট ছাড়াও।</string>
+    <string name="trips_empty_completed">এখনো কোনো যাত্রা সম্পন্ন হয়নি</string>
+    <string name="trips_empty_cancelled">কোনো বাতিল যাত্রা নেই</string>
+    <string name="trips_search">টিকিট খুঁজুন</string>
+    <string name="trips_sample">নমুনা</string>
+    <string name="trips_detail_title">টিকিট</string>
+    <string name="trips_phase">Phase 7 (আমার যাত্রা, বাতিল ও রিফান্ড)</string>
+    <string name="trips_actions_note">পিডিএফ ডাউনলোড, শেয়ার, ক্যালেন্ডারে যোগ ও বাতিল করার সুবিধা Phase 7-এ চালু হবে।</string>
+    <string name="trips_sample_route">ঢাকা → কক্সবাজার</string>
+    <string name="trips_sample_operator">Sample Paribahan · সিট A3, A4</string>
+    <string name="trips_pnr">পিএনআর</string>
+</resources>

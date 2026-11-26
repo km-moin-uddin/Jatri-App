@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="booking_phase">Phase 3 (যাত্রীর ফর্ম ও বুকিং হোল্ড)</string>
+    <string name="booking_title">যাত্রীর তথ্য</string>
+    <string name="booking_passenger">যাত্রী %s</string>
+    <string name="booking_full_name">পুরো নাম (এনআইডি/পাসপোর্ট অনুযায়ী)</string>
+    <string name="booking_gender">লিঙ্গ</string>
+    <string name="booking_nid">এনআইডি নম্বর</string>
+    <string name="booking_contact">যোগাযোগের তথ্য</string>
+    <string name="booking_phone">মোবাইল নম্বর</string>
+    <string name="booking_email">ইমেইল (ই-টিকিটের জন্য)</string>
+    <string name="booking_saved_traveller">সংরক্ষিত যাত্রী বেছে নিন</string>
+    <string name="booking_continue">যাচাই ও পেমেন্ট</string>
+</resources>

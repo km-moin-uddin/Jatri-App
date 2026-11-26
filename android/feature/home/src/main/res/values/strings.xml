@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="home_greeting_night">Good night</string>
+    <string name="home_subtitle">Where would you like to go?</string>
+    <string name="home_notifications">Notifications</string>
+    <string name="home_recent_searches">Recent searches</string>
+    <string name="home_popular_routes">Popular routes</string>
+    <string name="home_offers">Offers for you</string>
+    <string name="home_see_all">See all</string>
+    <string name="home_from_price">from %s</string>
+    <string name="home_select_from">Select where you are travelling from</string>
+    <string name="home_select_to">Select your destination</string>
+    <string name="home_offer_code">Code: %s</string>
+</resources>

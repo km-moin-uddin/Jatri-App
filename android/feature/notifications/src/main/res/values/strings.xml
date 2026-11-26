@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_title">Notifications</string>
+    <string name="notif_empty">No notifications yet</string>
+    <string name="notif_empty_body">Booking, payment and journey reminders will appear here.</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="offers_title">অফার</string>
+    <string name="offers_copy">কোড কপি করুন</string>
+    <string name="offers_copied">%s কোড কপি হয়েছে</string>
+    <string name="offers_valid_until">%s পর্যন্ত প্রযোজ্য</string>
+    <string name="offers_empty">এই মুহূর্তে কোনো অফার নেই</string>
+    <string name="offers_sample_note">নমুনা অফার। আসল প্রোমো কোড Phase 8-এ ব্যাকএন্ড থেকে আসবে।</string>
+</resources>

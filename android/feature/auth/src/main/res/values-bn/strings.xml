@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_onb1_title">সব টিকিট এক জায়গায়</string>
+    <string name="auth_onb1_body">বাংলাদেশের ফ্লাইট, বাস ও ট্রেনের টিকিট এক অ্যাপেই খুঁজুন ও কিনুন।</string>
+    <string name="auth_onb2_title">নিরাপদ পেমেন্ট</string>
+    <string name="auth_onb2_body">বিকাশ, নগদ, রকেট বা কার্ডে পেমেন্ট করুন। আপনার টাকা সুরক্ষিত।</string>
+    <string name="auth_onb3_title">সহজ ক্যান্সেল ও রিফান্ড</string>
+    <string name="auth_onb3_body">ক্যান্সেল করার আগেই রিফান্ডের পরিমাণ দেখুন, আর আমার যাত্রায় তা ট্র্যাক করুন।</string>
+    <string name="auth_choose_language">আপনার ভাষা বেছে নিন</string>
+    <string name="auth_skip">বাদ দিন</string>
+    <string name="auth_next">পরবর্তী</string>
+    <string name="auth_get_started">শুরু করুন</string>
+    <string name="auth_page_indicator">%2$s এর মধ্যে %1$s নম্বর পাতা</string>
+
+    <string name="auth_login_title">ফোন নম্বর দিয়ে লগইন করুন</string>
+    <string name="auth_login_body">আমরা এসএমএসে ৬ সংখ্যার একটি কোড পাঠাব।</string>
+    <string name="auth_phone_label">মোবাইল নম্বর</string>
+    <string name="auth_phone_hint">০১XXXXXXXXX</string>
+    <string name="auth_phone_error">১১ সংখ্যার সঠিক বাংলাদেশি মোবাইল নম্বর দিন</string>
+    <string name="auth_send_code">কোড পাঠান</string>
+    <string name="auth_continue_guest">অতিথি হিসেবে চালিয়ে যান</string>
+    <string name="auth_guest_note">অতিথি হিসেবে টিকিট খুঁজতে পারবেন। কিনতে হলে লগইন করুন।</string>
+    <string name="auth_terms">চালিয়ে যাওয়ার মাধ্যমে আপনি আমাদের শর্তাবলি ও গোপনীয়তা নীতিতে সম্মত হচ্ছেন।</string>
+
+    <string name="auth_otp_title">কোডটি লিখুন</string>
+    <string name="auth_otp_body">%s নম্বরে ৬ সংখ্যার একটি কোড পাঠানো হয়েছে</string>
+    <string name="auth_otp_label">৬ সংখ্যার কোড</string>
+    <string name="auth_verify">যাচাই করুন</string>
+    <string name="auth_resend_in">%s পরে আবার কোড পাঠানো যাবে</string>
+    <string name="auth_resend">আবার কোড পাঠান</string>
+    <string name="auth_change_number">নম্বর পরিবর্তন করুন</string>
+    <string name="auth_dev_otp_note">ডেভেলপমেন্ট বিল্ড: Phase 2 পর্যন্ত যেকোনো ৬ সংখ্যার কোড কাজ করবে।</string>
+
+    <string name="auth_name_title">আপনাকে কী নামে ডাকব?</string>
+    <string name="auth_name_body">এনআইডি বা পাসপোর্টে যে নাম আছে, সেটিই লিখুন।</string>
+    <string name="auth_name_label">পুরো নাম</string>
+    <string name="auth_name_error">অনুগ্রহ করে আপনার নাম লিখুন</string>
+    <string name="auth_finish">শেষ করুন</string>
+</resources>

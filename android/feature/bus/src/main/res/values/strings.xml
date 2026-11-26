@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bus_phase">Phase 3 (bus module)</string>
+    <string name="bus_seats_title">Choose seats</string>
+    <string name="bus_selected_seats">Seats: %s</string>
+    <string name="bus_no_seat_selected">Tap a seat to select it</string>
+    <string name="bus_continue">Continue</string>
+    <string name="bus_boarding_note">Boarding and dropping points are chosen on the next step (Phase 3).</string>
+</resources>

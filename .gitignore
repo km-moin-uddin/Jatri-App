@@ -1,0 +1,7 @@
+.DS_Store
+.idea/
+*.iml
+# Secrets: never commit real keys. Use .env.example as the template.
+.env
+*.keystore
+*.jks

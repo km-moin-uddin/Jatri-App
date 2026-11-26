@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ds_error_title">দুঃখিত, সমস্যা হয়েছে</string>
+    <string name="ds_error_message">কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।</string>
+    <string name="ds_retry">আবার চেষ্টা করুন</string>
+    <string name="ds_loading">লোড হচ্ছে</string>
+    <string name="ds_offline">ইন্টারনেট সংযোগ নেই। সংরক্ষিত তথ্য দেখানো হচ্ছে।</string>
+    <string name="ds_back">পেছনে</string>
+    <string name="ds_close">বন্ধ করুন</string>
+    <string name="ds_increase">%1$s একজন বাড়ান</string>
+    <string name="ds_decrease">%1$s একজন কমান</string>
+</resources>

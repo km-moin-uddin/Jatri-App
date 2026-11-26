@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_onb1_title">All tickets in one place</string>
+    <string name="auth_onb1_body">Search and book flight, bus and train tickets across Bangladesh in one app.</string>
+    <string name="auth_onb2_title">Safe payments</string>
+    <string name="auth_onb2_body">Pay with bKash, Nagad, Rocket or your card. Your money is protected.</string>
+    <string name="auth_onb3_title">Easy cancel &amp; refund</string>
+    <string name="auth_onb3_body">See the refund amount before you cancel, and track it in My Trips.</string>
+    <string name="auth_choose_language">Choose your language</string>
+    <string name="auth_skip">Skip</string>
+    <string name="auth_next">Next</string>
+    <string name="auth_get_started">Get started</string>
+    <string name="auth_page_indicator">Page %1$s of %2$s</string>
+
+    <string name="auth_login_title">Log in with your phone</string>
+    <string name="auth_login_body">We will send a 6-digit code by SMS.</string>
+    <string name="auth_phone_label">Mobile number</string>
+    <string name="auth_phone_hint">01XXXXXXXXX</string>
+    <string name="auth_phone_error">Enter a valid 11-digit Bangladeshi mobile number</string>
+    <string name="auth_send_code">Send code</string>
+    <string name="auth_continue_guest">Continue as guest</string>
+    <string name="auth_guest_note">You can search as a guest. Log in to book tickets.</string>
+    <string name="auth_terms">By continuing you agree to our Terms and Privacy Policy.</string>
+
+    <string name="auth_otp_title">Enter the code</string>
+    <string name="auth_otp_body">We sent a 6-digit code to %s</string>
+    <string name="auth_otp_label">6-digit code</string>
+    <string name="auth_verify">Verify</string>
+    <string name="auth_resend_in">Resend code in %s</string>
+    <string name="auth_resend">Resend code</string>
+    <string name="auth_change_number">Change number</string>
+    <string name="auth_dev_otp_note">Development build: any 6-digit code works until Phase 2.</string>
+
+    <string name="auth_name_title">What should we call you?</string>
+    <string name="auth_name_body">Use your name as it appears on your NID or passport.</string>
+    <string name="auth_name_label">Full name</string>
+    <string name="auth_name_error">Please enter your name</string>
+    <string name="auth_finish">Finish</string>
+</resources>

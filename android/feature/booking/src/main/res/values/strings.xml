@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="booking_phase">Phase 3 (passenger form &amp; booking hold)</string>
+    <string name="booking_title">Passenger details</string>
+    <string name="booking_passenger">Passenger %s</string>
+    <string name="booking_full_name">Full name (as on NID/passport)</string>
+    <string name="booking_gender">Gender</string>
+    <string name="booking_nid">NID number</string>
+    <string name="booking_contact">Contact details</string>
+    <string name="booking_phone">Mobile number</string>
+    <string name="booking_email">Email (for e-ticket)</string>
+    <string name="booking_saved_traveller">Select saved traveller</string>
+    <string name="booking_continue">Review &amp; pay</string>
+</resources>

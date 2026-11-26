@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="trips_title">My Trips</string>
+    <string name="trips_upcoming">Upcoming</string>
+    <string name="trips_completed">Completed</string>
+    <string name="trips_cancelled">Cancelled</string>
+    <string name="trips_empty_upcoming">No upcoming trips</string>
+    <string name="trips_empty_upcoming_body">Tickets you book will show here, even without internet.</string>
+    <string name="trips_empty_completed">No completed trips yet</string>
+    <string name="trips_empty_cancelled">No cancelled trips</string>
+    <string name="trips_search">Search tickets</string>
+    <string name="trips_sample">Sample</string>
+    <string name="trips_detail_title">Ticket</string>
+    <string name="trips_phase">Phase 7 (My Trips, cancellation &amp; refund)</string>
+    <string name="trips_actions_note">Download PDF, share, add to calendar and cancel will be enabled in Phase 7.</string>
+    <string name="trips_sample_route">Dhaka → Cox\'s Bazar</string>
+    <string name="trips_sample_operator">Sample Paribahan · Seats A3, A4</string>
+    <string name="trips_pnr">PNR</string>
+</resources>

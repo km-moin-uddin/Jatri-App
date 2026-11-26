@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_mode_flight">Flight</string>
+    <string name="ui_mode_bus">Bus</string>
+    <string name="ui_mode_train">Train</string>
+
+    <string name="ui_from">From</string>
+    <string name="ui_to">To</string>
+    <string name="ui_swap">Swap from and to</string>
+    <string name="ui_select_city">Select city</string>
+    <string name="ui_select_airport">Select airport</string>
+    <string name="ui_select_station">Select station</string>
+    <string name="ui_journey_date">Journey date</string>
+    <string name="ui_passengers">Passengers</string>
+    <string name="ui_class">Class</string>
+    <string name="ui_coach_type">Coach type</string>
+    <string name="ui_search_tickets">Search Tickets</string>
+    <string name="ui_same_city_error">From and To cannot be the same</string>
+    <plurals name="ui_passenger_count">
+        <item quantity="one">%s passenger</item>
+        <item quantity="other">%s passengers</item>
+    </plurals>
+
+    <string name="ui_cabin_economy">Economy</string>
+    <string name="ui_cabin_premium_economy">Premium Economy</string>
+    <string name="ui_cabin_business">Business</string>
+    <string name="ui_coach_any">All coaches</string>
+    <string name="ui_coach_ac">AC</string>
+    <string name="ui_coach_non_ac">Non-AC</string>
+    <string name="ui_coach_sleeper">Sleeper</string>
+    <string name="ui_train_shovan">Shovan</string>
+    <string name="ui_train_shovan_chair">Shovan Chair</string>
+    <string name="ui_train_snigdha">Snigdha</string>
+    <string name="ui_train_ac_seat">AC Seat</string>
+    <string name="ui_train_ac_berth">AC Berth</string>
+    <string name="ui_train_f_berth">F Berth</string>
+    <string name="ui_train_f_seat">F Seat</string>
+
+    <string name="ui_picker_search_hint">Search by name or code</string>
+    <string name="ui_picker_recent">Recent</string>
+    <string name="ui_picker_popular">Popular</string>
+    <string name="ui_picker_all">All</string>
+    <string name="ui_picker_no_match">No match found. Try another spelling.</string>
+
+    <string name="ui_date_title">Select journey date</string>
+    <string name="ui_done">Done</string>
+
+    <string name="ui_pax_title">Passengers &amp; class</string>
+    <string name="ui_pax_adults">Adults</string>
+    <string name="ui_pax_adults_desc">12+ years</string>
+    <string name="ui_pax_children">Children</string>
+    <string name="ui_pax_children_desc">2–11 years</string>
+    <string name="ui_pax_infants">Infants</string>
+    <string name="ui_pax_infants_desc">Under 2 years, on lap</string>
+    <string name="ui_pax_rules">Up to 9 passengers. Each infant travels with an adult.</string>
+    <string name="ui_train_pax_rules">Up to 4 passengers per booking. NID is needed for every adult.</string>
+
+    <string name="ui_nonstop">Non-stop</string>
+    <plurals name="ui_stops">
+        <item quantity="one">%s stop</item>
+        <item quantity="other">%s stops</item>
+    </plurals>
+    <string name="ui_refundable">Refundable</string>
+    <string name="ui_non_refundable">Non-refundable</string>
+    <string name="ui_baggage_kg">%s kg</string>
+    <string name="ui_seats_left">%s seats left</string>
+    <string name="ui_seats_available">%s seats</string>
+    <string name="ui_sold_out">Sold out</string>
+    <string name="ui_boarding_at">Boarding: %s</string>
+    <string name="ui_off_day">Off day: %s</string>
+    <string name="ui_per_person">per person</string>
+
+    <string name="ui_seat_available">Available</string>
+    <string name="ui_seat_selected">Selected</string>
+    <string name="ui_seat_booked">Booked</string>
+    <string name="ui_seat_ladies">Ladies</string>
+    <string name="ui_seat_driver">Driver</string>
+    <string name="ui_seat_description">Seat %1$s, %2$s</string>
+
+    <string name="ui_placeholder_title">Coming in %s</string>
+    <string name="ui_placeholder_body">This screen is a placeholder showing sample data. The full version is built in a later phase.</string>
+    <string name="ui_sort_cheapest">Cheapest</string>
+    <string name="ui_sort_fastest">Fastest</string>
+    <string name="ui_sort_earliest">Earliest</string>
+    <string name="ui_no_results_title">No tickets found</string>
+    <string name="ui_no_results_body">There are no tickets on this route right now. Try another date.</string>
+    <string name="ui_change_search">Change search</string>
+    <string name="ui_results_count">%s options found</string>
+</resources>

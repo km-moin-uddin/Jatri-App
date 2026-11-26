@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pay_phase">Phase 4 (পেমেন্ট গেটওয়ে স্যান্ডবক্স)</string>
+    <string name="pay_review_title">যাচাই ও পেমেন্ট</string>
+    <string name="pay_hold_timer">%s সময়ের জন্য সিট সংরক্ষিত</string>
+    <string name="pay_price_details">মূল্যের বিস্তারিত</string>
+    <string name="pay_base_fare">মূল ভাড়া</string>
+    <string name="pay_taxes">কর ও ফি</string>
+    <string name="pay_service_charge">সার্ভিস চার্জ</string>
+    <string name="pay_discount">ছাড়</string>
+    <string name="pay_total">মোট</string>
+    <string name="pay_promo">প্রোমো কোড</string>
+    <string name="pay_method">পেমেন্ট পদ্ধতি</string>
+    <string name="pay_card">ভিসা / মাস্টারকার্ড / অ্যামেক্স</string>
+    <string name="pay_bkash">বিকাশ</string>
+    <string name="pay_nagad">নগদ</string>
+    <string name="pay_rocket">রকেট</string>
+    <string name="pay_terms">ভাড়ার নিয়ম ও শর্তাবলিতে আমি সম্মত</string>
+    <string name="pay_button">%s দিন</string>
+    <string name="pay_simulate_failure">ব্যর্থ পেমেন্ট দেখুন (ডেমো)</string>
+    <string name="pay_success_title">অভিনন্দন! আপনার টিকিট কনফার্ম হয়েছে 🎉</string>
+    <string name="pay_success_body">ই-টিকিট এসএমএস ও ইমেইলে পাঠানো হয়েছে।</string>
+    <string name="pay_failure_title">পেমেন্ট সফল হয়নি</string>
+    <string name="pay_failure_body">আপনার কোনো টাকা কাটা হয়নি। আবার চেষ্টা করুন বা অন্য পদ্ধতি বেছে নিন।</string>
+    <string name="pay_try_again">আবার চেষ্টা করুন</string>
+    <string name="pay_view_trips">আমার যাত্রা দেখুন</string>
+    <string name="pay_go_home">হোমে ফিরে যান</string>
+    <string name="pay_sample_ticket">নমুনা টিকিট</string>
+    <string name="pay_pnr">পিএনআর</string>
+    <string name="pay_qr">টিকিটের কিউআর কোড</string>
+    <string name="pay_sample_route">ঢাকা → কক্সবাজার</string>
+</resources>

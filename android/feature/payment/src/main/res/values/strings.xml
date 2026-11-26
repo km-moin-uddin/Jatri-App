@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pay_phase">Phase 4 (payment gateway sandbox)</string>
+    <string name="pay_review_title">Review &amp; pay</string>
+    <string name="pay_hold_timer">Seats held for %s</string>
+    <string name="pay_price_details">Price details</string>
+    <string name="pay_base_fare">Base fare</string>
+    <string name="pay_taxes">Taxes &amp; fees</string>
+    <string name="pay_service_charge">Service charge</string>
+    <string name="pay_discount">Discount</string>
+    <string name="pay_total">Total</string>
+    <string name="pay_promo">Promo code</string>
+    <string name="pay_method">Payment method</string>
+    <string name="pay_card">Visa / Mastercard / Amex</string>
+    <string name="pay_bkash">bKash</string>
+    <string name="pay_nagad">Nagad</string>
+    <string name="pay_rocket">Rocket</string>
+    <string name="pay_terms">I agree to the fare rules and terms</string>
+    <string name="pay_button">Pay %s</string>
+    <string name="pay_simulate_failure">Simulate failed payment (demo)</string>
+    <string name="pay_success_title">Congratulations! Your ticket is confirmed 🎉</string>
+    <string name="pay_success_body">We have sent the e-ticket by SMS and email.</string>
+    <string name="pay_failure_title">Payment failed</string>
+    <string name="pay_failure_body">No money was taken. Please try again or choose another payment method.</string>
+    <string name="pay_try_again">Try again</string>
+    <string name="pay_view_trips">View My Trips</string>
+    <string name="pay_go_home">Back to home</string>
+    <string name="pay_sample_ticket">Sample ticket</string>
+    <string name="pay_pnr">PNR</string>
+    <string name="pay_qr">Ticket QR code</string>
+    <string name="pay_sample_route">Dhaka → Cox\'s Bazar</string>
+</resources>
