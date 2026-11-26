@@ -1,10 +1,16 @@
-# Pushing a tag like `phase-3` creates a GitHub Release with the APK attached.
-# Download it on a phone from the repository's Releases page.
+# Creates a GitHub Release with the APK attached, either by pushing a tag like `phase-3`
+# or by running this workflow by hand (Actions → Release → Run workflow) with a tag name;
+# the run then creates the tag on the chosen commit itself.
 name: Release
 
 on:
   push:
     tags: ["phase-*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to create, e.g. phase-3"
+        required: true
 
 permissions:
   contents: write
@@ -15,6 +21,9 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve tag
+        run: echo "TAG=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_ENV"
 
       - uses: actions/setup-java@v4
         with:
@@ -34,13 +43,15 @@ jobs:
         run: ./gradlew :app:assembleDebug
 
       - name: Name the APK after the tag
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk "Jatri-${GITHUB_REF_NAME}-debug.apk"
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "Jatri-${TAG}-debug.apk"
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          name: "Jatri ${{ github.ref_name }}"
-          files: "Jatri-${{ github.ref_name }}-debug.apk"
+          tag_name: ${{ env.TAG }}
+          target_commitish: ${{ github.sha }}
+          name: "Jatri ${{ env.TAG }}"
+          files: "Jatri-${{ env.TAG }}-debug.apk"
           body: |
             Debug build for testing on a phone. It uses the built-in demo backend:
             log in with any valid number (e.g. 01712345678) and OTP **123456**.
