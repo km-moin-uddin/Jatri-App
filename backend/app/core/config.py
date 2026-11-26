@@ -32,6 +32,19 @@ class Settings(BaseSettings):
 
     sms_provider: str = Field(default="console", description="console | (real gateway adapter later)")
 
+    # Redis: search cache + seat-hold locks. Without it an in-process fallback is used (dev/tests only).
+    redis_url: str | None = None
+    search_cache_seconds: int = 300
+
+    # Fernet key for personal data at rest (NID / passport numbers). `python -c "from cryptography.fernet
+    # import Fernet; print(Fernet.generate_key().decode())"`. The dev default is derived from secret_key.
+    data_key: str | None = None
+
+    # Booking
+    hold_minutes: int = 10
+    max_bus_seats: int = 4
+    bus_service_charge_paisa: int = 3000  # ৳30 per seat
+
     @property
     def is_prod(self) -> bool:
         return self.env == "prod"
@@ -45,4 +58,8 @@ def get_settings() -> Settings:
             raise RuntimeError("JATRI_SECRET_KEY must be a long random value in production")
         if settings.dev_fixed_otp:
             raise RuntimeError("JATRI_DEV_FIXED_OTP must not be set in production")
+        if not settings.data_key:
+            raise RuntimeError("JATRI_DATA_KEY must be set in production")
+        if not settings.redis_url:
+            raise RuntimeError("JATRI_REDIS_URL must be set in production")
     return settings
