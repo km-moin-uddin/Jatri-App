@@ -16,12 +16,12 @@ import com.jatri.core.designsystem.theme.JatriTheme
 import com.jatri.core.designsystem.theme.Spacing
 import com.jatri.core.ui.placeholder.PhasePlaceholderScreen
 
-/** Layout preview of the passenger form. Fields are disabled until validation lands in Phase 3. */
+/** Flight/train passenger form preview. The real forms come with Phases 5 and 6. */
 @Composable
-fun PassengerDetailsScreen(onBack: () -> Unit, onContinue: () -> Unit) {
+fun PassengerPreviewScreen(onBack: () -> Unit, onContinue: () -> Unit) {
     PhasePlaceholderScreen(
         title = stringResource(R.string.booking_title),
-        phase = stringResource(R.string.booking_phase),
+        phase = stringResource(R.string.booking_preview_phase),
         onBack = onBack,
         primaryActionText = stringResource(R.string.booking_continue),
         onPrimaryAction = onContinue,

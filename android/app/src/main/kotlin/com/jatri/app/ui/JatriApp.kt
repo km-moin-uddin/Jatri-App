@@ -35,7 +35,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -58,6 +57,7 @@ import com.jatri.feature.auth.navigation.OnboardingDestination
 import com.jatri.feature.auth.navigation.authFlow
 import com.jatri.feature.auth.navigation.navigateToLogin
 import com.jatri.feature.auth.navigation.onboardingScreen
+import com.jatri.feature.booking.navigation.PassengerDetailsDestination
 import com.jatri.feature.booking.navigation.bookingScreens
 import com.jatri.feature.booking.navigation.navigateToPassengerDetails
 import com.jatri.feature.bus.navigation.busScreens
@@ -104,19 +104,19 @@ fun JatriApp(startDestination: Any, networkMonitor: NetworkMonitor, isLoggedIn: 
 @Composable
 private fun JatriNavHost(navController: NavHostController, startDestination: Any, isLoggedIn: () -> Boolean) {
     // Searching works as a guest; booking needs an account. After logging in, carry on to the form.
-    var bookingAfterLogin by rememberSaveable { mutableStateOf(false) }
-    val toPassengers = {
+    var pendingBooking by remember { mutableStateOf<PassengerDetailsDestination?>(null) }
+    val toPassengers: (PassengerDetailsDestination) -> Unit = { destination ->
         if (isLoggedIn()) {
-            navController.navigateToPassengerDetails()
+            navController.navigateToPassengerDetails(destination)
         } else {
-            bookingAfterLogin = true
+            pendingBooking = destination
             navController.navigateToLogin()
         }
     }
     val leaveAuth = {
         navController.popBackStack<LoginDestination>(inclusive = true)
-        if (bookingAfterLogin && isLoggedIn()) navController.navigateToPassengerDetails()
-        bookingAfterLogin = false
+        pendingBooking?.takeIf { isLoggedIn() }?.let(navController::navigateToPassengerDetails)
+        pendingBooking = null
     }
     NavHost(navController = navController, startDestination = startDestination) {
         onboardingScreen(
@@ -135,10 +135,27 @@ private fun JatriNavHost(navController: NavHostController, startDestination: Any
             onSeeAllOffers = { navController.navigateToTab(TopLevelDestination.OFFERS) },
             onAccountClick = { navController.navigateToTab(TopLevelDestination.ACCOUNT) },
         )
-        flightScreens(navController, onContinueToPassengers = toPassengers)
-        busScreens(navController, onContinueToPassengers = toPassengers)
-        trainScreens(navController, onContinueToPassengers = toPassengers)
-        bookingScreens(navController, onContinueToPayment = { navController.navigateToReviewPay() })
+        flightScreens(navController, onContinueToPassengers = { toPassengers(PassengerDetailsDestination(mode = "flight")) })
+        busScreens(
+            navController,
+            onContinueToPassengers = { sel ->
+                toPassengers(
+                    PassengerDetailsDestination(
+                        mode = "bus",
+                        tripId = sel.tripId,
+                        seats = sel.seats.joinToString(","),
+                        boardingPointId = sel.boardingPointId,
+                        droppingPointId = sel.droppingPointId,
+                    ),
+                )
+            },
+        )
+        trainScreens(navController, onContinueToPassengers = { toPassengers(PassengerDetailsDestination(mode = "train")) })
+        bookingScreens(
+            navController,
+            onHeld = { bookingId -> navController.navigateToReviewPay(bookingId) },
+            onPreviewContinue = { navController.navigateToReviewPay() },
+        )
         paymentScreens(
             navController = navController,
             onViewTrips = { navController.navigateToTab(TopLevelDestination.TRIPS) },

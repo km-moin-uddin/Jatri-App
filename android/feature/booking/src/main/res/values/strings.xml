@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="booking_phase">Phase 3 (passenger form &amp; booking hold)</string>
     <string name="booking_title">Passenger details</string>
     <string name="booking_passenger">Passenger %s</string>
     <string name="booking_full_name">Full name (as on NID/passport)</string>
@@ -11,4 +10,23 @@
     <string name="booking_email">Email (for e-ticket)</string>
     <string name="booking_saved_traveller">Select saved traveller</string>
     <string name="booking_continue">Review &amp; pay</string>
+    <string name="booking_age">Age</string>
+    <string name="booking_male">Male</string>
+    <string name="booking_female">Female</string>
+    <string name="booking_other">Other</string>
+    <string name="booking_seat">Seat %s</string>
+    <string name="booking_ladies_seat">Ladies seat</string>
+    <string name="booking_name_error">Enter the full name</string>
+    <string name="booking_age_error">Enter a valid age</string>
+    <string name="booking_phone_error">Enter a valid 11-digit mobile number</string>
+    <string name="booking_email_error">Enter a valid email address</string>
+    <string name="booking_gender_error">Choose gender</string>
+    <string name="booking_hold_note">Your seats are held for 10 minutes after this step while you pay.</string>
+    <string name="booking_nid_optional">NID number (optional)</string>
+    <string name="booking_nid_error">NID must be 10, 13 or 17 digits</string>
+    <string name="booking_total">Total for %s seats</string>
+    <string name="booking_price_changed_title">Fare changed</string>
+    <string name="booking_ok">OK</string>
+    <string name="booking_choose_again">Choose seats again</string>
+    <string name="booking_preview_phase">Phase 5–6 (flight and train passenger forms)</string>
 </resources>

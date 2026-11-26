@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="bus_phase">Phase 3 (বাস মডিউল)</string>
     <string name="bus_seats_title">সিট বেছে নিন</string>
     <string name="bus_selected_seats">সিট: %s</string>
     <string name="bus_no_seat_selected">সিট বাছাই করতে ট্যাপ করুন</string>
     <string name="bus_continue">এগিয়ে যান</string>
-    <string name="bus_boarding_note">ওঠার ও নামার স্থান পরের ধাপে বেছে নেবেন (Phase 3)।</string>
+    <string name="bus_boarding_point">ওঠার স্থান</string>
+    <string name="bus_dropping_point">নামার স্থান</string>
+    <string name="bus_choose_boarding">কোথা থেকে উঠবেন?</string>
+    <string name="bus_choose_dropping">কোথায় নামবেন?</string>
+    <string name="bus_seat_limit">একটি বুকিংয়ে সর্বোচ্চ %sটি সিট নেওয়া যাবে।</string>
+    <string name="bus_ladies_note">গোলাপি সিটগুলো নারী যাত্রীদের জন্য সংরক্ষিত।</string>
 </resources>

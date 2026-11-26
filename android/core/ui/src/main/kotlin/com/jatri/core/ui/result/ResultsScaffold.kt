@@ -23,6 +23,9 @@ import androidx.compose.ui.res.stringResource
 import com.jatri.core.common.format.DateTimeFormats
 import com.jatri.core.common.format.localized
 import com.jatri.core.designsystem.component.EmptyState
+import com.jatri.core.designsystem.component.ErrorState
+import com.jatri.core.model.AppError
+import com.jatri.core.ui.text
 import com.jatri.core.designsystem.component.JatriTopAppBar
 import com.jatri.core.designsystem.component.PillChip
 import com.jatri.core.designsystem.component.ShimmerList
@@ -53,6 +56,8 @@ fun ResultsScaffold(
     onDateChange: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
     today: LocalDate = LocalDate.now(),
+    error: AppError? = null,
+    onRetry: () -> Unit = {},
     content: LazyListScope.() -> Unit,
 ) {
     Scaffold(
@@ -78,6 +83,7 @@ fun ResultsScaffold(
             SortPills(sort, onSortChange)
             when {
                 loading -> ShimmerList()
+                error != null -> ErrorState(onRetry = onRetry, message = error.text())
                 count == 0 -> EmptyState(
                     title = stringResource(R.string.ui_no_results_title),
                     message = stringResource(R.string.ui_no_results_body),
