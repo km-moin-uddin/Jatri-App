@@ -1,10 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="flight_phase">Phase 5 (flight provider sandbox)</string>
-    <string name="flight_details_title">Fare details</string>
-    <string name="flight_fare_rules">Fare rules</string>
-    <string name="flight_rule_change">Date change: ৳1,500 + fare difference</string>
-    <string name="flight_rule_cancel">Cancellation: ৳2,000 fee before 24 hours</string>
-    <string name="flight_rule_noshow">No-show: non-refundable</string>
-    <string name="flight_continue">Continue to passenger details</string>
+    <string name="flight_details_title">Flight details</string>
+    <string name="flight_continue">Continue</string>
+    <string name="flight_total">Total</string>
+    <string name="flight_price_breakdown">Price details</string>
+    <string name="flight_base_tax">Fare %1$s + taxes %2$s each</string>
+    <string name="flight_service_charge">Service charge</string>
+    <string name="flight_price_updated">Price updated: was %1$s, now %2$s</string>
+    <string name="flight_passport_note">International trip: every passenger needs a passport valid for 6 months after the trip.</string>
+    <string name="flight_hidden_by_filters">%1$s more flights hidden by filters</string>
+    <string name="flight_filters">Filters</string>
+    <string name="flight_filter_max_price">Max price: %1$s</string>
+    <string name="flight_filter_stops">Stops</string>
+    <string name="flight_filter_any">Any</string>
+    <string name="flight_filter_nonstop">Nonstop</string>
+    <string name="flight_filter_one_stop">Up to 1 stop</string>
+    <string name="flight_filter_departure">Departure time</string>
+    <string name="flight_slot_early">Before 6 AM</string>
+    <string name="flight_slot_morning">6 AM – 12 PM</string>
+    <string name="flight_slot_afternoon">12 PM – 6 PM</string>
+    <string name="flight_slot_evening">After 6 PM</string>
+    <string name="flight_filter_airlines">Airlines</string>
+    <string name="flight_filter_refundable">Refundable only</string>
+    <string name="flight_filter_show">Show %1$s flights</string>
 </resources>

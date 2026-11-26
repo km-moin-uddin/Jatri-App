@@ -3,11 +3,12 @@
 One Android app to search, compare, book and pay for **flight, bus and train tickets in Bangladesh**.
 "Jatri" is a working name.
 
-> **Status: Phase 4 (Payments) is done.** Built so far:
+> **Status: Phase 5 (Flights) is done.** Built so far:
 > - Phase 1: foundation and the v2 "soft neutral" style.
 > - Phase 2: phone OTP login and the FastAPI backend.
 > - Phase 3: bus search, seat map and booking hold.
 > - Phase 4: payment gateway sandbox, verified callbacks, e-ticket with QR and PDF.
+> - Phase 5: flight search (one way, round trip, multi-city), filters, fare rules, passengers, PNR hold, e-tickets.
 
 | Bangla · light | English · light | Bangla · dark |
 |---|---|---|
@@ -72,6 +73,33 @@ cd android
 The first launch shows onboarding (choose Bangla or English), then Home. Walk through it: pick
 cities, then Search, a result, a seat or class, passenger details, Review & pay, and the success
 screen. Every step in that flow can be reached.
+
+## Phase 5 — flights
+
+| Search (round trip) | Results + filters | Fare details | Passengers | E-ticket |
+|---|---|---|---|---|
+| ![](docs/screenshots/phase5/bn_light_12_flight_search.png) | ![](docs/screenshots/phase5/en_light_13_flight_results.png) | ![](docs/screenshots/phase5/en_light_14_flight_details.png) | ![](docs/screenshots/phase5/bn_light_15_flight_passengers.png) | ![](docs/screenshots/phase5/en_light_17_flight_e_ticket.png) |
+
+- **FlightProvider adapter** (`search`, `get_details`, `hold`, `confirm`, `cancel`, `get_status`) with a
+  deterministic **mock provider** (placeholder airlines "Sample Air", "Demo Airways"...). A Duffel
+  adapter can replace it later without touching the rest.
+- **Search**: one way, round trip and multi-city (up to 4 flights); adults, children and infants
+  (infants ≤ adults, at most 9 with a seat); Economy, Premium Economy, Business.
+  - Regional airports connect through Dhaka; long international routes also get one-stop options.
+  - Times are shown in **each airport's local time** (as on a boarding pass); durations are real.
+- **Results**: airline, flight numbers, times with "+1", duration, stops, baggage, refundable tag,
+  seats left and the total price. **Filters**: max price, airline, stops, departure time, refundable
+  only. **Sort**: cheapest, fastest, earliest. Date pills move the whole trip (a round trip keeps its length).
+- **Fare details**: every leg with aircraft and layovers, the **fare rules in plain words** (refund
+  fee, date change fee, deadline, no-show, baggage) and the price per passenger type. The price is
+  checked live; if it changed since the list, the screen says so.
+- **Passengers**: given name + surname in English letters (as on the passport/NID), gender, date of
+  birth (age must fit adult 12+ / child 2–11 / infant under 2 on the travel dates); **international
+  trips need a passport valid 6 months after the trip**. The server checks all of it again.
+- **Booking**: `POST /bookings` with `mode: "flight"` re-prices the offer (`price_changed`), holds it
+  with the airline (PNR) for 10 minutes, then the same payment flow as buses issues **13-digit e-ticket
+  numbers** and a flight PDF ticket (local times, baggage, cabin, PNR).
+- Endpoints: `POST /flights/search` (cached), `GET /flights/{offer_id}` (live). Migration `0004`.
 
 ## Phase 4 — payments & e-tickets
 
@@ -181,8 +209,8 @@ to `10.0.2.2` and `localhost`. Release builds are HTTPS-only.
 | Bus trips & seats | Real API flow, **mock bus provider** with placeholder operators ("Sample Paribahan") | When an authorised bus API is connected |
 | Payment gateway | Mock gateway by default; SSLCommerz adapter needs a sandbox store id/password | When you create the SSLCommerz sandbox account |
 | PDF in the demo APK | The demo backend has no PDF renderer (QR ticket works) | Works with the real backend |
-| Flight / train passenger form | Layout preview with disabled fields | Phases 5–6 |
-| Flight results, fare rules | `MockContent` with placeholder airlines ("Sample Air") | Phase 5 |
+| Flights | Real API flow, **mock flight provider** with placeholder airlines ("Sample Air") and approximate prices | When a Duffel (or other) sandbox key is added |
+| Train passenger form | Layout preview with disabled fields | Phase 6 |
 | Train results | `MockContent` ("Sample Express") | Phase 6 |
 | My Trips, ticket detail | One sample ticket, clearly labelled | Phase 7 |
 | Offers, popular routes | Sample promo codes | Phase 8 |
@@ -260,4 +288,14 @@ big bold left-aligned headlines.
 - স্বাক্ষর করা QR সহ ই-টিকিট।
 - বাংলা PDF টিকিট।
 
-**পরের ধাপ:** Phase 5। এতে ফ্লাইট মডিউল আসবে।
+**Phase 5 সম্পন্ন:**
+- ফ্লাইট সার্চ: একমুখী, রিটার্ন আর মাল্টি-সিটি (সর্বোচ্চ ৪টি ফ্লাইট)।
+- ফলাফলে ফিল্টার (দাম, এয়ারলাইন, বিরতি, ছাড়ার সময়, রিফান্ডযোগ্য) আর সাজানো।
+- ভাড়ার নিয়ম সহজ ভাষায়: রিফান্ড, তারিখ পরিবর্তন, ব্যাগেজ।
+- যাত্রীর তথ্য: পাসপোর্টের মতো ইংরেজি নাম, জন্মতারিখ, আন্তর্জাতিক যাত্রায় পাসপোর্ট (যাত্রার পর ৬ মাস মেয়াদ)।
+- এয়ারলাইনের কাছে ১০ মিনিটের হোল্ড (PNR), পেমেন্ট, তারপর ই-টিকিট নম্বর আর PDF।
+- প্রতিটি বিমানবন্দরের স্থানীয় সময় দেখায়।
+
+এয়ারলাইনের ডেটা এখনো নমুনা (mock provider)। Duffel-এর key দিলে আসল স্যান্ডবক্স যুক্ত হবে।
+
+**পরের ধাপ:** Phase 6। এতে ট্রেন মডিউল আসবে।

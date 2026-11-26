@@ -37,7 +37,7 @@
     <string name="pay_ref">বুকিং %s</string>
     <string name="pay_seats">সিট: %s</string>
     <string name="pay_board_drop">%1$s → %2$s</string>
-    <string name="pay_demo_note">আপনার সিট সত্যিই সংরক্ষিত আছে। পেমেন্ট আপাতত ডেমো, কোনো টাকা কাটা হবে না।</string>
+    <string name="pay_demo_note">স্যান্ডবক্স পেমেন্ট: আসল টাকা কাটা হবে না।</string>
     <string name="pay_processing_title">পেমেন্ট নিশ্চিত করা হচ্ছে</string>
     <string name="pay_processing_body">পেমেন্ট সার্ভিসের সাথে যাচাই করা হচ্ছে। অনুগ্রহ করে অ্যাপ বন্ধ করবেন না।</string>
     <string name="pay_demo_gateway_title">ডেমো পেমেন্ট গেটওয়ে</string>
@@ -54,4 +54,9 @@
     <string name="pay_ticket_no">টিকিট নং %s</string>
     <string name="pay_no_pdf_app">পিডিএফ খোলার মতো কোনো অ্যাপ পাওয়া যায়নি।</string>
     <string name="pay_ok">ঠিক আছে</string>
+    <string name="pay_taxes">ট্যাক্স ও ফি</string>
+    <string name="pay_flights">ফ্লাইট</string>
+    <string name="pay_document">ডকুমেন্ট %1$s</string>
+    <string name="pay_eticket_no">ই-টিকিট %1$s</string>
+    <string name="pay_hold_timer_flight">%1$s সময়ের জন্য ভাড়া সংরক্ষিত</string>
 </resources>

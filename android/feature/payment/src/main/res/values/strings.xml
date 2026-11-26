@@ -37,7 +37,7 @@
     <string name="pay_ref">Booking %s</string>
     <string name="pay_seats">Seats: %s</string>
     <string name="pay_board_drop">%1$s → %2$s</string>
-    <string name="pay_demo_note">Your seats are really held. Payment itself is a demo for now: no money will be taken.</string>
+    <string name="pay_demo_note">Sandbox payment: no real money is taken.</string>
     <string name="pay_processing_title">Confirming your payment</string>
     <string name="pay_processing_body">We\'re checking with the payment service. Please don\'t close the app.</string>
     <string name="pay_demo_gateway_title">Demo payment gateway</string>
@@ -54,4 +54,9 @@
     <string name="pay_ticket_no">Ticket no. %s</string>
     <string name="pay_no_pdf_app">No app found to open PDF files.</string>
     <string name="pay_ok">OK</string>
+    <string name="pay_taxes">Taxes and fees</string>
+    <string name="pay_flights">Flights</string>
+    <string name="pay_document">Document %1$s</string>
+    <string name="pay_eticket_no">E-ticket %1$s</string>
+    <string name="pay_hold_timer_flight">Fare held for %1$s</string>
 </resources>

@@ -219,15 +219,15 @@ private fun ExtraLegRow(index: Int, leg: LegQuery, actions: FlightSearchActions,
         }
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             OptionField(
-                label = stringResource(R.string.ui_from),
-                value = leg.from?.let { "${it.code} · ${it.city(language)}" } ?: stringResource(R.string.ui_select_airport_short),
+                label = stringResource(R.string.ui_from) + (leg.from?.let { " · ${it.code}" } ?: ""),
+                value = leg.from?.city(language) ?: stringResource(R.string.ui_select_airport_short),
                 icon = JatriIcons.Flight,
                 onClick = { actions.onLegFromClick(index) },
                 modifier = Modifier.weight(1f),
             )
             OptionField(
-                label = stringResource(R.string.ui_to),
-                value = leg.to?.let { "${it.code} · ${it.city(language)}" } ?: stringResource(R.string.ui_select_airport_short),
+                label = stringResource(R.string.ui_to) + (leg.to?.let { " · ${it.code}" } ?: ""),
+                value = leg.to?.city(language) ?: stringResource(R.string.ui_select_airport_short),
                 icon = JatriIcons.Flight,
                 onClick = { actions.onLegToClick(index) },
                 modifier = Modifier.weight(1f),

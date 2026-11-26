@@ -40,6 +40,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jatri.core.common.format.DateTimeFormats
 import com.jatri.core.common.format.format
+import com.jatri.core.common.format.localizeDigits
 import com.jatri.core.designsystem.component.JatriBottomSheet
 import com.jatri.core.designsystem.component.JatriCtaButton
 import com.jatri.core.designsystem.component.JatriOutlinedButton
@@ -52,6 +53,8 @@ import com.jatri.core.designsystem.icon.JatriIcons
 import com.jatri.core.designsystem.theme.JatriTheme
 import com.jatri.core.designsystem.theme.Spacing
 import com.jatri.core.model.Booking
+import com.jatri.core.ui.flight.BookedFlights
+import com.jatri.core.ui.flight.label
 import com.jatri.core.model.Location
 import com.jatri.core.model.Money
 import com.jatri.core.ui.QrCode
@@ -190,24 +193,36 @@ fun TicketResultScreen(
             notchOffsetFraction = 0.5f,
             top = {
                 Text(
-                    "${from?.city(lang) ?: seg?.fromId.orEmpty()} → ${to?.city(lang) ?: seg?.toId.orEmpty()}",
+                    "${from?.city(lang) ?: seg?.fromId.orEmpty()} ${if (booking.isFlight && booking.journeys.size == 2) "⇄" else "→"} ${to?.city(lang) ?: seg?.toId.orEmpty()}",
                     style = MaterialTheme.typography.titleLarge,
                 )
-                if (seg != null) {
-                    Text(
-                        DateTimeFormats.shortDate(seg.departAt.toLocalDate(), lang) + " · " + DateTimeFormats.time(seg.departAt, lang),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = JatriTheme.colors.textSecondary,
-                    )
-                    Text("${seg.carrier} · ${seg.number}", style = MaterialTheme.typography.bodyMedium, color = JatriTheme.colors.textSecondary)
-                    seg.boardingPoint?.let {
-                        Text(it.name(lang) + " · " + DateTimeFormats.time(it.time, lang), style = MaterialTheme.typography.bodyMedium)
+                if (booking.isFlight) {
+                    Spacer(Modifier.height(Spacing.xs))
+                    BookedFlights(booking, places = { null })
+                    Spacer(Modifier.height(Spacing.xs))
+                    booking.passengers.forEach { p ->
+                        Text("${p.fullName} · ${p.type.label()}", style = MaterialTheme.typography.titleSmall)
+                        p.ticketNumber?.let {
+                            Text(stringResource(R.string.pay_eticket_no, it.localizeDigits(lang)), style = MaterialTheme.typography.labelSmall, color = JatriTheme.colors.textSecondary)
+                        }
                     }
-                }
-                Spacer(Modifier.height(Spacing.xs))
-                booking.passengers.forEach { p ->
-                    Text("${p.seatNo.orEmpty()} · ${p.fullName}", style = MaterialTheme.typography.titleSmall)
-                    p.ticketNumber?.let { Text(stringResource(R.string.pay_ticket_no, it), style = MaterialTheme.typography.labelSmall, color = JatriTheme.colors.textSecondary) }
+                } else {
+                    if (seg != null) {
+                        Text(
+                            DateTimeFormats.shortDate(seg.departAt.toLocalDate(), lang) + " · " + DateTimeFormats.time(seg.departAt, lang),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = JatriTheme.colors.textSecondary,
+                        )
+                        Text("${seg.carrier} · ${seg.number}", style = MaterialTheme.typography.bodyMedium, color = JatriTheme.colors.textSecondary)
+                        seg.boardingPoint?.let {
+                            Text(it.name(lang) + " · " + DateTimeFormats.time(it.time, lang), style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                    Spacer(Modifier.height(Spacing.xs))
+                    booking.passengers.forEach { p ->
+                        Text("${p.seatNo.orEmpty()} · ${p.fullName}", style = MaterialTheme.typography.titleSmall)
+                        p.ticketNumber?.let { Text(stringResource(R.string.pay_ticket_no, it), style = MaterialTheme.typography.labelSmall, color = JatriTheme.colors.textSecondary) }
+                    }
                 }
             },
             bottom = {

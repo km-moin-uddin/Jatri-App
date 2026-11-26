@@ -47,7 +47,9 @@ uv run ruff check .
 | GET | `/locations?type=&q=` | Airports, bus cities, stations. Search matches English, Bangla and codes |
 | POST | `/buses/search` | `{from_id, to_id, date, coach_type?}`. Cached 5 min in Redis |
 | GET | `/buses/{trip_id}/seats` | Seat map; seats held by others show as `held` |
-| POST | `/bookings` | Holds seats for 10 min (`held`). Send `Idempotency-Key`; pass `expected_total` to detect price changes |
+| POST | `/flights/search` | `{slices: [{from_id, to_id, date}] (1–4), adults, children, infants, cabin}`. Cached 5 min |
+| GET | `/flights/{offer_id}` | Live price, fare rules, baggage; `offer_expired` (409) when gone |
+| POST | `/bookings` | `mode: "bus"` holds seats, `mode: "flight"` holds the fare with a PNR, for 10 min (`held`). Send `Idempotency-Key`; pass `expected_total` to detect price changes |
 | GET | `/bookings`, `/bookings/{id}` | Your bookings only (others get 404). Expired holds turn `cancelled` |
 | POST | `/bookings/{id}/cancel` | Releases an unpaid hold (paid cancellations + refunds: Phase 7) |
 | POST | `/payments/init` | `{booking_id, method}` → `checkout_url` to open in a browser tab. `Idempotency-Key` supported |

@@ -1,10 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="flight_phase">Phase 5 (ফ্লাইট প্রোভাইডার স্যান্ডবক্স)</string>
-    <string name="flight_details_title">ভাড়ার বিস্তারিত</string>
-    <string name="flight_fare_rules">ভাড়ার নিয়ম</string>
-    <string name="flight_rule_change">তারিখ পরিবর্তন: ৳১,৫০০ + ভাড়ার পার্থক্য</string>
-    <string name="flight_rule_cancel">বাতিল: ২৪ ঘণ্টা আগে ৳২,০০০ ফি</string>
-    <string name="flight_rule_noshow">যাত্রা না করলে: রিফান্ড হবে না</string>
-    <string name="flight_continue">যাত্রীর তথ্য দিতে এগিয়ে যান</string>
+    <string name="flight_details_title">ফ্লাইটের বিস্তারিত</string>
+    <string name="flight_continue">এগিয়ে যান</string>
+    <string name="flight_total">মোট</string>
+    <string name="flight_price_breakdown">ভাড়ার বিবরণ</string>
+    <string name="flight_base_tax">প্রতিজন ভাড়া %1$s + ট্যাক্স %2$s</string>
+    <string name="flight_service_charge">সার্ভিস চার্জ</string>
+    <string name="flight_price_updated">দাম বদলেছে: আগে %1$s, এখন %2$s</string>
+    <string name="flight_passport_note">আন্তর্জাতিক যাত্রা: প্রত্যেক যাত্রীর পাসপোর্টের মেয়াদ যাত্রার পর অন্তত ৬ মাস থাকতে হবে।</string>
+    <string name="flight_hidden_by_filters">ফিল্টারের কারণে আরও %1$sটি ফ্লাইট লুকানো</string>
+    <string name="flight_filters">ফিল্টার</string>
+    <string name="flight_filter_max_price">সর্বোচ্চ ভাড়া: %1$s</string>
+    <string name="flight_filter_stops">বিরতি</string>
+    <string name="flight_filter_any">যেকোনো</string>
+    <string name="flight_filter_nonstop">সরাসরি</string>
+    <string name="flight_filter_one_stop">সর্বোচ্চ ১ বিরতি</string>
+    <string name="flight_filter_departure">ছাড়ার সময়</string>
+    <string name="flight_slot_early">ভোর ৬টার আগে</string>
+    <string name="flight_slot_morning">সকাল ৬টা – দুপুর ১২টা</string>
+    <string name="flight_slot_afternoon">দুপুর ১২টা – সন্ধ্যা ৬টা</string>
+    <string name="flight_slot_evening">সন্ধ্যা ৬টার পরে</string>
+    <string name="flight_filter_airlines">এয়ারলাইন</string>
+    <string name="flight_filter_refundable">শুধু রিফান্ডযোগ্য</string>
+    <string name="flight_filter_show">%1$sটি ফ্লাইট দেখুন</string>
 </resources>

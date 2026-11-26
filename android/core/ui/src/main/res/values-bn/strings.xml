@@ -123,4 +123,6 @@
     <string name="ui_no_filter_results_title">ফিল্টারের সাথে মেলে এমন ফ্লাইট নেই</string>
     <string name="ui_no_filter_results_body">আরও ফ্লাইট দেখতে একটি ফিল্টার সরিয়ে দেখুন।</string>
     <string name="ui_clear_filters">ফিল্টার মুছুন</string>
+    <string name="ui_total_for">%1$s জনের মোট</string>
+    <string name="ui_total_incl_tax">ট্যাক্সসহ</string>
 </resources>

@@ -87,7 +87,12 @@ fun FlightResultCard(offer: FlightOffer, onClick: () -> Unit, modifier: Modifier
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            PriceBlock(offer.price.format(lang))
+            // Flight prices are the whole booking (all passengers, taxes included).
+            val travellers = offer.fares.sumOf { it.count }
+            PriceBlock(
+                offer.price.format(lang),
+                if (travellers > 1) stringResource(R.string.ui_total_for, travellers.localized(lang)) else stringResource(R.string.ui_total_incl_tax),
+            )
         }
         Spacer(Modifier.height(Spacing.sm))
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalAlignment = Alignment.CenterVertically) {
@@ -337,10 +342,10 @@ private fun Dot(filled: Boolean) {
 }
 
 @Composable
-private fun PriceBlock(price: String) {
+private fun PriceBlock(price: String, caption: String? = null) {
     Column(horizontalAlignment = Alignment.End) {
         Text(price, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
-        Text(stringResource(R.string.ui_per_person), style = MaterialTheme.typography.labelSmall, color = JatriTheme.colors.textSecondary)
+        Text(caption ?: stringResource(R.string.ui_per_person), style = MaterialTheme.typography.labelSmall, color = JatriTheme.colors.textSecondary)
     }
 }
 

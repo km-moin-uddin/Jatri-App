@@ -123,4 +123,6 @@
     <string name="ui_no_filter_results_title">No flights match your filters</string>
     <string name="ui_no_filter_results_body">Try removing a filter to see more options.</string>
     <string name="ui_clear_filters">Clear filters</string>
+    <string name="ui_total_for">total for %1$s</string>
+    <string name="ui_total_incl_tax">incl. taxes</string>
 </resources>
