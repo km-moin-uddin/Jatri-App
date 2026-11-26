@@ -16,6 +16,12 @@ One Android app to search, compare, book and pay for **flight, bus and train tic
 All 42 screenshots are in [`docs/screenshots/phase1`](docs/screenshots/phase1). They are rendered on the
 JVM by Roborazzi, not on a phone.
 
+## Download the app
+
+Each finished phase is published on the **[Releases page](../../releases)** with a debug APK.
+Open the page on your phone, download the APK, and install it (allow "install unknown apps").
+Every push and pull request also builds an APK, found under **Actions → the run → Artifacts**.
+
 ## Repository layout
 
 ```
@@ -36,6 +42,7 @@ Jatri-App/
 │                            # trips, offers, account, notifications
 ├── backend/                 # FastAPI + PostgreSQL: auth, profile, locations (see backend/README.md)
 ├── design/                  # tokens.json, app icon SVG/PNG sources, font licences
+├── .github/workflows/        # CI: Android build + tests, backend tests, release on phase-* tags
 ├── docs/openapi.json        # API spec exported from the backend
 └── docs/screenshots/
 ```

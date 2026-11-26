@@ -1,0 +1,42 @@
+# Lints and tests the FastAPI backend against a real PostgreSQL.
+name: Backend
+
+on:
+  push:
+    branches: ["main", "claude/**"]
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: jatri
+          POSTGRES_PASSWORD: jatri
+          POSTGRES_DB: jatri_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U jatri" --health-interval 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - name: Migrations apply cleanly
+        env:
+          JATRI_DATABASE_URL: postgresql+asyncpg://jatri:jatri@localhost:5432/jatri_test
+        run: uv run alembic upgrade head && uv run alembic downgrade base
+      - name: Tests (PostgreSQL)
+        env:
+          JATRI_TEST_DATABASE_URL: postgresql+asyncpg://jatri:jatri@localhost:5432/jatri_test
+        run: uv run pytest -q
