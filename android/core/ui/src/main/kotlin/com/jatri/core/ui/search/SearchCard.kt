@@ -54,13 +54,12 @@ import com.jatri.core.ui.label
 import com.jatri.core.ui.selectPlaceRes
 
 /**
- * The home search card: mode tabs, From ⇅ To, date, passengers/class and the orange Search button.
- * Stateless — the caller owns [query] and opens the pickers.
+ * The home search card: From ⇅ To, date, passengers/class and the orange Search button.
+ * Mode pills ([TravelModeTabs]) sit above it on the Home screen. Stateless.
  */
 @Composable
 fun SearchCard(
     query: SearchQuery,
-    onModeChange: (TravelMode) -> Unit,
     onFromClick: () -> Unit,
     onToClick: () -> Unit,
     onSwap: () -> Unit,
@@ -72,9 +71,6 @@ fun SearchCard(
 ) {
     val language = JatriTheme.language
     JatriCard(modifier = modifier.fillMaxWidth()) {
-        TravelModeTabs(selected = query.mode, onSelect = onModeChange)
-        Spacer(Modifier.height(Spacing.md))
-
         Box {
             Column {
                 LocationField(
@@ -151,7 +147,7 @@ private fun LocationField(label: String, location: Location?, placeholder: Strin
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(JatriShapes.button)
+            .clip(JatriShapes.field)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(vertical = Spacing.sm)
             .padding(end = 56.dp),
@@ -198,7 +194,7 @@ private fun SwapButton(onSwap: () -> Unit, modifier: Modifier = Modifier) {
             onSwap()
         },
         shape = CircleShape,
-        border = BorderStroke(1.dp, JatriTheme.colors.divider),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         modifier = modifier.size(Spacing.touchTarget),
     ) {
         Icon(
@@ -221,9 +217,8 @@ private fun OptionField(
     androidx.compose.material3.Surface(
         onClick = onClick,
         modifier = modifier.semantics(mergeDescendants = true) { contentDescription = "$label: $value" },
-        shape = JatriShapes.button,
-        border = BorderStroke(1.dp, JatriTheme.colors.divider),
-        color = MaterialTheme.colorScheme.surface,
+        shape = JatriShapes.field,
+        color = MaterialTheme.colorScheme.background,
     ) {
         Row(Modifier.padding(Spacing.sm), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))

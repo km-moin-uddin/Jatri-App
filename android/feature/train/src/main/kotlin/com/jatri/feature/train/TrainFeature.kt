@@ -66,6 +66,16 @@ class TrainResultsViewModel @Inject constructor(
     val state: StateFlow<TrainResultsUiState> = _state.asStateFlow()
 
     init {
+        load()
+    }
+
+    /** Date pill tapped: search the same route on another day. */
+    fun setDate(date: LocalDate) {
+        _state.update { it.copy(args = it.args.copy(date = date.toString()), loading = true, trips = emptyList()) }
+        load()
+    }
+
+    private fun load() {
         viewModelScope.launch {
             val args = _state.value.args
             val from = locations.getById(args.fromId)
@@ -73,7 +83,7 @@ class TrainResultsViewModel @Inject constructor(
             _state.update { it.copy(from = from, to = to) }
             delay(700)
             val trips = if (from != null && to != null) MockContent.trainTrips(LocalDate.parse(args.date), from, to) else emptyList()
-            _state.update { it.copy(loading = false, trips = trips) }
+            _state.update { if (it.args == args) it.copy(loading = false, trips = trips) else it }
         }
     }
 
@@ -96,6 +106,8 @@ internal fun TrainResultsRoute(
         onSortChange = viewModel::setSort,
         onBack = onBack,
         phase = stringResource(R.string.train_phase),
+        date = state.date,
+        onDateChange = viewModel::setDate,
     ) {
         items(state.sorted, key = { it.id }) { trip -> TrainResultCard(trip, onClassClick = { onClassClick(trip, it) }) }
     }

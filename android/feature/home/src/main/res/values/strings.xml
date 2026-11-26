@@ -14,4 +14,6 @@
     <string name="home_select_from">Select where you are travelling from</string>
     <string name="home_select_to">Select your destination</string>
     <string name="home_offer_code">Code: %s</string>
+    <string name="home_details">View details</string>
+    <string name="home_account">Account</string>
 </resources>

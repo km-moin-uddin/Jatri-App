@@ -86,4 +86,5 @@
     <string name="ui_no_results_body">এই রুটে এখন কোনো টিকিট নেই। অন্য তারিখ চেষ্টা করুন।</string>
     <string name="ui_change_search">খোঁজ পরিবর্তন করুন</string>
     <string name="ui_results_count">%sটি অপশন পাওয়া গেছে</string>
+    <string name="ui_available_trips">যাত্রার অপশন</string>
 </resources>

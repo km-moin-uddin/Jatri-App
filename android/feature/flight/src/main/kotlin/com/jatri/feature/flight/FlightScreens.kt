@@ -45,6 +45,8 @@ internal fun FlightResultsRoute(
         onSortChange = viewModel::setSort,
         onBack = onBack,
         phase = stringResource(R.string.flight_phase),
+        date = state.date,
+        onDateChange = viewModel::setDate,
     ) {
         items(state.sorted, key = { it.id }) { offer ->
             FlightResultCard(offer = offer, onClick = { onOfferClick(offer, state.args) })

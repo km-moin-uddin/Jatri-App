@@ -38,7 +38,7 @@ import com.jatri.core.model.SeatState
 import com.jatri.core.ui.R
 
 private val SeatSize = 44.dp
-private val SeatShape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
+private val SeatShape = RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
 private val LadiesColor = Color(0xFFD9468F)
 
 /**

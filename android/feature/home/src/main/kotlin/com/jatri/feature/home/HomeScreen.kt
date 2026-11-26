@@ -42,7 +42,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jatri.core.common.format.DateTimeFormats
 import com.jatri.core.common.format.format
+import com.jatri.core.designsystem.component.CircleIconButton
 import com.jatri.core.designsystem.component.JatriCard
+import com.jatri.core.designsystem.component.JatriSmallButton
 import com.jatri.core.designsystem.component.SectionHeader
 import com.jatri.core.designsystem.icon.JatriIcons
 import com.jatri.core.designsystem.theme.JatriPalette
@@ -59,7 +61,11 @@ import com.jatri.core.ui.icon
 import com.jatri.core.ui.picker.CityPickerSheet
 import com.jatri.core.ui.picker.DatePickerSheet
 import com.jatri.core.ui.picker.PassengerClassSheet
+import com.jatri.core.ui.ModeIllustration
 import com.jatri.core.ui.search.SearchCard
+import com.jatri.core.ui.search.TravelModeTabs
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import com.jatri.core.ui.selectPlaceRes
 import java.time.LocalTime
 
@@ -68,6 +74,7 @@ internal fun HomeRoute(
     onSearch: (SearchQuery) -> Unit,
     onNotificationsClick: () -> Unit,
     onSeeAllOffers: () -> Unit,
+    onAccountClick: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -82,6 +89,7 @@ internal fun HomeRoute(
             onPopularClick = viewModel::applyPopular,
             onNotificationsClick = onNotificationsClick,
             onSeeAllOffers = onSeeAllOffers,
+            onAccountClick = onAccountClick,
         ),
     )
     when (state.sheet) {
@@ -123,6 +131,7 @@ data class HomeActions(
     val onPopularClick: (PopularRoute) -> Unit = {},
     val onNotificationsClick: () -> Unit = {},
     val onSeeAllOffers: () -> Unit = {},
+    val onAccountClick: () -> Unit = {},
 )
 
 /** Stateless Home screen — used directly by previews and screenshot tests. */
@@ -138,23 +147,27 @@ fun HomeScreen(
         contentPadding = PaddingValues(bottom = Spacing.lg),
     ) {
         item(key = "header") {
-            Box {
-                HomeHeader(now = now, onNotificationsClick = actions.onNotificationsClick)
-                SearchCard(
-                    query = state.query,
-                    onModeChange = actions.onModeChange,
-                    onFromClick = { actions.onOpenSheet(HomeSheet.FROM) },
-                    onToClick = { actions.onOpenSheet(HomeSheet.TO) },
-                    onSwap = actions.onSwap,
-                    onDateClick = { actions.onOpenSheet(HomeSheet.DATE) },
-                    onOptionsClick = { actions.onOpenSheet(HomeSheet.OPTIONS) },
-                    onSearch = actions.onSearch,
-                    errorText = state.error?.let { errorText(it) },
-                    modifier = Modifier
-                        .padding(horizontal = Spacing.screen)
-                        .padding(top = HeaderOverlap),
-                )
-            }
+            HomeHeader(now = now, onNotificationsClick = actions.onNotificationsClick, onAccountClick = actions.onAccountClick)
+        }
+        item(key = "modes") {
+            TravelModeTabs(
+                selected = state.query.mode,
+                onSelect = actions.onModeChange,
+                modifier = Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.md),
+            )
+        }
+        item(key = "search") {
+            SearchCard(
+                query = state.query,
+                onFromClick = { actions.onOpenSheet(HomeSheet.FROM) },
+                onToClick = { actions.onOpenSheet(HomeSheet.TO) },
+                onSwap = actions.onSwap,
+                onDateClick = { actions.onOpenSheet(HomeSheet.DATE) },
+                onOptionsClick = { actions.onOpenSheet(HomeSheet.OPTIONS) },
+                onSearch = actions.onSearch,
+                errorText = state.error?.let { errorText(it) },
+                modifier = Modifier.padding(horizontal = Spacing.screen),
+            )
         }
 
         if (state.recentSearches.isNotEmpty()) {
@@ -203,10 +216,9 @@ fun HomeScreen(
     }
 }
 
-private val HeaderOverlap = 112.dp
-
+/** Round bell + profile buttons, a small greeting and a big bold question, left-aligned. */
 @Composable
-private fun HomeHeader(now: LocalTime, onNotificationsClick: () -> Unit) {
+private fun HomeHeader(now: LocalTime, onNotificationsClick: () -> Unit, onAccountClick: () -> Unit) {
     val greeting = stringResource(
         when (now.hour) {
             in 5..11 -> R.string.home_greeting_morning
@@ -215,34 +227,38 @@ private fun HomeHeader(now: LocalTime, onNotificationsClick: () -> Unit) {
             else -> R.string.home_greeting_night
         },
     )
-    Box(
+    Column(
         Modifier
             .fillMaxWidth()
-            .height(HeaderOverlap + 88.dp)
-            .background(JatriTheme.colors.topBar),
+            .statusBarsPadding()
+            .padding(start = Spacing.screen, end = Spacing.screen, top = Spacing.sm),
     ) {
-        Row(
-            modifier = Modifier
-                .statusBarsPadding()
-                .padding(start = Spacing.screen, end = Spacing.xxs, top = Spacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(greeting, style = MaterialTheme.typography.headlineSmall, color = JatriTheme.colors.onTopBar)
-                Text(
-                    stringResource(R.string.home_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = JatriTheme.colors.onTopBar.copy(alpha = 0.85f),
-                )
-            }
-            IconButton(onClick = onNotificationsClick) {
-                Icon(
-                    JatriIcons.NotificationsOutlined,
-                    contentDescription = stringResource(R.string.home_notifications),
-                    tint = JatriTheme.colors.onTopBar,
-                )
-            }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "$greeting 👋",
+                style = MaterialTheme.typography.bodyLarge,
+                color = JatriTheme.colors.textSecondary,
+                modifier = Modifier.weight(1f),
+            )
+            CircleIconButton(
+                icon = JatriIcons.NotificationsOutlined,
+                contentDescription = stringResource(R.string.home_notifications),
+                onClick = onNotificationsClick,
+            )
+            Spacer(Modifier.width(Spacing.xs))
+            CircleIconButton(
+                icon = JatriIcons.Person,
+                contentDescription = stringResource(R.string.home_account),
+                onClick = onAccountClick,
+                selected = true,
+            )
         }
+        Spacer(Modifier.height(Spacing.xs))
+        Text(
+            stringResource(R.string.home_subtitle),
+            style = MaterialTheme.typography.displayMedium,
+            modifier = Modifier.semantics { heading() },
+        )
     }
 }
 
@@ -256,7 +272,7 @@ private fun errorText(error: SearchError): String = when (error) {
 @Composable
 private fun RecentSearchCard(search: RecentSearch, onClick: () -> Unit) {
     val lang = JatriTheme.language
-    JatriCard(onClick = onClick, modifier = Modifier.width(200.dp), contentPadding = PaddingValues(Spacing.sm)) {
+    JatriCard(onClick = onClick, modifier = Modifier.width(200.dp), contentPadding = PaddingValues(Spacing.md), shape = JatriShapes.cardSmall) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(search.mode.icon, contentDescription = null, tint = search.mode.color, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(Spacing.xs))
@@ -276,30 +292,35 @@ private fun RecentSearchCard(search: RecentSearch, onClick: () -> Unit) {
     }
 }
 
+/** Big card: gradient artwork on top, route and starting price below, black "View details" pill. */
 @Composable
 private fun PopularRouteCard(route: PopularRoute, onClick: () -> Unit) {
     val lang = JatriTheme.language
-    JatriCard(onClick = onClick, modifier = Modifier.width(168.dp), contentPadding = PaddingValues(Spacing.sm)) {
-        Box(
-            Modifier.size(36.dp).background(route.mode.color.copy(alpha = 0.12f), CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(route.mode.icon, contentDescription = null, tint = route.mode.color, modifier = Modifier.size(20.dp))
+    JatriCard(onClick = onClick, modifier = Modifier.width(264.dp), contentPadding = PaddingValues(Spacing.xs)) {
+        ModeIllustration(
+            mode = route.mode,
+            shape = JatriShapes.cardSmall,
+            iconSize = 56.dp,
+            modifier = Modifier.fillMaxWidth().height(132.dp),
+        )
+        Column(Modifier.padding(horizontal = Spacing.xs, vertical = Spacing.sm)) {
+            Text(
+                "${route.from.city(lang)} → ${route.to.city(lang)}",
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(Spacing.xs))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.home_from_price, route.startingFrom.format(lang)),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = JatriTheme.colors.textSecondary,
+                    modifier = Modifier.weight(1f),
+                )
+                JatriSmallButton(text = stringResource(R.string.home_details), onClick = onClick)
+            }
         }
-        Spacer(Modifier.height(Spacing.xs))
-        Text(route.from.city(lang), style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Text(
-            "→ " + route.to.city(lang),
-            style = MaterialTheme.typography.titleSmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            stringResource(R.string.home_from_price, route.startingFrom.format(lang)),
-            style = MaterialTheme.typography.labelMedium,
-            color = JatriTheme.colors.textSecondary,
-        )
     }
 }
 
@@ -340,7 +361,7 @@ private fun OfferBanner(offer: Offer) {
     val index = (offer.id.hashCode() and Int.MAX_VALUE) % offerGradients.size
     // Ink text on the orange gradient keeps WCAG AA contrast; white on teal/maroon.
     val onBanner = if (index == 1) JatriPalette.Ink else Color.White
-    Surface(shape = JatriShapes.card, modifier = Modifier.fillMaxWidth().height(128.dp)) {
+    Surface(shape = JatriShapes.card, modifier = Modifier.fillMaxWidth().height(140.dp)) {
         Box(Modifier.background(Brush.linearGradient(offerGradients[index])).padding(Spacing.md)) {
             Column(Modifier.align(Alignment.CenterStart).padding(end = 64.dp)) {
                 Text(offer.title(lang), style = MaterialTheme.typography.titleLarge, color = onBanner, maxLines = 2)

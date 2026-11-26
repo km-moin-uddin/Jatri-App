@@ -52,7 +52,7 @@ fun JatriCtaButton(
     )
 }
 
-/** Teal primary button for secondary-importance actions ("Continue", "Verify"). */
+/** Black pill button for secondary-importance actions ("Continue", "Verify"). */
 @Composable
 fun JatriPrimaryButton(
     text: String,
@@ -114,9 +114,30 @@ fun JatriOutlinedButton(
         enabled = enabled,
         modifier = modifier.fillMaxWidth().height(Spacing.buttonHeight),
         shape = JatriShapes.button,
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
         ButtonContent(text, leadingIcon)
+    }
+}
+
+/** Small black pill ("View details", "বিস্তারিত") for use inside cards. */
+@Composable
+fun JatriSmallButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(40.dp),
+        shape = JatriShapes.pill,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ),
+        contentPadding = PaddingValues(horizontal = Spacing.md),
+    ) {
+        Text(text, style = MaterialTheme.typography.labelLarge)
     }
 }
 

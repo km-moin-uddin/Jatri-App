@@ -49,14 +49,24 @@ class FlightResultsViewModel @Inject constructor(
     val state: StateFlow<FlightResultsUiState> = _state.asStateFlow()
 
     init {
+        load()
+    }
+
+    /** Date pill tapped: search the same route on another day. */
+    fun setDate(date: LocalDate) {
+        _state.update { it.copy(args = it.args.copy(date = date.toString()), loading = true, offers = emptyList()) }
+        load()
+    }
+
+    private fun load() {
         viewModelScope.launch {
             val args = _state.value.args
             val from = locations.getById(args.fromId)
             val to = locations.getById(args.toId)
             _state.update { it.copy(from = from, to = to) }
             delay(MOCK_LATENCY_MS) // lets the shimmer show, like a real network call
-            val offers = if (from != null && to != null) MockContent.flightOffers(args.date.let(LocalDate::parse), from, to) else emptyList()
-            _state.update { it.copy(loading = false, offers = offers) }
+            val offers = if (from != null && to != null) MockContent.flightOffers(LocalDate.parse(args.date), from, to) else emptyList()
+            _state.update { if (it.args == args) it.copy(loading = false, offers = offers) else it }
         }
     }
 

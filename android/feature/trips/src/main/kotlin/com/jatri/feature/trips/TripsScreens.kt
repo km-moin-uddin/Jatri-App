@@ -11,9 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jatri.core.designsystem.component.EmptyState
 import com.jatri.core.designsystem.component.JatriTopAppBar
+import com.jatri.core.designsystem.component.PillChip
 import com.jatri.core.designsystem.component.StatusChip
 import com.jatri.core.designsystem.component.StatusTone
 import com.jatri.core.designsystem.component.TicketCard
@@ -46,9 +45,12 @@ fun TripsScreen(onSearchTickets: () -> Unit, onTicketClick: (String) -> Unit, sh
     val tabs = listOf(R.string.trips_upcoming, R.string.trips_completed, R.string.trips_cancelled)
     Scaffold(topBar = { JatriTopAppBar(title = stringResource(R.string.trips_title)) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            PrimaryTabRow(selectedTabIndex = tab, containerColor = MaterialTheme.colorScheme.surface) {
+            Row(
+                Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.xs),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+            ) {
                 tabs.forEachIndexed { i, label ->
-                    Tab(selected = tab == i, onClick = { tab = i }, text = { Text(stringResource(label)) })
+                    PillChip(text = stringResource(label), selected = tab == i, onClick = { tab = i })
                 }
             }
             when (tab) {

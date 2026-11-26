@@ -1,31 +1,30 @@
 package com.jatri.core.ui.search
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.jatri.core.designsystem.theme.JatriShapes
 import com.jatri.core.designsystem.theme.JatriTheme
@@ -35,7 +34,10 @@ import com.jatri.core.ui.color
 import com.jatri.core.ui.icon
 import com.jatri.core.ui.labelRes
 
-/** ✈ Flight | 🚌 Bus | 🚆 Train segmented tabs at the top of the search card. */
+/**
+ * Row of mode pills. The selected mode is a black pill with its icon in a white circle and its
+ * name; the others are round icon buttons (with their name for screen readers).
+ */
 @Composable
 fun TravelModeTabs(
     selected: TravelMode,
@@ -43,46 +45,42 @@ fun TravelModeTabs(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(JatriShapes.button)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(4.dp)
-            .selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = modifier.selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         TravelMode.entries.forEach { mode ->
             val isSelected = mode == selected
-            val bg by animateColorAsState(
-                if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
-                tween(200),
-                label = "tabBg",
-            )
-            Column(
+            val label = stringResource(mode.labelRes)
+            Surface(
+                shape = JatriShapes.pill,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                border = if (isSelected) null else BorderStroke(1.dp, JatriTheme.colors.cardBorder),
                 modifier = Modifier
-                    .weight(1f)
-                    .heightIn(min = 56.dp)
-                    .clip(JatriShapes.button)
-                    .background(bg)
+                    .height(56.dp)
                     .selectable(selected = isSelected, role = Role.Tab, onClick = { onSelect(mode) })
-                    .padding(vertical = Spacing.xs),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
+                    .semantics { contentDescription = label }
+                    .animateContentSize(tween(250)),
             ) {
-                Icon(
-                    imageVector = mode.icon,
-                    contentDescription = null,
-                    tint = if (isSelected) mode.color else JatriTheme.colors.textSecondary,
-                    modifier = Modifier.size(24.dp),
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = stringResource(mode.labelRes),
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                    ),
-                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else JatriTheme.colors.textSecondary,
-                )
+                Row(Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .size(48.dp)
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surface,
+                                JatriShapes.circle,
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(mode.icon, contentDescription = null, tint = mode.color, modifier = Modifier.size(24.dp))
+                    }
+                    if (isSelected) {
+                        Spacer(Modifier.width(Spacing.sm))
+                        Text(label, style = MaterialTheme.typography.titleSmall)
+                        Spacer(Modifier.width(Spacing.md))
+                    }
+                }
             }
         }
     }

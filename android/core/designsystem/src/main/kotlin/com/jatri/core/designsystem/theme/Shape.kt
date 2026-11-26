@@ -1,22 +1,26 @@
 package com.jatri.core.designsystem.theme
 
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
-/** Corner radii: buttons 12 · cards 16 · chips 20 · bottom sheets 24 (top corners only). */
+/** Soft, very rounded shapes: pill buttons & chips, 24 dp cards, 28 dp sheets. */
 object JatriShapes {
-    val button = RoundedCornerShape(12.dp)
-    val card = RoundedCornerShape(16.dp)
-    val chip = RoundedCornerShape(20.dp)
-    val sheet = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-    val field = RoundedCornerShape(12.dp)
+    val pill = RoundedCornerShape(percent = 50)
+    val button = pill
+    val chip = pill
+    val circle = CircleShape
+    val card = RoundedCornerShape(24.dp)
+    val cardSmall = RoundedCornerShape(18.dp)
+    val sheet = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    val field = RoundedCornerShape(18.dp)
 }
 
 internal val JatriMaterialShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(24.dp),
-    extraLarge = RoundedCornerShape(28.dp),
+    extraSmall = RoundedCornerShape(10.dp),
+    small = RoundedCornerShape(14.dp),
+    medium = RoundedCornerShape(24.dp),
+    large = RoundedCornerShape(28.dp),
+    extraLarge = RoundedCornerShape(32.dp),
 )

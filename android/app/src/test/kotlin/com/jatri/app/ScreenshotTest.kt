@@ -9,7 +9,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import com.jatri.app.ui.JatriBottomBar
+import com.jatri.app.ui.TopLevelDestination
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -77,7 +80,12 @@ abstract class ScreenshotTest(private val name: String, private val dark: Boolea
     }
 
     @Test fun home() = shot("01_home") {
-        HomeScreen(
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            bottomBar = { JatriBottomBar(current = TopLevelDestination.HOME, onSelect = {}) },
+        ) { padding ->
+            HomeScreen(
+                modifier = Modifier.padding(padding),
             state = HomeUiState(
                 query = SearchQuery(TravelMode.BUS, dhakaCox.from, dhakaCox.to, today.plusDays(1), passengers = PassengerCount(2)),
                 today = today,
@@ -86,7 +94,8 @@ abstract class ScreenshotTest(private val name: String, private val dark: Boolea
             ),
             actions = HomeActions(),
             now = LocalTime.of(9, 0),
-        )
+            )
+        }
     }
 
     @Test fun onboarding() = shot("00_onboarding") {
@@ -105,6 +114,9 @@ abstract class ScreenshotTest(private val name: String, private val dark: Boolea
             onSortChange = {},
             onBack = {},
             phase = "Phase 3",
+            date = today.plusDays(1),
+            onDateChange = {},
+            today = today,
         ) {
             items(MockContent.busTrips(today, dhakaCox.from, dhakaCox.to)) { BusResultCard(it, onClick = {}) }
         }

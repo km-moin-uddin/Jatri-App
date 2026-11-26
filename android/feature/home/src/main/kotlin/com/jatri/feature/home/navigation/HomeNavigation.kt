@@ -13,8 +13,9 @@ fun NavGraphBuilder.homeScreen(
     onSearch: (SearchQuery) -> Unit,
     onNotificationsClick: () -> Unit,
     onSeeAllOffers: () -> Unit,
+    onAccountClick: () -> Unit,
 ) {
     composable<HomeDestination> {
-        HomeRoute(onSearch = onSearch, onNotificationsClick = onNotificationsClick, onSeeAllOffers = onSeeAllOffers)
+        HomeRoute(onSearch = onSearch, onNotificationsClick = onNotificationsClick, onSeeAllOffers = onSeeAllOffers, onAccountClick = onAccountClick)
     }
 }

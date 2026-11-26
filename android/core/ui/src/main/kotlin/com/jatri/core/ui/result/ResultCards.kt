@@ -48,6 +48,7 @@ import com.jatri.core.model.TrainTrip
 import com.jatri.core.model.TravelMode
 import com.jatri.core.ui.R
 import com.jatri.core.ui.color
+import com.jatri.core.ui.icon
 import com.jatri.core.ui.label
 import java.time.Duration
 import java.time.LocalDateTime
@@ -56,33 +57,31 @@ import java.util.Locale
 
 private const val FEW_SEATS = 5
 
-/** Flight result: airline, times with duration line, stops, baggage, refundable tag, price. */
+/** Flight result: times + route line on top, airline and price below, baggage/refund chips. */
 @Composable
 fun FlightResultCard(offer: FlightOffer, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val lang = JatriTheme.language
     JatriCard(modifier = modifier.fillMaxWidth(), onClick = onClick) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OperatorAvatar(offer.airlineName, TravelMode.FLIGHT.color)
-            Spacer(Modifier.width(Spacing.sm))
-            Column(Modifier.weight(1f)) {
-                Text(offer.airlineName, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(offer.flightNumber.localizeIf(lang), style = MaterialTheme.typography.bodySmall, color = JatriTheme.colors.textSecondary)
-            }
-            PriceBlock(offer.price.format(lang))
-        }
-        Spacer(Modifier.height(Spacing.md))
         TimeLine(
+            mode = TravelMode.FLIGHT,
             departAt = offer.departAt,
             arriveAt = offer.arriveAt,
-            fromCode = offer.from.code,
-            toCode = offer.to.code,
-            middle = if (offer.stops == 0) {
+            fromLabel = offer.from.code,
+            toLabel = offer.to.code,
+            caption = DateTimeFormats.duration(offer.duration, lang) + " · " + if (offer.stops == 0) {
                 stringResource(R.string.ui_nonstop)
             } else {
                 pluralStringResource(R.plurals.ui_stops, offer.stops, offer.stops.localized(lang))
             },
-            duration = offer.duration,
         )
+        Spacer(Modifier.height(Spacing.md))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(offer.airlineName, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(offer.flightNumber.localizeDigits(lang), style = MaterialTheme.typography.bodySmall, color = JatriTheme.colors.textSecondary)
+            }
+            PriceBlock(offer.price.format(lang))
+        }
         Spacer(Modifier.height(Spacing.sm))
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalAlignment = Alignment.CenterVertically) {
             StatusChip(
@@ -99,50 +98,49 @@ fun FlightResultCard(offer: FlightOffer, onClick: () -> Unit, modifier: Modifier
     }
 }
 
-/** Bus result: operator, coach type, times, boarding point, seats left, price. */
+/** Bus result: times + route line, operator & coach type, boarding point, seats left, price. */
 @Composable
 fun BusResultCard(trip: BusTrip, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val lang = JatriTheme.language
     JatriCard(modifier = modifier.fillMaxWidth(), onClick = onClick) {
+        TimeLine(
+            mode = TravelMode.BUS,
+            departAt = trip.departAt,
+            arriveAt = trip.arriveAt,
+            fromLabel = trip.from.city(lang),
+            toLabel = trip.to.city(lang),
+            caption = DateTimeFormats.duration(Duration.between(trip.departAt, trip.arriveAt), lang),
+        )
+        Spacer(Modifier.height(Spacing.md))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            OperatorAvatar(trip.operatorName, TravelMode.BUS.color)
-            Spacer(Modifier.width(Spacing.sm))
             Column(Modifier.weight(1f)) {
-                Text(trip.operatorName, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        trip.operatorName,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    Spacer(Modifier.width(Spacing.xs))
                     TagChip(trip.coachType.label(), TravelMode.BUS.color)
-                    Text(trip.coachNumber, style = MaterialTheme.typography.bodySmall, color = JatriTheme.colors.textSecondary)
                 }
+                Text(
+                    stringResource(R.string.ui_boarding_at, trip.boardingPoint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = JatriTheme.colors.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
             PriceBlock(trip.price.format(lang))
         }
-        Spacer(Modifier.height(Spacing.md))
-        TimeLine(
-            departAt = trip.departAt,
-            arriveAt = trip.arriveAt,
-            fromCode = trip.from.city(lang),
-            toCode = trip.to.city(lang),
-            middle = null,
-            duration = Duration.between(trip.departAt, trip.arriveAt),
-        )
         Spacer(Modifier.height(Spacing.sm))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(JatriIcons.Location, contentDescription = null, tint = JatriTheme.colors.textSecondary, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text(
-                stringResource(R.string.ui_boarding_at, trip.boardingPoint),
-                style = MaterialTheme.typography.bodySmall,
-                color = JatriTheme.colors.textSecondary,
-                modifier = Modifier.weight(1f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            SeatsChip(trip.seatsAvailable, lang)
-        }
+        SeatsChip(trip.seatsAvailable, lang)
     }
 }
 
-/** Train result: name & number, times, off-day, a tappable fare box per class. */
+/** Train result: times + route line, name & number, off-day, a tappable fare pill per class. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TrainResultCard(
@@ -152,35 +150,29 @@ fun TrainResultCard(
 ) {
     val lang = JatriTheme.language
     JatriCard(modifier = modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OperatorAvatar(trip.trainName, TravelMode.TRAIN.color)
-            Spacer(Modifier.width(Spacing.sm))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    "${trip.trainName} (${trip.trainNumber.localizeIf(lang)})",
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                trip.offDay?.let { day ->
-                    Text(
-                        stringResource(R.string.ui_off_day, day.getDisplayName(TextStyle.FULL, lang.locale())),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = JatriTheme.colors.textSecondary,
-                    )
-                }
-            }
-        }
-        Spacer(Modifier.height(Spacing.md))
         TimeLine(
+            mode = TravelMode.TRAIN,
             departAt = trip.departAt,
             arriveAt = trip.arriveAt,
-            fromCode = trip.from.city(lang),
-            toCode = trip.to.city(lang),
-            middle = null,
-            duration = Duration.between(trip.departAt, trip.arriveAt),
+            fromLabel = trip.from.city(lang),
+            toLabel = trip.to.city(lang),
+            caption = DateTimeFormats.duration(Duration.between(trip.departAt, trip.arriveAt), lang),
         )
-        HorizontalDivider(Modifier.padding(vertical = Spacing.sm), color = JatriTheme.colors.divider)
+        Spacer(Modifier.height(Spacing.md))
+        Text(
+            "${trip.trainName} (${trip.trainNumber.localizeDigits(lang)})",
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        trip.offDay?.let { day ->
+            Text(
+                stringResource(R.string.ui_off_day, day.getDisplayName(TextStyle.FULL, lang.locale())),
+                style = MaterialTheme.typography.bodySmall,
+                color = JatriTheme.colors.textSecondary,
+            )
+        }
+        Spacer(Modifier.height(Spacing.sm))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             trip.classes.forEach { fare -> TrainFareBox(fare, lang) { onClassClick(fare) } }
         }
@@ -193,8 +185,8 @@ private fun TrainFareBox(fare: TrainClassFare, lang: AppLanguage, onClick: () ->
     Surface(
         onClick = onClick,
         enabled = !soldOut,
-        shape = JatriShapes.button,
-        color = if (soldOut) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primaryContainer,
+        shape = JatriShapes.cardSmall,
+        color = if (soldOut) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.background,
     ) {
         Column(Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)) {
             Text(fare.trainClass.label(), style = MaterialTheme.typography.labelLarge)
@@ -225,62 +217,70 @@ private fun SeatsChip(seats: Int, lang: AppLanguage) {
     }
 }
 
-/** "07:30 ——— 1h 05m ——— 08:35" with codes underneath. */
+/**
+ * 07:30                         08:35
+ * DAC                             CXB
+ *  •────────── (✈) ──────────•
+ *            1h 05m · Non-stop
+ */
 @Composable
 private fun TimeLine(
+    mode: TravelMode,
     departAt: LocalDateTime,
     arriveAt: LocalDateTime,
-    fromCode: String,
-    toCode: String,
-    middle: String?,
-    duration: Duration,
+    fromLabel: String,
+    toLabel: String,
+    caption: String,
 ) {
     val lang = JatriTheme.language
+    Row(verticalAlignment = Alignment.Top) {
+        Column(Modifier.weight(1f)) {
+            Text(DateTimeFormats.time(departAt, lang), style = MaterialTheme.typography.headlineSmall)
+            Text(fromLabel, style = MaterialTheme.typography.labelMedium, color = JatriTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+            Text(DateTimeFormats.time(arriveAt, lang), style = MaterialTheme.typography.headlineSmall)
+            Text(toLabel, style = MaterialTheme.typography.labelMedium, color = JatriTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.End)
+        }
+    }
+    Spacer(Modifier.height(Spacing.xs))
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Column {
-            Text(DateTimeFormats.time(departAt, lang), style = MaterialTheme.typography.titleLarge)
-            Text(fromCode, style = MaterialTheme.typography.labelMedium, color = JatriTheme.colors.textSecondary, maxLines = 1)
+        Dot(filled = true)
+        HorizontalDivider(Modifier.weight(1f), color = JatriTheme.colors.divider, thickness = 1.5.dp)
+        Box(
+            Modifier.size(32.dp).background(MaterialTheme.colorScheme.background, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(mode.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(18.dp))
         }
-        Column(Modifier.weight(1f).padding(horizontal = Spacing.sm), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(DateTimeFormats.duration(duration, lang), style = MaterialTheme.typography.labelMedium, color = JatriTheme.colors.textSecondary)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Dot()
-                HorizontalDivider(Modifier.weight(1f), color = JatriTheme.colors.divider, thickness = 1.5.dp)
-                Dot()
-            }
-            if (middle != null) {
-                Text(middle, style = MaterialTheme.typography.labelSmall, color = JatriTheme.colors.textSecondary)
-            }
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            Text(DateTimeFormats.time(arriveAt, lang), style = MaterialTheme.typography.titleLarge)
-            Text(toCode, style = MaterialTheme.typography.labelMedium, color = JatriTheme.colors.textSecondary, maxLines = 1, textAlign = TextAlign.End)
-        }
+        HorizontalDivider(Modifier.weight(1f), color = JatriTheme.colors.divider, thickness = 1.5.dp)
+        Dot(filled = false)
     }
+    Text(
+        caption,
+        style = MaterialTheme.typography.labelSmall,
+        color = JatriTheme.colors.textSecondary,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable
-private fun Dot() {
-    Box(Modifier.size(6.dp).background(JatriTheme.colors.divider, CircleShape))
-}
-
-/** Logo placeholder: first letter on a tinted circle. Real logos load with Coil in Phase 3/5. */
-@Composable
-private fun OperatorAvatar(name: String, tint: Color) {
-    Box(Modifier.size(40.dp).background(tint.copy(alpha = 0.12f), CircleShape), contentAlignment = Alignment.Center) {
-        Text(name.take(1).uppercase(), style = MaterialTheme.typography.titleMedium, color = tint)
-    }
+private fun Dot(filled: Boolean) {
+    Box(
+        Modifier.size(8.dp).background(
+            if (filled) MaterialTheme.colorScheme.onSurface else JatriTheme.colors.divider,
+            CircleShape,
+        ),
+    )
 }
 
 @Composable
 private fun PriceBlock(price: String) {
     Column(horizontalAlignment = Alignment.End) {
-        Text(price, style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.onSurface)
+        Text(price, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
         Text(stringResource(R.string.ui_per_person), style = MaterialTheme.typography.labelSmall, color = JatriTheme.colors.textSecondary)
     }
 }
-
-private fun String.localizeIf(lang: AppLanguage) =
-    localizeDigits(lang)
 
 private fun AppLanguage.locale(): Locale = Locale.forLanguageTag(if (this == AppLanguage.BANGLA) "bn-BD" else "en-BD")

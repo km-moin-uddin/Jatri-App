@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import com.jatri.core.designsystem.component.JatriBottomSheet
 import com.jatri.core.designsystem.component.JatriCtaButton
 import com.jatri.core.designsystem.component.PassengerCounter
+import com.jatri.core.designsystem.component.PillChip
 import com.jatri.core.designsystem.theme.JatriShapes
 import com.jatri.core.designsystem.theme.JatriTheme
 import com.jatri.core.designsystem.theme.Spacing
@@ -144,18 +145,7 @@ private fun Rules(text: String) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun <T> ChoiceChips(options: List<T>, selected: T, label: @Composable (T) -> String, onSelect: (T) -> Unit) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-        options.forEach { option ->
-            FilterChip(
-                selected = option == selected,
-                onClick = { onSelect(option) },
-                label = { Text(label(option)) },
-                shape = JatriShapes.chip,
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                ),
-            )
-        }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        options.forEach { option -> PillChip(text = label(option), selected = option == selected, onClick = { onSelect(option) }) }
     }
 }

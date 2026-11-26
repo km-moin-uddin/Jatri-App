@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.core.os.LocaleListCompat
@@ -45,8 +46,7 @@ class MainActivity : AppCompatActivity() {
         // Keep the splash until settings are read (DataStore is fast, well under the ~1 s budget).
         splash.setKeepOnScreenCondition { viewModel.uiState.value is MainUiState.Loading }
 
-        // Most screens have a teal top bar, so status bar icons are always light.
-        enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT))
+        enableEdgeToEdge()
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -66,6 +66,12 @@ class MainActivity : AppCompatActivity() {
             }
             // Decide the first screen once; later settings changes must not reset navigation.
             val start: Any = remember { if (settings.onboardingCompleted) HomeDestination else OnboardingDestination }
+            // Screens sit on a light/dark canvas, so system bar icons follow the app theme.
+            DisposableEffect(dark) {
+                val style = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark }
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+                onDispose {}
+            }
             JatriTheme(darkTheme = dark) {
                 JatriApp(startDestination = start, networkMonitor = networkMonitor)
             }

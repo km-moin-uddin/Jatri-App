@@ -56,6 +56,16 @@ class BusResultsViewModel @Inject constructor(
     val state: StateFlow<BusResultsUiState> = _state.asStateFlow()
 
     init {
+        load()
+    }
+
+    /** Date pill tapped: search the same route on another day. */
+    fun setDate(date: LocalDate) {
+        _state.update { it.copy(args = it.args.copy(date = date.toString()), loading = true, trips = emptyList()) }
+        load()
+    }
+
+    private fun load() {
         viewModelScope.launch {
             val args = _state.value.args
             val from = locations.getById(args.fromId)
@@ -69,7 +79,7 @@ class BusResultsViewModel @Inject constructor(
             } else {
                 emptyList()
             }
-            _state.update { it.copy(loading = false, trips = trips) }
+            _state.update { if (it.args == args) it.copy(loading = false, trips = trips) else it }
         }
     }
 

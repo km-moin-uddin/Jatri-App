@@ -6,9 +6,29 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import com.jatri.core.designsystem.theme.JatriShapes
+import com.jatri.core.designsystem.theme.Spacing
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,6 +83,7 @@ fun JatriApp(startDestination: Any, networkMonitor: NetworkMonitor) {
     val currentTab = TopLevelDestination.entries.firstOrNull { currentDestination.isOn(it) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
             if (currentTab != null) {
@@ -95,6 +116,7 @@ private fun JatriNavHost(navController: NavHostController, startDestination: Any
             onSearch = { navController.navigateToResults(it) },
             onNotificationsClick = { navController.navigateToNotifications() },
             onSeeAllOffers = { navController.navigateToTab(TopLevelDestination.OFFERS) },
+            onAccountClick = { navController.navigateToTab(TopLevelDestination.ACCOUNT) },
         )
         flightScreens(navController, onContinueToPassengers = toPassengers)
         busScreens(navController, onContinueToPassengers = toPassengers)
@@ -134,25 +156,58 @@ private fun NavHostController.navigateToTab(tab: TopLevelDestination) {
 private fun NavDestination?.isOn(tab: TopLevelDestination): Boolean =
     this?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true
 
+/**
+ * Floating pill navigation. The active tab is a black pill with icon + label; the others are round
+ * icon buttons whose label is still read out by screen readers.
+ */
 @Composable
-private fun JatriBottomBar(current: TopLevelDestination, onSelect: (TopLevelDestination) -> Unit) {
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-        TopLevelDestination.entries.forEach { tab ->
-            val selected = tab == current
-            NavigationBarItem(
-                selected = selected,
-                onClick = { onSelect(tab) },
-                icon = { Icon(if (selected) tab.selectedIcon else tab.unselectedIcon, contentDescription = null) },
-                label = { Text(stringResource(tab.label), style = MaterialTheme.typography.labelMedium, maxLines = 1) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                    unselectedIconColor = JatriTheme.colors.textSecondary,
-                    unselectedTextColor = JatriTheme.colors.textSecondary,
-                ),
-            )
+internal fun JatriBottomBar(current: TopLevelDestination, onSelect: (TopLevelDestination) -> Unit) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            shape = JatriShapes.pill,
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, JatriTheme.colors.cardBorder),
+            shadowElevation = 10.dp,
+        ) {
+            Row(
+                Modifier.padding(6.dp).selectableGroup(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TopLevelDestination.entries.forEach { tab -> NavPill(tab, tab == current) { onSelect(tab) } }
+            }
         }
     }
 }
 
+@Composable
+private fun NavPill(tab: TopLevelDestination, selected: Boolean, onClick: () -> Unit) {
+    val label = stringResource(tab.label)
+    Surface(
+        shape = JatriShapes.pill,
+        color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+        contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else JatriTheme.colors.textSecondary,
+        modifier = Modifier
+            .height(52.dp)
+            .selectable(selected = selected, role = Role.Tab, onClick = onClick)
+            .semantics { contentDescription = label }
+            .animateContentSize(tween(250)),
+    ) {
+        Row(
+            Modifier.padding(horizontal = if (selected) 18.dp else 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(if (selected) tab.selectedIcon else tab.unselectedIcon, contentDescription = null, modifier = Modifier.size(24.dp))
+            if (selected) {
+                Spacer(Modifier.width(8.dp))
+                Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+            }
+        }
+    }
+}

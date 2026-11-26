@@ -38,7 +38,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jatri.core.common.format.localized
 import com.jatri.core.designsystem.component.JatriCtaButton
 import com.jatri.core.designsystem.component.JatriTextButton
-import com.jatri.core.designsystem.component.StatusBarScrim
+import com.jatri.core.designsystem.component.PillChip
+import com.jatri.core.designsystem.theme.JatriPalette
+import com.jatri.core.ui.GradientIllustration
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.statusBarsPadding
 import com.jatri.core.designsystem.icon.JatriIcons
 import com.jatri.core.designsystem.theme.JatriShapes
 import com.jatri.core.designsystem.theme.JatriTheme
@@ -46,12 +50,12 @@ import com.jatri.core.designsystem.theme.Spacing
 import com.jatri.core.model.AppLanguage
 import kotlinx.coroutines.launch
 
-private data class Slide(val icon: ImageVector, @StringRes val title: Int, @StringRes val body: Int)
+private data class Slide(val icon: ImageVector, val color: Color, @StringRes val title: Int, @StringRes val body: Int)
 
 private val slides = listOf(
-    Slide(JatriIcons.Ticket, R.string.auth_onb1_title, R.string.auth_onb1_body),
-    Slide(JatriIcons.Lock, R.string.auth_onb2_title, R.string.auth_onb2_body),
-    Slide(JatriIcons.Payments, R.string.auth_onb3_title, R.string.auth_onb3_body),
+    Slide(JatriIcons.Ticket, JatriPalette.OceanTeal, R.string.auth_onb1_title, R.string.auth_onb1_body),
+    Slide(JatriIcons.Lock, JatriPalette.SkyBlue, R.string.auth_onb2_title, R.string.auth_onb2_body),
+    Slide(JatriIcons.Payments, JatriPalette.LeafGreen, R.string.auth_onb3_title, R.string.auth_onb3_body),
 )
 
 @Composable
@@ -79,9 +83,9 @@ fun OnboardingScreen(
         Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
             .navigationBarsPadding(),
     ) {
-        StatusBarScrim()
         Row(Modifier.fillMaxWidth().padding(horizontal = Spacing.xs), horizontalArrangement = Arrangement.End) {
             if (!isLast) JatriTextButton(text = stringResource(R.string.auth_skip), onClick = onFinish)
             else Spacer(Modifier.height(Spacing.touchTarget))
@@ -89,24 +93,22 @@ fun OnboardingScreen(
         HorizontalPager(state = pager, modifier = Modifier.weight(1f)) { page ->
             val slide = slides[page]
             Column(
-                Modifier.fillMaxSize().padding(horizontal = Spacing.xl),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                Modifier.fillMaxSize().padding(horizontal = Spacing.screen),
                 verticalArrangement = Arrangement.Center,
             ) {
-                Box(
-                    Modifier.size(180.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(slide.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(88.dp))
-                }
+                GradientIllustration(
+                    color = slide.color,
+                    icon = slide.icon,
+                    iconSize = 96.dp,
+                    modifier = Modifier.fillMaxWidth().height(260.dp),
+                )
                 Spacer(Modifier.height(Spacing.xl))
-                Text(stringResource(slide.title), style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                Text(stringResource(slide.title), style = MaterialTheme.typography.displaySmall)
                 Spacer(Modifier.height(Spacing.sm))
                 Text(
                     stringResource(slide.body),
                     style = MaterialTheme.typography.bodyLarge,
                     color = JatriTheme.colors.textSecondary,
-                    textAlign = TextAlign.Center,
                 )
                 if (page == 0) {
                     Spacer(Modifier.height(Spacing.xl))
@@ -129,7 +131,7 @@ fun OnboardingScreen(
 
 @Composable
 private fun LanguageChooser(language: AppLanguage, onChange: (AppLanguage) -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column {
         Text(stringResource(R.string.auth_choose_language), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(Spacing.xs))
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
@@ -142,23 +144,7 @@ private fun LanguageChooser(language: AppLanguage, onChange: (AppLanguage) -> Un
 
 @Composable
 private fun LanguageChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = { Text(label, style = MaterialTheme.typography.titleMedium) },
-        leadingIcon = if (selected) {
-            { Icon(JatriIcons.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-        } else {
-            null
-        },
-        shape = JatriShapes.chip,
-        modifier = Modifier.height(Spacing.touchTarget),
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ),
-    )
+    PillChip(text = label, selected = selected, onClick = onClick, icon = if (selected) JatriIcons.Check else null)
 }
 
 @Composable

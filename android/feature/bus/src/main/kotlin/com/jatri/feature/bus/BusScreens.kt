@@ -47,6 +47,8 @@ internal fun BusResultsRoute(
         onSortChange = viewModel::setSort,
         onBack = onBack,
         phase = stringResource(R.string.bus_phase),
+        date = state.date,
+        onDateChange = viewModel::setDate,
     ) {
         items(state.sorted, key = { it.id }) { trip -> BusResultCard(trip, onClick = { onTripClick(trip, state.args) }) }
     }

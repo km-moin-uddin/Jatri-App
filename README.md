@@ -3,7 +3,7 @@
 One Android app to search, compare, book and pay for **flight, bus and train tickets in Bangladesh**.
 "Jatri" is a working name.
 
-> **Status: Phase 1 (Foundation) is done.** The project structure, design system, navigation for all
+> **Status: Phase 1 (Foundation) is done**, with the v2 "soft neutral" visual style. The project structure, design system, navigation for all
 > screens, Bangla/English and light/dark themes are in place. Search results, seat maps and payments
 > show **sample data** until their phases are built (see [What is mocked](#what-is-mocked)).
 
@@ -65,15 +65,15 @@ screen. Every step in that flow can be reached.
 
 ## Phase 1 — what's built
 
-- **Design system**: Material 3 light/dark colour schemes from the brand palette (dynamic colour off),
-  Hind Siliguri for Bangla and Inter for English (bundled, OFL), a 4 dp spacing grid, and the
-  12/16/20/24 dp corner radii.
-- **Components**: CTA/primary/outlined buttons, card, status & tag chips, empty/error/loading states,
+- **Design system**: Material 3 light/dark colour schemes (dynamic colour off), bundled fonts
+  (Hind Siliguri, Inter, Plus Jakarta Sans — all OFL), a 4 dp spacing grid, pill buttons and chips,
+  and 24 dp cards. See [Visual style](#visual-style-v2).
+- **Components**: CTA/primary/outlined/small buttons, `PillChip`, `CircleIconButton`, card, status & tag chips, empty/error/loading states,
   shimmer skeletons, offline banner, `TicketShape` + `TicketCard`, `PriceSummaryBar`,
   `PassengerCounter`, top bar, text field, bottom sheet, `SearchCard`, `TravelModeTabs`,
   `CityPickerSheet`, `DatePickerSheet`, `PassengerClassSheet`, flight/bus/train `ResultCard`s, and `SeatMap`.
-- **Navigation**: type-safe Navigation Compose routes for all 25 screens. The bottom bar has Home · My Trips ·
-  Offers · Account.
+- **Navigation**: type-safe Navigation Compose routes for all 25 screens. A floating pill bottom bar
+  has Home · My Trips · Offers · Account.
 - **Language**: everything is in `strings.xml` (`values` = English, `values-bn` = Bangla). Bangla is
   the default. Language can be switched in onboarding and in Account, using the per-app locale API.
   Bangla digits appear in prices, dates and counts.
@@ -102,14 +102,32 @@ screen. Every step in that flow can be reached.
 Every placeholder screen shows a "Coming in Phase N" banner, so sample data can't be mistaken for
 real data.
 
+## Visual style (v2)
+
+Soft neutral look: a grey canvas, lighter cards with a hairline light edge, very round shapes and
+big bold left-aligned headlines.
+
+- **Black "pills" mark what is selected**: mode, date, sort option, tab, class, language. In dark
+  mode the pills are white.
+- **Orange is only for the main money/search actions** ("Search Tickets", "Pay", "Continue"), so they
+  always stand out. Teal stays as the brand colour (icon, splash).
+- **Gradient artwork instead of photos**: each mode's colour with a dashed route arc and a big
+  white icon (`ModeIllustration`). Real operator photos can replace it later.
+- **Floating pill bottom navigation**: the active tab shows icon + label, the others show icons
+  only (their labels are still read by screen readers).
+- **Result cards**: times on both sides, a line with the mode icon in the middle, the operator and
+  price below. Results have a strip of date pills (±2 days) that reloads the list.
+- **Fonts**: Plus Jakarta Sans for English headlines, Inter for English text, Hind Siliguri (bold
+  for headlines) for Bangla.
+
 ## Design decisions worth knowing
 
 - **Dark text on orange buttons.** White on `#FF7A45` is only 2.6:1 contrast and fails WCAG AA.
-  Ink `#1A1F24` on orange is 6.5:1, so CTA labels use Ink.
-- **Warning text** uses a darker amber (`#B45309`) on light backgrounds for the same reason.
+  Ink on orange is 6.5:1. Black pills with white text are about 18:1.
+- **Warning and success text** use darker shades on light cards for the same reason.
 - **Seat codes (A1, B2) stay in Latin letters and ASCII digits** in both languages, because they are
   printed on the bus that way.
-- **Dark mode top bar** is deep teal `#0B4A50`, so it stays on-brand and separates the header from dark cards.
+- **System bar icons follow the app theme** (dark icons on the light canvas, light icons in dark mode).
 - **No backups**: `allowBackup=false` and data-extraction rules exclude everything, so tokens and
   tickets never leave the device.
 
@@ -119,7 +137,7 @@ real data.
 
 **যাত্রী** একটি অ্যান্ড্রয়েড অ্যাপ। এতে বাংলাদেশের ফ্লাইট, বাস ও ট্রেনের টিকিট এক জায়গায় খোঁজা, তুলনা করা, বুক করা ও পেমেন্ট করা যাবে।
 
-**এখনকার অবস্থা: Phase 1 (ভিত্তি) সম্পন্ন।**
+**এখনকার অবস্থা: Phase 1 (ভিত্তি) সম্পন্ন, নতুন "নরম ধূসর" ডিজাইনসহ।** বাছাই করা জিনিস কালো pill-এ, মূল বাটন কমলা, ছবির জায়গায় gradient ইলাস্ট্রেশন, আর নিচে ভেসে থাকা pill navigation।
 - প্রজেক্টের কাঠামো আর মডিউলগুলো তৈরি হয়েছে।
 - ডিজাইন সিস্টেম তৈরি: কালার, ফন্ট (হিন্দ শিলিগুড়ি ও ইন্টার) আর কম্পোনেন্ট।
 - সব স্ক্রিনে navigation দিয়ে যাওয়া যায়।

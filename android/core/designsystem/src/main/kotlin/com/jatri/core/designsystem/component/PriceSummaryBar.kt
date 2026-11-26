@@ -30,16 +30,21 @@ fun PriceSummaryBar(
     enabled: Boolean = true,
     loading: Boolean = false,
 ) {
-    Surface(modifier = modifier.fillMaxWidth(), shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = com.jatri.core.designsystem.theme.JatriShapes.sheet,
+        shadowElevation = 12.dp,
+        color = MaterialTheme.colorScheme.surface,
+    ) {
         Row(
             modifier = Modifier
                 .navigationBarsPadding()
-                .padding(horizontal = Spacing.screen, vertical = Spacing.sm),
+                .padding(horizontal = Spacing.screen + 4.dp, vertical = Spacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
                 Text(label, style = MaterialTheme.typography.labelMedium, color = JatriTheme.colors.textSecondary)
-                Text(price, style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.onSurface)
+                Text(price, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
             }
             Spacer(Modifier.width(Spacing.md))
             JatriCtaButton(

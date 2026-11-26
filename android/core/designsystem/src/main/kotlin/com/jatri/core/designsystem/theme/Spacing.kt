@@ -15,5 +15,5 @@ object Spacing {
     /** Minimum touch target for accessibility. */
     val touchTarget = 48.dp
     val buttonHeight = 52.dp
-    val cardElevation = 1.dp
+    val cardElevation = 0.dp
 }

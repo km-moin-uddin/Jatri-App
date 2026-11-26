@@ -14,4 +14,6 @@
     <string name="home_select_from">কোথা থেকে যাবেন তা বেছে নিন</string>
     <string name="home_select_to">কোথায় যাবেন তা বেছে নিন</string>
     <string name="home_offer_code">কোড: %s</string>
+    <string name="home_details">বিস্তারিত</string>
+    <string name="home_account">অ্যাকাউন্ট</string>
 </resources>

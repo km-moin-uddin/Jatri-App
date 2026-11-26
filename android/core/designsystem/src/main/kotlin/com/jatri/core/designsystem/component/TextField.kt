@@ -50,7 +50,7 @@ fun JatriTextField(
         shape = JatriShapes.field,
         textStyle = MaterialTheme.typography.bodyLarge,
         colors = OutlinedTextFieldDefaults.colors(
-            unfocusedBorderColor = JatriTheme.colors.divider,
+            unfocusedBorderColor = JatriTheme.colors.cardBorder,
             focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             focusedContainerColor = MaterialTheme.colorScheme.surface,

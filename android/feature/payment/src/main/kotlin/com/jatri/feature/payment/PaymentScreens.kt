@@ -49,7 +49,7 @@ import com.jatri.core.designsystem.component.JatriTextButton
 import com.jatri.core.designsystem.component.JatriTextField
 import com.jatri.core.designsystem.component.JatriTopAppBar
 import com.jatri.core.designsystem.component.PriceSummaryBar
-import com.jatri.core.designsystem.component.StatusBarScrim
+import androidx.compose.foundation.layout.statusBarsPadding
 import com.jatri.core.designsystem.component.StatusChip
 import com.jatri.core.designsystem.component.StatusTone
 import com.jatri.core.designsystem.component.TicketCard
@@ -166,8 +166,7 @@ private fun PriceRow(label: String, value: String, color: androidx.compose.ui.gr
 
 @Composable
 fun PaymentResultScreen(success: Boolean, onRetry: () -> Unit, onViewTrips: () -> Unit, onGoHome: () -> Unit) {
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        StatusBarScrim()
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
         PaymentResultContent(success, onRetry, onViewTrips, onGoHome)
     }
 }

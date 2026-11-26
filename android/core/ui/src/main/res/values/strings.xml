@@ -86,4 +86,5 @@
     <string name="ui_no_results_body">There are no tickets on this route right now. Try another date.</string>
     <string name="ui_change_search">Change search</string>
     <string name="ui_results_count">%s options found</string>
+    <string name="ui_available_trips">Available trips</string>
 </resources>

@@ -1,23 +1,33 @@
 package com.jatri.core.designsystem.component
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.jatri.core.designsystem.R
 import com.jatri.core.designsystem.icon.JatriIcons
 import com.jatri.core.designsystem.theme.JatriTheme
+import com.jatri.core.designsystem.theme.Spacing
 
-/** Teal top bar with title, optional subtitle and back arrow. */
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Light top bar on the grey canvas.
+ * - With [onBack]: round back button on the left, title + subtitle centred (detail screens).
+ * - Without: big bold title on the left (tab screens like My Trips, Offers, Account).
+ */
 @Composable
 fun JatriTopAppBar(
     title: String,
@@ -26,29 +36,48 @@ fun JatriTopAppBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
-    TopAppBar(
-        modifier = modifier,
-        title = {
-            androidx.compose.foundation.layout.Column {
-                Text(title, style = MaterialTheme.typography.headlineSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (subtitle != null) {
-                    Text(subtitle, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = Spacing.screen, vertical = Spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (onBack != null) {
+            CircleIconButton(icon = JatriIcons.Back, contentDescription = stringResource(R.string.ds_back), onClick = onBack)
+            Column(Modifier.weight(1f).padding(horizontal = Spacing.xs), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.semantics { heading() },
+                )
+                if (!subtitle.isNullOrEmpty()) {
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = JatriTheme.colors.textSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
-        },
-        navigationIcon = {
-            if (onBack != null) {
-                IconButton(onClick = onBack) {
-                    Icon(JatriIcons.Back, contentDescription = stringResource(R.string.ds_back))
-                }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                actions()
+                // Keeps the title centred when there are no actions.
+                Box(Modifier.size(Spacing.touchTarget))
             }
-        },
-        actions = actions,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = JatriTheme.colors.topBar,
-            titleContentColor = JatriTheme.colors.onTopBar,
-            navigationIconContentColor = JatriTheme.colors.onTopBar,
-            actionIconContentColor = JatriTheme.colors.onTopBar,
-        ),
-    )
+        } else {
+            Text(
+                title,
+                style = MaterialTheme.typography.displaySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).padding(vertical = Spacing.xs).semantics { heading() },
+            )
+            actions()
+        }
+    }
 }

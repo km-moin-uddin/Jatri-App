@@ -33,7 +33,7 @@ import com.jatri.core.designsystem.theme.Spacing
  * The notches sit at [notchOffsetFraction] of the height (0.5 = middle).
  */
 class TicketShape(
-    private val cornerRadius: Dp = 16.dp,
+    private val cornerRadius: Dp = 24.dp,
     private val notchRadius: Dp = 12.dp,
     private val notchOffsetFraction: Float = 0.5f,
 ) : Shape {
@@ -66,8 +66,8 @@ fun TicketCard(
     Card(
         modifier = modifier,
         shape = TicketShape(notchOffsetFraction = notchOffsetFraction),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.md), content = top)
         DashedDivider(Modifier.padding(horizontal = Spacing.lg))

@@ -43,7 +43,7 @@ fun SectionHeader(
 fun PriceText(
     money: Money,
     modifier: Modifier = Modifier,
-    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.displaySmall,
+    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.headlineSmall,
     color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
 ) {
     Text(text = money.format(JatriTheme.language), style = style, color = color, modifier = modifier)
