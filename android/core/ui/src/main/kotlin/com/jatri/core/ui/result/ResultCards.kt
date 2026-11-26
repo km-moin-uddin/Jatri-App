@@ -42,6 +42,7 @@ import com.jatri.core.designsystem.theme.JatriTheme
 import com.jatri.core.designsystem.theme.Spacing
 import com.jatri.core.model.AppLanguage
 import com.jatri.core.model.BusTrip
+import com.jatri.core.model.FlightJourney
 import com.jatri.core.model.FlightOffer
 import com.jatri.core.model.TrainClassFare
 import com.jatri.core.model.TrainTrip
@@ -57,43 +58,103 @@ import java.util.Locale
 
 private const val FEW_SEATS = 5
 
-/** Flight result: times + route line on top, airline and price below, baggage/refund chips. */
+/**
+ * Flight result: one compact time line per journey (outbound, return, multi-city flights), the
+ * airline(s) and total price, then baggage / refund / seats-left chips.
+ */
 @Composable
 fun FlightResultCard(offer: FlightOffer, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val lang = JatriTheme.language
     JatriCard(modifier = modifier.fillMaxWidth(), onClick = onClick) {
-        TimeLine(
-            mode = TravelMode.FLIGHT,
-            departAt = offer.departAt,
-            arriveAt = offer.arriveAt,
-            fromLabel = offer.from.code,
-            toLabel = offer.to.code,
-            caption = DateTimeFormats.duration(offer.duration, lang) + " · " + if (offer.stops == 0) {
-                stringResource(R.string.ui_nonstop)
-            } else {
-                pluralStringResource(R.plurals.ui_stops, offer.stops, offer.stops.localized(lang))
-            },
-        )
+        offer.journeys.forEachIndexed { i, journey ->
+            if (i > 0) Spacer(Modifier.height(Spacing.sm))
+            JourneyLine(journey)
+        }
         Spacer(Modifier.height(Spacing.md))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(offer.airlineName, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(offer.flightNumber.localizeDigits(lang), style = MaterialTheme.typography.bodySmall, color = JatriTheme.colors.textSecondary)
+                Text(
+                    offer.airlines.joinToString(" + "),
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    offer.journeys.joinToString(", ") { j -> j.legs.joinToString(" / ") { it.flightNumber } }.localizeDigits(lang),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = JatriTheme.colors.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
             PriceBlock(offer.price.format(lang))
         }
         Spacer(Modifier.height(Spacing.sm))
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalAlignment = Alignment.CenterVertically) {
             StatusChip(
-                text = stringResource(R.string.ui_baggage_kg, offer.baggageKg.localized(lang)),
+                text = stringResource(R.string.ui_baggage_kg, offer.rules.checkedBaggageKg.localized(lang)),
                 tone = StatusTone.Neutral,
                 icon = JatriIcons.Baggage,
             )
-            if (offer.refundable) {
+            if (offer.rules.refundable) {
                 StatusChip(stringResource(R.string.ui_refundable), StatusTone.Success)
             } else {
                 StatusChip(stringResource(R.string.ui_non_refundable), StatusTone.Neutral)
             }
+            if (offer.seatsLeft <= FEW_FLIGHT_SEATS) {
+                StatusChip(stringResource(R.string.ui_seats_left, offer.seatsLeft.localized(lang)), StatusTone.Warning)
+            }
+        }
+    }
+}
+
+private const val FEW_FLIGHT_SEATS = 4
+
+/** "07:00 DAC —— 1h 05m · Nonstop —— 08:05 CXB" with "+1" when it lands on a later day. */
+@Composable
+fun JourneyLine(journey: FlightJourney, modifier: Modifier = Modifier) {
+    val lang = JatriTheme.language
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column {
+            Text(DateTimeFormats.time(journey.departAt, lang), style = MaterialTheme.typography.titleLarge)
+            Text(journey.from.code, style = MaterialTheme.typography.labelMedium, color = JatriTheme.colors.textSecondary)
+        }
+        Column(Modifier.weight(1f).padding(horizontal = Spacing.sm), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                DateTimeFormats.duration(journey.duration, lang),
+                style = MaterialTheme.typography.labelSmall,
+                color = JatriTheme.colors.textSecondary,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Dot(filled = true)
+                HorizontalDivider(Modifier.weight(1f), color = JatriTheme.colors.divider, thickness = 1.5.dp)
+                Icon(TravelMode.FLIGHT.icon, contentDescription = null, modifier = Modifier.size(16.dp).padding(horizontal = 2.dp))
+                HorizontalDivider(Modifier.weight(1f), color = JatriTheme.colors.divider, thickness = 1.5.dp)
+                Dot(filled = false)
+            }
+            Text(
+                if (journey.stops == 0) {
+                    stringResource(R.string.ui_nonstop)
+                } else {
+                    pluralStringResource(R.plurals.ui_stops, journey.stops, journey.stops.localized(lang)) +
+                        " · " + journey.legs.dropLast(1).joinToString { it.to.code }
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = if (journey.stops == 0) JatriTheme.colors.success else JatriTheme.colors.textSecondary,
+            )
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Row(verticalAlignment = Alignment.Top) {
+                Text(DateTimeFormats.time(journey.arriveAt, lang), style = MaterialTheme.typography.titleLarge)
+                if (journey.dayShift > 0) {
+                    Text(
+                        "+${journey.dayShift}".localizeDigits(lang),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = JatriTheme.colors.danger,
+                    )
+                }
+            }
+            Text(journey.to.code, style = MaterialTheme.typography.labelMedium, color = JatriTheme.colors.textSecondary)
         }
     }
 }

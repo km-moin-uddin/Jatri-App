@@ -58,6 +58,13 @@ fun ResultsScaffold(
     today: LocalDate = LocalDate.now(),
     error: AppError? = null,
     onRetry: () -> Unit = {},
+    /** Hide the day pills (e.g. multi-city flights, where one date can't move alone). */
+    showDates: Boolean = true,
+    /** Adds a "Filter" pill before the sort pills. */
+    onFilterClick: (() -> Unit)? = null,
+    activeFilters: Int = 0,
+    /** Results exist but the filters hide them all: offer to clear the filters. */
+    onClearFilters: (() -> Unit)? = null,
     content: LazyListScope.() -> Unit,
 ) {
     Scaffold(
@@ -66,7 +73,7 @@ fun ResultsScaffold(
         topBar = { JatriTopAppBar(title = title, subtitle = subtitle, onBack = onBack) },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            DateStrip(date = date, today = today, onDateChange = onDateChange)
+            if (showDates) DateStrip(date = date, today = today, onDateChange = onDateChange)
             Row(
                 Modifier.fillMaxWidth().padding(start = Spacing.screen, end = Spacing.screen, top = Spacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
@@ -80,10 +87,16 @@ fun ResultsScaffold(
                     )
                 }
             }
-            SortPills(sort, onSortChange)
+            SortPills(sort, onSortChange, onFilterClick, activeFilters)
             when {
                 loading -> ShimmerList()
                 error != null -> ErrorState(onRetry = onRetry, message = error.text())
+                count == 0 && onClearFilters != null -> EmptyState(
+                    title = stringResource(R.string.ui_no_filter_results_title),
+                    message = stringResource(R.string.ui_no_filter_results_body),
+                    actionText = stringResource(R.string.ui_clear_filters),
+                    onAction = onClearFilters,
+                )
                 count == 0 -> EmptyState(
                     title = stringResource(R.string.ui_no_results_title),
                     message = stringResource(R.string.ui_no_results_body),
@@ -124,11 +137,25 @@ private fun DateStrip(date: LocalDate, today: LocalDate, onDateChange: (LocalDat
 }
 
 @Composable
-private fun SortPills(sort: ResultSort, onSortChange: (ResultSort) -> Unit) {
+private fun SortPills(sort: ResultSort, onSortChange: (ResultSort) -> Unit, onFilterClick: (() -> Unit)?, activeFilters: Int) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = Spacing.screen, vertical = Spacing.sm),
         horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
+        if (onFilterClick != null) {
+            item(key = "filter") {
+                PillChip(
+                    text = if (activeFilters > 0) {
+                        stringResource(R.string.ui_filter_count, activeFilters.localized(JatriTheme.language))
+                    } else {
+                        stringResource(R.string.ui_filter)
+                    },
+                    selected = activeFilters > 0,
+                    onClick = onFilterClick,
+                    icon = com.jatri.core.designsystem.icon.JatriIcons.Tune,
+                )
+            }
+        }
         items(ResultSort.entries) { option ->
             PillChip(
                 text = stringResource(

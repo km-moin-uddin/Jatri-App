@@ -16,6 +16,10 @@ data class BookingSegment(
     val seatNumbers: List<String>,
     val boardingPoint: StopPoint?,
     val droppingPoint: StopPoint?,
+    /** Flights: which journey this flight belongs to (0 = outbound), aircraft and checked baggage. */
+    val journeyIndex: Int = 0,
+    val aircraft: String? = null,
+    val baggage: String? = null,
 )
 
 data class BookingPassenger(
@@ -25,6 +29,7 @@ data class BookingPassenger(
     val seatNo: String?,
     val documentMasked: String?,
     val ticketNumber: String? = null,
+    val type: PassengerType = PassengerType.ADULT,
 )
 
 /** The e-ticket. [qrPayload] is signed by the server, so counters can check it offline. */
@@ -45,7 +50,17 @@ data class Booking(
     val segments: List<BookingSegment>,
     val passengers: List<BookingPassenger>,
     val ticket: Ticket? = null,
-)
+    /** Flights: airport/government taxes, cabin, fare brand and the rules of the fare. */
+    val taxes: Money = Money.ZERO,
+    val cabinClass: CabinClass? = null,
+    val fareBrand: FareBrand? = null,
+    val fareRules: FareRules? = null,
+) {
+    val isFlight: Boolean get() = mode == TravelMode.FLIGHT
+
+    /** Flights grouped by journey (outbound, return, ...). */
+    val journeys: List<List<BookingSegment>> get() = segments.groupBy { it.journeyIndex }.toSortedMap().values.toList()
+}
 
 enum class PaymentMethod { BKASH, NAGAD, ROCKET, CARD }
 
@@ -83,4 +98,26 @@ data class PassengerInput(
     val age: Int?,
     val seatNo: String,
     val nid: String? = null,
+)
+
+/** What the flight passenger form sends to hold the fare (the airline creates a PNR). */
+data class FlightHoldRequest(
+    val offerId: String,
+    val passengers: List<FlightPassengerInput>,
+    val contactPhone: String,
+    val contactEmail: String?,
+    val expectedTotal: Money,
+    val idempotencyKey: String,
+)
+
+/** Names exactly as on the passport / NID, in English letters. */
+data class FlightPassengerInput(
+    val type: PassengerType,
+    val givenName: String,
+    val surname: String,
+    val gender: Gender,
+    val dateOfBirth: java.time.LocalDate,
+    val nationality: String = "BD",
+    val documentNo: String? = null,
+    val documentExpiry: java.time.LocalDate? = null,
 )

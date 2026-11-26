@@ -120,6 +120,10 @@ internal fun parseLocal(value: String): LocalDateTime = runCatching {
     OffsetDateTime.parse(value).atZoneSameInstant(DHAKA).toLocalDateTime()
 }.getOrElse { LocalDateTime.parse(value).atOffset(ZoneOffset.UTC).atZoneSameInstant(DHAKA).toLocalDateTime() }
 
+/** The wall-clock time written in the string (an airport's local time), ignoring its offset. */
+internal fun parseWallTime(value: String): LocalDateTime =
+    runCatching { OffsetDateTime.parse(value).toLocalDateTime() }.getOrElse { LocalDateTime.parse(value) }
+
 internal fun parseInstant(value: String): Instant = runCatching { OffsetDateTime.parse(value).toInstant() }
     .getOrElse { LocalDateTime.parse(value).toInstant(ZoneOffset.UTC) } // naive = UTC
 
@@ -164,12 +168,16 @@ internal fun BookingDto.toModel() = Booking(
             number = it.number,
             fromId = it.fromId,
             toId = it.toId,
-            departAt = parseLocal(it.departAt),
-            arriveAt = parseLocal(it.arriveAt),
+            // Flights keep the airport's own clock (as on the boarding pass); bus/train use Dhaka time.
+            departAt = if (it.fromCode != null) parseWallTime(it.departAt) else parseLocal(it.departAt),
+            arriveAt = if (it.fromCode != null) parseWallTime(it.arriveAt) else parseLocal(it.arriveAt),
             travelClass = it.travelClass,
             seatNumbers = it.seatNumbers,
             boardingPoint = it.boardingPoint?.toModel(),
             droppingPoint = it.droppingPoint?.toModel(),
+            journeyIndex = it.sliceIndex ?: 0,
+            aircraft = it.aircraft,
+            baggage = it.baggage,
         )
     },
     passengers = passengers.map {
@@ -180,7 +188,12 @@ internal fun BookingDto.toModel() = Booking(
             seatNo = it.seatNo,
             documentMasked = it.documentMasked,
             ticketNumber = it.ticketNumber,
+            type = passengerType(it.type),
         )
     },
     ticket = ticket?.let { Ticket(it.qrPayload, it.pdfUrl, parseInstant(it.issuedAt)) },
+    taxes = Money(taxes),
+    cabinClass = cabin?.let(::cabinClass),
+    fareBrand = fareBrand?.let(::fareBrand),
+    fareRules = fareRules?.toModel(),
 )

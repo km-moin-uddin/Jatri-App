@@ -5,12 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.jatri.core.data.repository.HomeContentRepository
 import com.jatri.core.data.repository.LocationRepository
 import com.jatri.core.data.repository.RecentSearchRepository
+import com.jatri.core.model.LegQuery
 import com.jatri.core.model.Location
 import com.jatri.core.model.Offer
 import com.jatri.core.model.PopularRoute
 import com.jatri.core.model.RecentSearch
 import com.jatri.core.model.SearchQuery
 import com.jatri.core.model.TravelMode
+import com.jatri.core.model.TripType
 import com.jatri.core.model.locationType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,10 +29,10 @@ import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
 
-enum class SearchError { MISSING_FROM, MISSING_TO, SAME_PLACE }
+enum class SearchError { MISSING_FROM, MISSING_TO, SAME_PLACE, LEG_INCOMPLETE, DATE_ORDER }
 
 /** Which sheet is open on top of Home. */
-enum class HomeSheet { NONE, FROM, TO, DATE, OPTIONS }
+enum class HomeSheet { NONE, FROM, TO, DATE, RETURN_DATE, OPTIONS }
 
 data class HomeUiState(
     val query: SearchQuery,
@@ -40,8 +42,27 @@ data class HomeUiState(
     val popularRoutes: List<PopularRoute> = emptyList(),
     val offers: List<Offer> = emptyList(),
     val sheet: HomeSheet = HomeSheet.NONE,
+    /** -1 = the main from/to/date; 0.. = that extra multi-city flight. */
+    val sheetLeg: Int = -1,
     val error: SearchError? = null,
-)
+) {
+    /** The date the open date sheet should show as selected. */
+    val sheetDate: LocalDate
+        get() = when {
+            sheet == HomeSheet.RETURN_DATE -> query.returnDate ?: query.date
+            sheetLeg >= 0 -> query.extraLegs.getOrNull(sheetLeg)?.date ?: query.date
+            else -> query.date
+        }
+
+    /** Earliest date allowed in the open date sheet (a later flight can't leave before the previous one). */
+    val sheetMinDate: LocalDate
+        get() = when {
+            sheet == HomeSheet.RETURN_DATE -> query.date
+            sheetLeg > 0 -> query.extraLegs[sheetLeg - 1].date
+            sheetLeg == 0 -> query.date
+            else -> today
+        }
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -60,6 +81,7 @@ class HomeViewModel @Inject constructor(
     )
     private val mode = MutableStateFlow(TravelMode.BUS)
     private val sheet = MutableStateFlow(HomeSheet.NONE)
+    private val sheetLeg = MutableStateFlow(-1)
     private val error = MutableStateFlow<SearchError?>(null)
 
     private val modeContent = mode.flatMapLatest { m ->
@@ -78,7 +100,7 @@ class HomeViewModel @Inject constructor(
         modeContent,
         recent,
         homeContentRepository.observeOffers(),
-        combine(sheet, error) { s, e -> s to e },
+        combine(sheet, sheetLeg, error) { s, l, e -> Triple(s, l, e) },
     ) { query, content, recentList, offers, sheetAndError ->
         HomeUiState(
             query = query,
@@ -88,7 +110,8 @@ class HomeViewModel @Inject constructor(
             popularRoutes = content.second,
             offers = offers,
             sheet = sheetAndError.first,
-            error = sheetAndError.second,
+            sheetLeg = sheetAndError.second,
+            error = sheetAndError.third,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -102,26 +125,82 @@ class HomeViewModel @Inject constructor(
     }
 
     fun openSheet(target: HomeSheet) {
+        sheetLeg.value = -1
+        sheet.value = target
+    }
+
+    /** Opens the from/to/date sheet of extra multi-city flight [index]. */
+    fun openLegSheet(target: HomeSheet, index: Int) {
+        sheetLeg.value = index
         sheet.value = target
     }
 
     fun closeSheet() {
         sheet.value = HomeSheet.NONE
+        sheetLeg.value = -1
     }
 
     fun setFrom(location: Location) {
-        edit { it.copy(from = location) }
+        val leg = sheetLeg.value
+        if (leg >= 0) editLeg(leg) { it.copy(from = location) } else edit { it.copy(from = location) }
         closeSheet()
     }
 
     fun setTo(location: Location) {
-        edit { it.copy(to = location) }
+        val leg = sheetLeg.value
+        if (leg >= 0) {
+            editLeg(leg) { it.copy(to = location) }
+        } else {
+            edit { q ->
+                // A new destination is the natural start of the next multi-city flight.
+                val legs = q.extraLegs.mapIndexed { i, l -> if (i == 0 && l.from == null) l.copy(from = location) else l }
+                q.copy(to = location, extraLegs = legs)
+            }
+        }
         closeSheet()
     }
 
     fun swap() = edit { it.copy(from = it.to, to = it.from) }
 
-    fun setDate(date: LocalDate) = edit { it.copy(date = date) }
+    /** Date sheet picked a day: the main date, the return date or a multi-city flight's date. */
+    fun setDate(date: LocalDate) {
+        val leg = sheetLeg.value
+        when {
+            sheet.value == HomeSheet.RETURN_DATE -> edit { it.copy(returnDate = date) }
+            leg >= 0 -> editLeg(leg) { it.copy(date = date) }
+            else -> edit { q -> q.copy(date = date, returnDate = q.returnDate?.let { maxOf(it, date) }) }
+        }
+        if (sheet.value == HomeSheet.RETURN_DATE || leg >= 0) closeSheet()
+        keepLegsInOrder()
+    }
+
+    fun setTripType(type: TripType) = edit { q ->
+        when (type) {
+            TripType.ONE_WAY -> q.copy(tripType = type)
+            TripType.ROUND_TRIP -> q.copy(tripType = type, returnDate = q.returnDate?.takeIf { !it.isBefore(q.date) } ?: q.date.plusDays(3))
+            TripType.MULTI_CITY -> q.copy(
+                tripType = type,
+                extraLegs = q.extraLegs.ifEmpty { listOf(LegQuery(from = q.to, to = null, date = q.date.plusDays(2))) },
+            )
+        }
+    }
+
+    fun addLeg() = edit { q ->
+        if (q.extraLegs.size + 1 >= SearchQuery.MAX_FLIGHT_LEGS) return@edit q
+        val last = q.extraLegs.lastOrNull()
+        q.copy(extraLegs = q.extraLegs + LegQuery(from = last?.to ?: q.to, to = null, date = (last?.date ?: q.date).plusDays(2)))
+    }
+
+    fun removeLeg(index: Int) = edit { q -> q.copy(extraLegs = q.extraLegs.filterIndexed { i, _ -> i != index }) }
+
+    private fun editLeg(index: Int, transform: (LegQuery) -> LegQuery) =
+        edit { q -> q.copy(extraLegs = q.extraLegs.mapIndexed { i, l -> if (i == index) transform(l) else l }) }
+
+    /** Later flights never leave before earlier ones. */
+    private fun keepLegsInOrder() = edit { q ->
+        var previous = q.date
+        q.copy(extraLegs = q.extraLegs.map { l -> l.copy(date = maxOf(l.date, previous)).also { previous = it.date } })
+    }
 
     fun updateQuery(query: SearchQuery) = edit { query }
 
@@ -141,10 +220,15 @@ class HomeViewModel @Inject constructor(
         val query = drafts.value.getValue(mode.value)
         val from = query.from
         val to = query.to
+        val multiCity = query.mode == TravelMode.FLIGHT && query.tripType == TripType.MULTI_CITY
         val problem = when {
             from == null -> SearchError.MISSING_FROM
             to == null -> SearchError.MISSING_TO
             from.id == to.id -> SearchError.SAME_PLACE
+            multiCity && query.extraLegs.any { !it.isComplete } -> SearchError.LEG_INCOMPLETE
+            multiCity && query.extraLegs.zipWithNext().any { (a, b) -> b.date.isBefore(a.date) } -> SearchError.DATE_ORDER
+            query.mode == TravelMode.FLIGHT && query.tripType == TripType.ROUND_TRIP &&
+                query.returnDate?.isBefore(query.date) == true -> SearchError.DATE_ORDER
             else -> null
         }
         error.value = problem

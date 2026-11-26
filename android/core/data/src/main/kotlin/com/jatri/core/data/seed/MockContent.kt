@@ -3,7 +3,13 @@ package com.jatri.core.data.seed
 import com.jatri.core.model.CabinClass
 import com.jatri.core.model.CoachType
 import com.jatri.core.model.DiscountType
+import com.jatri.core.model.FareBrand
+import com.jatri.core.model.FareRules
+import com.jatri.core.model.FlightJourney
+import com.jatri.core.model.FlightLeg
 import com.jatri.core.model.FlightOffer
+import com.jatri.core.model.PassengerType
+import com.jatri.core.model.PaxFare
 import com.jatri.core.model.BusTrip
 import com.jatri.core.model.Location
 import com.jatri.core.model.Money
@@ -64,19 +70,45 @@ object MockContent {
         ),
     )
 
+    /** Sample offers for previews and screenshot tests (the app itself gets offers from the API). */
     fun flightOffers(date: LocalDate, from: Location, to: Location): List<FlightOffer> = listOf(
-        flight("f1", "Sample Air", "SA 101", date, 7, 30, 65, 0, 20, true, 5499, from, to),
-        flight("f2", "Demo Airways", "DW 433", date, 10, 15, 60, 0, 20, false, 4899, from, to),
-        flight("f3", "Test Jet", "TJ 207", date, 14, 45, 70, 0, 15, true, 6150, from, to),
-        flight("f4", "Sample Air", "SA 115", date, 19, 0, 65, 0, 20, false, 5199, from, to),
+        flight("f1", "S1", "Sample Air", "S1 101", date, 7, 30, 65, FareBrand.SAVER, 5499, from, to),
+        flight("f2", "D2", "Demo Airways", "D2 433", date, 10, 15, 60, FareBrand.FLEX, 6420, from, to),
+        flight("f3", "T3", "Test Wings", "T3 207", date, 14, 45, 70, FareBrand.SAVER, 5150, from, to),
+        flight("f4", "M4", "Mock Air", "M4 115", date, 19, 0, 65, FareBrand.FLEX, 6199, from, to),
     )
 
     private fun flight(
-        id: String, airline: String, number: String, date: LocalDate, h: Int, m: Int, mins: Long,
-        stops: Int, bag: Int, refundable: Boolean, taka: Long, from: Location, to: Location,
+        id: String, code: String, airline: String, number: String, date: LocalDate, h: Int, m: Int, mins: Long,
+        brand: FareBrand, taka: Long, from: Location, to: Location,
     ): FlightOffer {
         val dep = LocalDateTime.of(date, LocalTime.of(h, m))
-        return FlightOffer(id, airline, null, number, from, to, dep, dep.plusMinutes(mins), stops, bag, refundable, CabinClass.ECONOMY, Money.taka(taka))
+        val duration = java.time.Duration.ofMinutes(mins)
+        val leg = FlightLeg(code, airline, number, "ATR 72-600", from, to, dep, dep.plus(duration), duration)
+        val flex = brand == FareBrand.FLEX
+        val tax = Money.taka(1000)
+        val base = Money.taka(taka) - tax - Money.taka(200)
+        return FlightOffer(
+            id = id,
+            journeys = listOf(FlightJourney(from, to, dep, dep.plus(duration), duration, listOf(leg))),
+            cabinClass = CabinClass.ECONOMY,
+            fareBrand = brand,
+            rules = FareRules(
+                refundable = flex,
+                refundFee = if (flex) Money.taka(1500) else null,
+                changeFee = Money.taka(if (flex) 1000 else 2500),
+                deadlineHours = 3,
+                checkedBaggageKg = 20,
+                cabinBaggageKg = 7,
+            ),
+            fares = listOf(PaxFare(PassengerType.ADULT, 1, base, tax)),
+            baseTotal = base,
+            taxTotal = tax,
+            serviceCharge = Money.taka(200),
+            price = Money.taka(taka),
+            seatsLeft = 4 + taka.toInt() % 5,
+            international = false,
+        )
     }
 
     fun busTrips(date: LocalDate, from: Location, to: Location): List<BusTrip> = listOf(

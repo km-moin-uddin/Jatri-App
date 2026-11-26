@@ -180,6 +180,15 @@ internal class MockBus {
         return dto
     }
 
+    /** Shared booking store: the mock flight provider keeps its holds here too. */
+    fun existing(phone: String, key: String): BookingDto? = idempotency["$phone|$key"]?.let { bookings[it] }
+
+    fun register(dto: BookingDto, phone: String, key: String): BookingDto {
+        bookings[dto.id] = dto
+        idempotency["$phone|$key"] = dto.id
+        return dto
+    }
+
     fun get(id: String): BookingDto {
         expireHolds()
         return bookings[id] ?: throw api("booking_not_found", "Booking not found.", "বুকিং পাওয়া যায়নি।")
@@ -229,7 +238,11 @@ internal class MockBus {
         bookings[b.id] = b.copy(
             status = "ticketed",
             holdExpiresAt = null,
-            passengers = b.passengers.mapIndexed { i, pass -> pass.copy(ticketNumber = "$pnr-${i + 1}") },
+            passengers = b.passengers.mapIndexed { i, pass ->
+                // Airlines issue a 13-digit e-ticket per passenger (000 = no real airline).
+                val number = if (b.mode == "flight") "000-%010d".format(Math.floorMod((pnr + i).hashCode().toLong() * 7919, 10_000_000_000L)) else "$pnr-${i + 1}"
+                pass.copy(ticketNumber = number)
+            },
             ticket = TicketDto(qrPayload = "JT1.${b.bookingRef}.${b.id.replace("-", "")}.demo", pdfUrl = "", issuedAt = OffsetDateTime.now(ZoneOffset.UTC).toString()),
         )
         release(b.id)

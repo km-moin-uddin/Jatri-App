@@ -16,4 +16,6 @@
     <string name="home_offer_code">কোড: %s</string>
     <string name="home_details">বিস্তারিত</string>
     <string name="home_account">অ্যাকাউন্ট</string>
+    <string name="home_leg_incomplete">প্রতিটি ফ্লাইটের জন্য আলাদা যাত্রা ও গন্তব্য বিমানবন্দর বেছে নিন।</string>
+    <string name="home_date_order">প্রতিটি ফ্লাইটের তারিখ আগেরটির দিন বা পরে হতে হবে।</string>
 </resources>
