@@ -1,0 +1,72 @@
+{
+ "success": true,
+ "data": {
+  "id": "723951ed-1e03-4dd6-833d-5ffa69c24820",
+  "booking_ref": "JT8EU3",
+  "mode": "train",
+  "status": "held",
+  "hold_expires_at": "2026-11-27T08:26:59.201656Z",
+  "base_fare": 131000,
+  "taxes": 0,
+  "service_charge": 4000,
+  "discount": 0,
+  "total_amount": 135000,
+  "currency": "BDT",
+  "contact_phone": "01712345678",
+  "contact_email": null,
+  "segments": [
+   {
+    "trip_id": "mt~stn_dhaka~stn_sylhet~2026-12-01~3",
+    "carrier": "Mock Nishitha",
+    "number": "729",
+    "from_id": "stn_dhaka",
+    "to_id": "stn_sylhet",
+    "depart_at": "2026-12-01T16:15:00Z",
+    "arrive_at": "2026-12-01T22:55:00Z",
+    "travel_class": "snigdha",
+    "seat_numbers": [
+     "CHA-1",
+     "CHA-9"
+    ],
+    "boarding_point": null,
+    "dropping_point": null,
+    "coach": "CHA",
+    "slice_index": null,
+    "from_code": null,
+    "to_code": null,
+    "aircraft": null,
+    "baggage": null
+   }
+  ],
+  "passengers": [
+   {
+    "full_name": "রহিম উদ্দিন",
+    "ticket_number": null,
+    "type": "adult",
+    "gender": "male",
+    "age": 34,
+    "seat_no": "CHA-1",
+    "document_masked": "•••••••••6789",
+    "date_of_birth": null,
+    "nationality": null
+   },
+   {
+    "full_name": "Ayesha Rahman",
+    "ticket_number": null,
+    "type": "child",
+    "gender": "female",
+    "age": 9,
+    "seat_no": "CHA-9",
+    "document_masked": null,
+    "date_of_birth": null,
+    "nationality": null
+   }
+  ],
+  "created_at": "2026-11-27T08:16:58.886417Z",
+  "ticket": null,
+  "cabin": null,
+  "fare_brand": null,
+  "fare_rules": null
+ },
+ "error": null
+}

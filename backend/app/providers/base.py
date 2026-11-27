@@ -185,3 +185,51 @@ class FlightProvider(Protocol):
     async def confirm(self, provider_ref: str) -> str: ...
     async def cancel(self, provider_ref: str) -> None: ...
     async def get_status(self, provider_ref: str) -> str: ...
+
+
+# ---------------------------------------------------------------- trains
+
+TRAIN_CLASSES = ("shovan", "shovan_chair", "snigdha", "ac_seat", "f_seat", "f_berth", "ac_berth")
+
+
+@dataclass(frozen=True)
+class TrainClassFare:
+    travel_class: str  # one of TRAIN_CLASSES
+    fare_paisa: int  # per seat
+    seats_available: int
+
+
+@dataclass(frozen=True)
+class TrainTrip:
+    id: str
+    provider: str
+    train_name: str
+    train_number: str
+    from_id: str
+    to_id: str
+    depart_at: datetime
+    arrive_at: datetime
+    off_day: int | None  # weekday the train doesn't run (0 = Monday), None = runs daily
+    classes: list[TrainClassFare] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class Coach:
+    """One coach of a class. Seat numbers carry the coach name, e.g. "CHA-25"."""
+
+    name: str
+    travel_class: str
+    layout: str  # "2+2" chairs | "berth" cabins
+    rows: list[list[Seat | None]]
+
+
+class TrainProvider(Protocol):
+    name: str
+
+    async def search(self, from_id: str, to_id: str, on: date, travel_class: str | None) -> list[TrainTrip]: ...
+    async def get_details(self, trip_id: str) -> TrainTrip | None: ...
+    async def get_coaches(self, trip_id: str, travel_class: str) -> list[Coach] | None: ...
+    async def hold(self, trip_id: str, travel_class: str, seats: list[str], expires_at: datetime) -> HoldResult: ...
+    async def confirm(self, provider_ref: str) -> str: ...
+    async def cancel(self, provider_ref: str) -> None: ...
+    async def get_status(self, provider_ref: str) -> str: ...

@@ -49,7 +49,9 @@ uv run ruff check .
 | GET | `/buses/{trip_id}/seats` | Seat map; seats held by others show as `held` |
 | POST | `/flights/search` | `{slices: [{from_id, to_id, date}] (1–4), adults, children, infants, cabin}`. Cached 5 min |
 | GET | `/flights/{offer_id}` | Live price, fare rules, baggage; `offer_expired` (409) when gone |
-| POST | `/bookings` | `mode: "bus"` holds seats, `mode: "flight"` holds the fare with a PNR, for 10 min (`held`). Send `Idempotency-Key`; pass `expected_total` to detect price changes |
+| POST | `/trains/search` | `{from_id, to_id, date, travel_class?}`. Dates up to 10 days ahead; off-day trains left out |
+| GET | `/trains/{trip_id}/seats?travel_class=` | Coaches of one class with seat maps (`held` = someone is paying) |
+| POST | `/bookings` | `mode: "bus"` or `"train"` holds seats (train: NID for passengers 18+), `mode: "flight"` holds the fare with a PNR, for 10 min (`held`). Send `Idempotency-Key`; pass `expected_total` to detect price changes |
 | GET | `/bookings`, `/bookings/{id}` | Your bookings only (others get 404). Expired holds turn `cancelled` |
 | POST | `/bookings/{id}/cancel` | Releases an unpaid hold (paid cancellations + refunds: Phase 7) |
 | POST | `/payments/init` | `{booking_id, method}` → `checkout_url` to open in a browser tab. `Idempotency-Key` supported |

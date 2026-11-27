@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.api.v1 import auth, bookings, buses, flights, locations, me, payments
+from app.api.v1 import auth, bookings, buses, flights, locations, me, payments, trains
 from app.core.envelope import install_error_handlers, ok
 
 
@@ -14,7 +14,16 @@ def create_app() -> FastAPI:
         docs_url="/docs",
     )
     install_error_handlers(app)
-    for router in (auth.router, me.router, locations.router, buses.router, flights.router, bookings.router, payments.router):
+    for router in (
+        auth.router,
+        me.router,
+        locations.router,
+        buses.router,
+        flights.router,
+        trains.router,
+        bookings.router,
+        payments.router,
+    ):
         app.include_router(router, prefix="/api/v1")
 
     @app.get("/health", tags=["meta"])

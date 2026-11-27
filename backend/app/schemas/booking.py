@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Discriminator, EmailStr, Field, Tag, model_validator
 
 from app.schemas.flight import FareRulesOut, FlightBookingIn
+from app.schemas.train import TrainBookingIn
 
 
 class PassengerIn(BaseModel):
@@ -44,7 +45,7 @@ def _mode(v) -> str:
 
 # `mode` picks the shape: "bus" (the default, so Phase 3 apps keep working) or "flight".
 BookingCreateIn = Annotated[
-    Annotated[BusBookingIn, Tag("bus")] | Annotated[FlightBookingIn, Tag("flight")],
+    Annotated[BusBookingIn, Tag("bus")] | Annotated[FlightBookingIn, Tag("flight")] | Annotated[TrainBookingIn, Tag("train")],
     Discriminator(_mode),
 ]
 
@@ -61,6 +62,8 @@ class SegmentOut(BaseModel):
     seat_numbers: list[str]
     boarding_point: dict | None = None
     dropping_point: dict | None = None
+    # Trains: the coach of the seats.
+    coach: str | None = None
     # Flights: which journey this flight belongs to (0 = outbound), airport codes and baggage.
     slice_index: int | None = None
     from_code: str | None = None

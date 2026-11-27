@@ -564,13 +564,116 @@
                 }
             }
         },
+        "/api/v1/trains/search": {
+            "post": {
+                "tags": [
+                    "train"
+                ],
+                "summary": "Search",
+                "description": "Trains for one day, with seats left and fare per class. Only dates up to 10 days ahead\n(`outside_sale_window` otherwise); trains on their weekly off day are left out.",
+                "operationId": "search_api_v1_trains_search_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TrainSearchIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_list_TrainTripOut__"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trains/{trip_id}/seats": {
+            "get": {
+                "tags": [
+                    "train"
+                ],
+                "summary": "Seats",
+                "description": "Coaches of one class with their seat maps; seats someone else is paying for show as `held`.",
+                "operationId": "seats_api_v1_trains__trip_id__seats_get",
+                "parameters": [
+                    {
+                        "name": "trip_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Trip Id"
+                        }
+                    },
+                    {
+                        "name": "travel_class",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "enum": [
+                                "shovan",
+                                "shovan_chair",
+                                "snigdha",
+                                "ac_seat",
+                                "f_seat",
+                                "f_berth",
+                                "ac_berth"
+                            ],
+                            "type": "string",
+                            "title": "Travel Class"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_TrainSeatMapOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/bookings": {
             "post": {
                 "tags": [
                     "bookings"
                 ],
                 "summary": "Create",
-                "description": "Holds the seats (bus) or the fare (flight, with a PNR) for `hold_minutes` (status `held`).\n`mode` picks the body shape. Send an `Idempotency-Key` header so a retried request returns the\nsame booking instead of holding twice.",
+                "description": "Holds the seats (bus, train) or the fare (flight, with a PNR) for `hold_minutes` (status `held`).\n`mode` picks the body shape. Send an `Idempotency-Key` header so a retried request returns the\nsame booking instead of holding twice.",
                 "operationId": "create_api_v1_bookings_post",
                 "parameters": [
                     {
@@ -618,6 +721,9 @@
                                     },
                                     {
                                         "$ref": "#/components/schemas/FlightBookingIn"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/TrainBookingIn"
                                     }
                                 ],
                                 "title": "Body"
@@ -1488,6 +1594,46 @@
                 ],
                 "title": "BusTripOut"
             },
+            "CoachOut": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "layout": {
+                        "type": "string",
+                        "enum": [
+                            "2+2",
+                            "berth"
+                        ],
+                        "title": "Layout"
+                    },
+                    "rows": {
+                        "items": {
+                            "items": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/components/schemas/SeatOut"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ]
+                            },
+                            "type": "array"
+                        },
+                        "type": "array",
+                        "title": "Rows"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "layout",
+                    "rows"
+                ],
+                "title": "CoachOut"
+            },
             "Envelope_AuthOut_": {
                 "properties": {
                     "success": {
@@ -1779,6 +1925,39 @@
                 ],
                 "title": "Envelope[TokenPair]"
             },
+            "Envelope_TrainSeatMapOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TrainSeatMapOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[TrainSeatMapOut]"
+            },
             "Envelope_UserOut_": {
                 "properties": {
                     "success": {
@@ -1959,6 +2138,43 @@
                     "success"
                 ],
                 "title": "Envelope[list[LocationOut]]"
+            },
+            "Envelope_list_TrainTripOut__": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/TrainTripOut"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Data"
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[list[TrainTripOut]]"
             },
             "FareRulesOut": {
                 "properties": {
@@ -3011,6 +3227,17 @@
                         ],
                         "title": "Dropping Point"
                     },
+                    "coach": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Coach"
+                    },
                     "slice_index": {
                         "anyOf": [
                             {
@@ -3193,6 +3420,350 @@
                     "expires_in"
                 ],
                 "title": "TokenPair"
+            },
+            "TrainBookingIn": {
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "const": "train",
+                        "title": "Mode"
+                    },
+                    "trip_id": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "title": "Trip Id"
+                    },
+                    "travel_class": {
+                        "type": "string",
+                        "enum": [
+                            "shovan",
+                            "shovan_chair",
+                            "snigdha",
+                            "ac_seat",
+                            "f_seat",
+                            "f_berth",
+                            "ac_berth"
+                        ],
+                        "title": "Travel Class"
+                    },
+                    "seats": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "maxItems": 4,
+                        "minItems": 1,
+                        "title": "Seats"
+                    },
+                    "passengers": {
+                        "items": {
+                            "$ref": "#/components/schemas/TrainPassengerIn"
+                        },
+                        "type": "array",
+                        "maxItems": 4,
+                        "minItems": 1,
+                        "title": "Passengers"
+                    },
+                    "contact_phone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 10,
+                        "title": "Contact Phone"
+                    },
+                    "contact_email": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Contact Email"
+                    },
+                    "expected_total": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Expected Total"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "mode",
+                    "trip_id",
+                    "travel_class",
+                    "seats",
+                    "passengers",
+                    "contact_phone"
+                ],
+                "title": "TrainBookingIn"
+            },
+            "TrainClassOut": {
+                "properties": {
+                    "travel_class": {
+                        "type": "string",
+                        "enum": [
+                            "shovan",
+                            "shovan_chair",
+                            "snigdha",
+                            "ac_seat",
+                            "f_seat",
+                            "f_berth",
+                            "ac_berth"
+                        ],
+                        "title": "Travel Class"
+                    },
+                    "fare": {
+                        "type": "integer",
+                        "title": "Fare",
+                        "description": "Per seat, paisa"
+                    },
+                    "seats_available": {
+                        "type": "integer",
+                        "title": "Seats Available"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "travel_class",
+                    "fare",
+                    "seats_available"
+                ],
+                "title": "TrainClassOut"
+            },
+            "TrainPassengerIn": {
+                "properties": {
+                    "full_name": {
+                        "type": "string",
+                        "maxLength": 80,
+                        "minLength": 2,
+                        "title": "Full Name"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female",
+                            "other"
+                        ],
+                        "title": "Gender"
+                    },
+                    "age": {
+                        "type": "integer",
+                        "maximum": 120.0,
+                        "minimum": 1.0,
+                        "title": "Age"
+                    },
+                    "seat_no": {
+                        "type": "string",
+                        "maxLength": 12,
+                        "title": "Seat No"
+                    },
+                    "document_no": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^\\d{10}$|^\\d{13}$|^\\d{17}$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Document No"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "full_name",
+                    "gender",
+                    "age",
+                    "seat_no"
+                ],
+                "title": "TrainPassengerIn"
+            },
+            "TrainSearchIn": {
+                "properties": {
+                    "from_id": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "title": "From Id",
+                        "examples": [
+                            "stn_dhaka"
+                        ]
+                    },
+                    "to_id": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "title": "To Id",
+                        "examples": [
+                            "stn_chattogram"
+                        ]
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Date"
+                    },
+                    "travel_class": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "shovan",
+                                    "shovan_chair",
+                                    "snigdha",
+                                    "ac_seat",
+                                    "f_seat",
+                                    "f_berth",
+                                    "ac_berth"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Travel Class",
+                        "description": "Only trains that have this class"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "from_id",
+                    "to_id",
+                    "date"
+                ],
+                "title": "TrainSearchIn"
+            },
+            "TrainSeatMapOut": {
+                "properties": {
+                    "trip": {
+                        "$ref": "#/components/schemas/TrainTripOut"
+                    },
+                    "travel_class": {
+                        "type": "string",
+                        "enum": [
+                            "shovan",
+                            "shovan_chair",
+                            "snigdha",
+                            "ac_seat",
+                            "f_seat",
+                            "f_berth",
+                            "ac_berth"
+                        ],
+                        "title": "Travel Class"
+                    },
+                    "fare": {
+                        "type": "integer",
+                        "title": "Fare"
+                    },
+                    "coaches": {
+                        "items": {
+                            "$ref": "#/components/schemas/CoachOut"
+                        },
+                        "type": "array",
+                        "title": "Coaches"
+                    },
+                    "max_selectable": {
+                        "type": "integer",
+                        "title": "Max Selectable"
+                    },
+                    "service_charge_per_seat": {
+                        "type": "integer",
+                        "title": "Service Charge Per Seat"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "trip",
+                    "travel_class",
+                    "fare",
+                    "coaches",
+                    "max_selectable",
+                    "service_charge_per_seat"
+                ],
+                "title": "TrainSeatMapOut"
+            },
+            "TrainTripOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "train_name": {
+                        "type": "string",
+                        "title": "Train Name"
+                    },
+                    "train_number": {
+                        "type": "string",
+                        "title": "Train Number"
+                    },
+                    "from_id": {
+                        "type": "string",
+                        "title": "From Id"
+                    },
+                    "to_id": {
+                        "type": "string",
+                        "title": "To Id"
+                    },
+                    "depart_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Depart At"
+                    },
+                    "arrive_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Arrive At"
+                    },
+                    "off_day": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "monday",
+                                    "tuesday",
+                                    "wednesday",
+                                    "thursday",
+                                    "friday",
+                                    "saturday",
+                                    "sunday"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Off Day",
+                        "description": "Weekly day the train doesn't run; null = daily"
+                    },
+                    "classes": {
+                        "items": {
+                            "$ref": "#/components/schemas/TrainClassOut"
+                        },
+                        "type": "array",
+                        "title": "Classes"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "train_name",
+                    "train_number",
+                    "from_id",
+                    "to_id",
+                    "depart_at",
+                    "arrive_at",
+                    "off_day",
+                    "classes"
+                ],
+                "title": "TrainTripOut"
             },
             "UserOut": {
                 "properties": {

@@ -386,6 +386,7 @@ def booking_out(b: Booking, ticket=None) -> BookingOut:
                 seat_numbers=list(s.seat_numbers),
                 boarding_point=(s.extra or {}).get("boarding_point"),
                 dropping_point=(s.extra or {}).get("dropping_point"),
+                coach=(s.extra or {}).get("coach"),
                 slice_index=(s.extra or {}).get("slice_index"),
                 from_code=(s.extra or {}).get("from_code"),
                 to_code=(s.extra or {}).get("to_code"),

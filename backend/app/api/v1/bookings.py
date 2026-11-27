@@ -9,8 +9,10 @@ from app.core.envelope import ok
 from app.providers.registry import ProvidersDep
 from app.schemas.booking import BookingCreateIn, BookingOut, BusBookingIn
 from app.schemas.common import Envelope
+from app.schemas.train import TrainBookingIn
 from app.services import booking as service
 from app.services import flight as flight_service
+from app.services import train as train_service
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
@@ -25,11 +27,13 @@ async def create(
     settings: AppSettings,
     idempotency_key: Annotated[str | None, Header(max_length=64)] = None,
 ):
-    """Holds the seats (bus) or the fare (flight, with a PNR) for `hold_minutes` (status `held`).
+    """Holds the seats (bus, train) or the fare (flight, with a PNR) for `hold_minutes` (status `held`).
     `mode` picks the body shape. Send an `Idempotency-Key` header so a retried request returns the
     same booking instead of holding twice."""
     if isinstance(body, BusBookingIn):
         booking = await service.create_bus_hold(db, providers, store, settings, user, body, idempotency_key)
+    elif isinstance(body, TrainBookingIn):
+        booking = await train_service.create_train_hold(db, providers, store, settings, user, body, idempotency_key)
     else:
         booking = await flight_service.create_flight_hold(db, providers, store, settings, user, body, idempotency_key)
     return ok(service.booking_out(booking, await service.ticket_of(db, booking)))
