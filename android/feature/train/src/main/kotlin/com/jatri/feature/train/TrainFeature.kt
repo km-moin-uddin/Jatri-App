@@ -13,9 +13,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -30,6 +32,7 @@ import com.jatri.core.common.format.format
 import com.jatri.core.common.format.localized
 import com.jatri.core.data.repository.LocationRepository
 import com.jatri.core.data.repository.TrainRepository
+import com.jatri.core.data.repository.PriceAlertRepository
 import com.jatri.core.designsystem.component.ErrorState
 import com.jatri.core.designsystem.component.JatriTopAppBar
 import com.jatri.core.designsystem.component.LoadingState
@@ -49,9 +52,13 @@ import com.jatri.core.model.TrainClass
 import com.jatri.core.model.TrainClassFare
 import com.jatri.core.model.TrainSeatMap
 import com.jatri.core.model.TrainTrip
+import com.jatri.core.model.TravelMode
 import com.jatri.core.ui.label
 import com.jatri.core.ui.result.ResultSort
 import com.jatri.core.ui.result.ResultsScaffold
+import com.jatri.core.ui.result.PriceAlertAction
+import com.jatri.core.ui.result.PriceAlertSnackbar
+import com.jatri.core.ui.result.PriceAlertStatus
 import com.jatri.core.ui.result.TrainResultCard
 import com.jatri.core.ui.result.routeSubtitle
 import com.jatri.core.ui.result.routeTitle
@@ -81,8 +88,12 @@ data class TrainResultsUiState(
     val error: AppError? = null,
     val trips: List<TrainTrip> = emptyList(),
     val sort: ResultSort = ResultSort.EARLIEST,
+    val alert: PriceAlertStatus = PriceAlertStatus.IDLE,
+    /** One-shot: true = alert saved, false = it failed. */
+    val alertResult: Boolean? = null,
 ) {
     val date: LocalDate get() = LocalDate.parse(args.date)
+    val lowest: Money? get() = trips.flatMap { it.classes }.minOfOrNull { it.price }
     val sorted: List<TrainTrip>
         get() = when (sort) {
             ResultSort.CHEAPEST -> trips.sortedBy { t -> t.classes.minOf { it.price } }
@@ -96,6 +107,7 @@ class TrainResultsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val locations: LocationRepository,
     private val trains: TrainRepository,
+    private val alerts: PriceAlertRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TrainResultsUiState(savedStateHandle.toRoute<TrainResultsDestination>()))
     val state: StateFlow<TrainResultsUiState> = _state.asStateFlow()
@@ -107,13 +119,24 @@ class TrainResultsViewModel @Inject constructor(
 
     /** Date pill tapped: search the same route on another day. */
     fun setDate(date: LocalDate) {
-        _state.update { it.copy(args = it.args.copy(date = date.toString()), trips = emptyList()) }
+        _state.update { it.copy(args = it.args.copy(date = date.toString()), trips = emptyList(), alert = PriceAlertStatus.IDLE) }
         load()
     }
 
     fun retry() = load()
 
     fun setSort(sort: ResultSort) = _state.update { it.copy(sort = sort) }
+
+    fun createAlert(target: Money) {
+        val args = _state.value.args
+        _state.update { it.copy(alert = PriceAlertStatus.SAVING) }
+        viewModelScope.launch {
+            val ok = runCatching { alerts.create(TravelMode.TRAIN, args.fromId, args.toId, LocalDate.parse(args.date), target) }.isSuccess
+            _state.update { it.copy(alert = if (ok) PriceAlertStatus.SAVED else PriceAlertStatus.IDLE, alertResult = ok) }
+        }
+    }
+
+    fun alertShown() = _state.update { it.copy(alertResult = null) }
 
     private fun load() {
         job?.cancel()
@@ -145,7 +168,12 @@ internal fun TrainResultsRoute(
     viewModel: TrainResultsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    TrainResultsScreen(state, onBack, onClassClick, viewModel::setSort, viewModel::setDate, viewModel::retry)
+    val snackbar = remember { SnackbarHostState() }
+    PriceAlertSnackbar(state.alertResult, snackbar, viewModel::alertShown)
+    TrainResultsScreen(
+        state, onBack, onClassClick, viewModel::setSort, viewModel::setDate, viewModel::retry,
+        onCreateAlert = viewModel::createAlert, snackbar = snackbar,
+    )
 }
 
 /** Stateless results screen, also used by screenshot tests. */
@@ -158,10 +186,14 @@ fun TrainResultsScreen(
     onDateChange: (LocalDate) -> Unit = {},
     onRetry: () -> Unit = {},
     today: LocalDate = LocalDate.now(),
+    onCreateAlert: (Money) -> Unit = {},
+    snackbar: SnackbarHostState? = null,
 ) {
     ResultsScaffold(
         title = routeTitle(state.from, state.to),
         subtitle = routeSubtitle(state.date, state.args.adults + state.args.children),
+        actions = { PriceAlertAction(state.lowest.takeUnless { state.loading }, state.alert, onCreateAlert) },
+        snackbarHost = snackbar,
         loading = state.loading,
         count = state.trips.size,
         sort = state.sort,

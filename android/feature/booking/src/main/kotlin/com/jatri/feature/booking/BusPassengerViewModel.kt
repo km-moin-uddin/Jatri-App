@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
+import com.jatri.core.data.repository.TravellerRepository
+import com.jatri.core.model.SavedTraveller
 import javax.inject.Inject
 
 data class PassengerForm(
@@ -51,6 +53,7 @@ data class BusPassengerUiState(
     val error: AppError? = null,
     /** The server says seats or price changed: the user must go back to the seat map. */
     val mustReselect: Boolean = false,
+    val travellers: List<SavedTraveller> = emptyList(),
 ) {
     val total: Money
         get() = seatMap?.let { (it.trip.price + it.serviceChargePerSeat) * passengers.size } ?: Money.ZERO
@@ -62,6 +65,7 @@ class BusPassengerViewModel @Inject constructor(
     private val buses: BusRepository,
     private val bookings: BookingRepository,
     auth: AuthRepository,
+    private val travellers: TravellerRepository,
 ) : ViewModel() {
     private val args = savedStateHandle.toRoute<PassengerDetailsDestination>()
     private val seats = args.seats.split(',').filter(String::isNotBlank)
@@ -79,6 +83,7 @@ class BusPassengerViewModel @Inject constructor(
     val state: StateFlow<BusPassengerUiState> = _state.asStateFlow()
 
     init {
+        loadTravellers()
         val userName = (auth.session.value as? SessionState.LoggedIn)?.user?.name.orEmpty()
         viewModelScope.launch {
             try {
@@ -96,6 +101,13 @@ class BusPassengerViewModel @Inject constructor(
             } catch (e: AppException) {
                 _state.update { it.copy(loading = false, error = e.error) }
             }
+        }
+    }
+
+    private fun loadTravellers() {
+        viewModelScope.launch {
+            val list = runCatching { travellers.list() }.getOrDefault(emptyList())
+            _state.update { it.copy(travellers = list) }
         }
     }
 

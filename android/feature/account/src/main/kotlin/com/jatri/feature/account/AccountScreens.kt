@@ -75,7 +75,7 @@ import com.jatri.core.ui.placeholder.PhasePlaceholderScreen
 /** Kept so R8 doesn't rename it: it is a navigation argument. */
 @androidx.annotation.Keep
 @kotlinx.serialization.Serializable
-enum class AccountSubPage { PROFILE, SAVED_TRAVELLERS, PAYMENT_HISTORY, PRIVACY, TERMS }
+enum class AccountSubPage { PROFILE, SAVED_TRAVELLERS, PRICE_ALERTS, PAYMENT_HISTORY, PRIVACY, TERMS }
 
 @Composable
 internal fun AccountRoute(
@@ -145,6 +145,7 @@ fun AccountScreen(
 
             SettingsGroup(stringResource(R.string.account_section_travel)) {
                 SettingsRow(JatriIcons.Group, stringResource(R.string.account_saved_travellers)) { onOpenPage(AccountSubPage.SAVED_TRAVELLERS) }
+                SettingsRow(JatriIcons.NotificationsOutlined, stringResource(R.string.alerts_title)) { onOpenPage(AccountSubPage.PRICE_ALERTS) }
                 SettingsRow(JatriIcons.Payments, stringResource(R.string.account_payment_history)) { onOpenPage(AccountSubPage.PAYMENT_HISTORY) }
                 SettingsRow(JatriIcons.Notifications, stringResource(R.string.account_notifications), onClick = onNotificationsClick)
             }
@@ -399,7 +400,7 @@ internal fun ProfileRoute(onBack: () -> Unit, viewModel: ProfileViewModel = hilt
 fun AccountSubPageScreen(page: AccountSubPage, onBack: () -> Unit) {
     val (title, phase) = when (page) {
         AccountSubPage.PROFILE -> R.string.account_title to R.string.account_phase_profile
-        AccountSubPage.SAVED_TRAVELLERS -> R.string.account_saved_travellers to R.string.account_phase_travellers
+        AccountSubPage.SAVED_TRAVELLERS, AccountSubPage.PRICE_ALERTS -> R.string.account_saved_travellers to R.string.account_phase_travellers
         AccountSubPage.PAYMENT_HISTORY -> R.string.account_payment_history to R.string.account_phase_payments
         AccountSubPage.PRIVACY -> R.string.account_privacy to R.string.account_phase_legal
         AccountSubPage.TERMS -> R.string.account_terms to R.string.account_phase_legal

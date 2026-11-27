@@ -25,6 +25,8 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.Period
 import java.util.UUID
+import com.jatri.core.data.repository.TravellerRepository
+import com.jatri.core.model.SavedTraveller
 import javax.inject.Inject
 
 /** Dates are typed as 8 digits (DDMMYYYY) and shown as DD/MM/YYYY. */
@@ -73,6 +75,7 @@ data class FlightPassengerUiState(
     val error: AppError? = null,
     /** The fare changed or is gone: the user must pick a flight again. */
     val mustReselect: Boolean = false,
+    val travellers: List<SavedTraveller> = emptyList(),
 )
 
 @HiltViewModel
@@ -81,6 +84,7 @@ class FlightPassengerViewModel @Inject constructor(
     private val flights: FlightRepository,
     auth: AuthRepository,
     private val clock: Clock,
+    private val travellers: TravellerRepository,
 ) : ViewModel() {
     private val args = savedStateHandle.toRoute<PassengerDetailsDestination>()
     private val user = (auth.session.value as? SessionState.LoggedIn)?.user
@@ -93,6 +97,7 @@ class FlightPassengerViewModel @Inject constructor(
 
     init {
         load()
+        loadTravellers()
     }
 
     fun retry() = load()
@@ -116,6 +121,13 @@ class FlightPassengerViewModel @Inject constructor(
             } catch (e: AppException) {
                 _state.update { it.copy(loading = false, error = e.error) }
             }
+        }
+    }
+
+    private fun loadTravellers() {
+        viewModelScope.launch {
+            val list = runCatching { travellers.list() }.getOrDefault(emptyList())
+            _state.update { it.copy(travellers = list) }
         }
     }
 

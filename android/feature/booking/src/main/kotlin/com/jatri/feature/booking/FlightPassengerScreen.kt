@@ -130,6 +130,7 @@ fun FlightPassengerScreen(
                         form = p,
                         international = offer.international,
                         onChange = { t -> onChange(i, t) },
+                        saved = state.travellers.fitting(p.type, offer.departAt.toLocalDate()),
                     )
                 }
                 JatriCard {
@@ -163,6 +164,7 @@ private fun FlightPassengerCard(
     form: FlightPassengerForm,
     international: Boolean,
     onChange: ((FlightPassengerForm) -> FlightPassengerForm) -> Unit,
+    saved: List<com.jatri.core.model.SavedTraveller> = emptyList(),
 ) {
     JatriCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -179,6 +181,7 @@ private fun FlightPassengerCard(
             )
         }
         Spacer(Modifier.height(Spacing.xs))
+        SavedTravellerChips(saved) { t -> onChange { it.fillFrom(t, international) } }
         JatriTextField(
             value = form.givenName,
             onValueChange = { v -> onChange { it.copy(givenName = v.take(40), givenNameError = null) } },

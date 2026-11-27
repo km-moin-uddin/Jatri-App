@@ -8,6 +8,12 @@ import com.jatri.core.data.repository.NetworkFlightRepository
 import com.jatri.core.data.repository.NetworkTrainRepository
 import com.jatri.core.data.repository.NetworkNotificationRepository
 import com.jatri.core.data.repository.NotificationRepository
+import com.jatri.core.data.repository.NetworkOfferRepository
+import com.jatri.core.data.repository.NetworkPriceAlertRepository
+import com.jatri.core.data.repository.NetworkTravellerRepository
+import com.jatri.core.data.repository.OfferRepository
+import com.jatri.core.data.repository.PriceAlertRepository
+import com.jatri.core.data.repository.TravellerRepository
 import com.jatri.core.data.repository.TrainRepository
 import com.jatri.core.data.repository.NetworkBookingRepository
 import com.jatri.core.data.repository.NetworkBusRepository
@@ -41,6 +47,9 @@ internal abstract class DataModule {
     @Binds abstract fun bindsFlightRepository(impl: NetworkFlightRepository): FlightRepository
     @Binds abstract fun bindsTrainRepository(impl: NetworkTrainRepository): TrainRepository
     @Binds abstract fun bindsNotificationRepository(impl: NetworkNotificationRepository): NotificationRepository
+    @Binds abstract fun bindsOfferRepository(impl: NetworkOfferRepository): OfferRepository
+    @Binds abstract fun bindsTravellerRepository(impl: NetworkTravellerRepository): TravellerRepository
+    @Binds abstract fun bindsPriceAlertRepository(impl: NetworkPriceAlertRepository): PriceAlertRepository
     @Binds abstract fun bindsBookingRepository(impl: NetworkBookingRepository): BookingRepository
     @Binds abstract fun bindsPaymentRepository(impl: NetworkPaymentRepository): PaymentRepository
 

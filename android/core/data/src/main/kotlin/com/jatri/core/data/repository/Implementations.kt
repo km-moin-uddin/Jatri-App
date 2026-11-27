@@ -125,9 +125,14 @@ internal class DataStoreUserSettingsRepository @Inject constructor(
 @Singleton
 internal class MockHomeContentRepository @Inject constructor(
     private val clock: Clock,
+    private val offerRepository: OfferRepository,
 ) : HomeContentRepository {
     override fun observePopularRoutes(mode: TravelMode): Flow<List<PopularRoute>> =
         flowOf(MockContent.popularRoutes.filter { it.mode == mode })
 
-    override fun observeOffers(): Flow<List<Offer>> = flowOf(MockContent.offers(LocalDate.now(clock)))
+    /** Offers from the server (the bundled samples first, so Home never waits on the network). */
+    override fun observeOffers(): Flow<List<Offer>> = kotlinx.coroutines.flow.flow {
+        emit(MockContent.offers(LocalDate.now(clock)))
+        emit(offerRepository.offers())
+    }
 }

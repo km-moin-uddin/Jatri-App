@@ -127,4 +127,13 @@
     <string name="ui_total_incl_tax">ট্যাক্সসহ</string>
     <string name="ui_no_pdf_app">এই ফোনে পিডিএফ খোলার কোনো অ্যাপ নেই।</string>
     <string name="ui_no_calendar_app">এই ফোনে কোনো ক্যালেন্ডার অ্যাপ পাওয়া যায়নি।</string>
+    <string name="ui_price_alert">দামের অ্যালার্ট</string>
+    <string name="ui_price_alert_title">দাম কমলে জানান</string>
+    <string name="ui_price_alert_body">আজ সর্বনিম্ন ভাড়া জনপ্রতি %s। আপনার দামে নামলেই আমরা জানাব।</string>
+    <string name="ui_price_alert_target">জনপ্রতি আপনার দাম (৳)</string>
+    <string name="ui_price_alert_too_high">আজকের সর্বনিম্ন ভাড়ার চেয়ে কম দাম দিন</string>
+    <string name="ui_price_alert_save">অ্যালার্ট দিন</string>
+    <string name="ui_price_alert_cancel">বাতিল</string>
+    <string name="ui_price_alert_saved">দামের অ্যালার্ট চালু হয়েছে। আমরা জানাব।</string>
+    <string name="ui_price_alert_failed">অ্যালার্ট দেওয়া গেল না। আবার চেষ্টা করুন।</string>
 </resources>

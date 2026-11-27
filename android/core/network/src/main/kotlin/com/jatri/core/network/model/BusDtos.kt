@@ -127,6 +127,7 @@ data class BookingDto(
     val cabin: String? = null,
     @SerialName("fare_brand") val fareBrand: String? = null,
     @SerialName("fare_rules") val fareRules: FareRulesDto? = null,
+    @SerialName("promo_code") val promoCode: String? = null,
     @SerialName("cancelled_at") val cancelledAt: String? = null,
     val refund: RefundDto? = null,
 )

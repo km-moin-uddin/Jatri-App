@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
+import com.jatri.core.data.repository.TravellerRepository
+import com.jatri.core.model.SavedTraveller
 import javax.inject.Inject
 
 /** Bangladesh Railway: every passenger aged 18+ needs an NID. */
@@ -38,6 +40,7 @@ data class TrainPassengerUiState(
     val submitting: Boolean = false,
     val error: AppError? = null,
     val mustReselect: Boolean = false,
+    val travellers: List<SavedTraveller> = emptyList(),
 ) {
     val total: Money get() = seatMap?.let { (it.fare + it.serviceChargePerSeat) * passengers.size } ?: Money.ZERO
 }
@@ -47,6 +50,7 @@ class TrainPassengerViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val trains: TrainRepository,
     auth: AuthRepository,
+    private val travellers: TravellerRepository,
 ) : ViewModel() {
     private val args = savedStateHandle.toRoute<PassengerDetailsDestination>()
     private val seats = args.seats.split(',').filter(String::isNotBlank)
@@ -61,6 +65,7 @@ class TrainPassengerViewModel @Inject constructor(
 
     init {
         load()
+        loadTravellers()
     }
 
     fun retry() = load()
@@ -82,6 +87,13 @@ class TrainPassengerViewModel @Inject constructor(
             } catch (e: AppException) {
                 _state.update { it.copy(loading = false, error = e.error) }
             }
+        }
+    }
+
+    private fun loadTravellers() {
+        viewModelScope.launch {
+            val list = runCatching { travellers.list() }.getOrDefault(emptyList())
+            _state.update { it.copy(travellers = list) }
         }
     }
 

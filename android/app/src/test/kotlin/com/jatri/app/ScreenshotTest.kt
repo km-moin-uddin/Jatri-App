@@ -180,15 +180,10 @@ abstract class ScreenshotTest(private val name: String, private val dark: Boolea
         }
     }
 
-    @Test fun reviewPay() = shot("06_review_pay") {
+    private fun busHeld(): Booking {
         val trip = MockContent.busTrips(today.plusDays(1), dhakaCox.from, dhakaCox.to).first()
         val point = StopPoint("p", "Kalabagan", "কলাবাগান", trip.departAt)
-        ReviewPayScreen(
-            onBack = {},
-            onPaid = {},
-            secondsLeft = 9 * 60 + 12,
-            onCancel = {},
-            booking = Booking(
+        return Booking(
                 id = "b1", ref = "JTW4US", mode = TravelMode.BUS, status = BookingStatus.HELD, holdExpiresAt = null,
                 baseFare = trip.price * 2, serviceCharge = Money.taka(60), discount = Money.ZERO, total = trip.price * 2 + Money.taka(60),
                 contactPhone = "01712345678", contactEmail = null,
@@ -202,6 +197,50 @@ abstract class ScreenshotTest(private val name: String, private val dark: Boolea
                     BookingPassenger("রহিম উদ্দিন", Gender.MALE, 34, "A1", "••••••7890"),
                     BookingPassenger("Karima Begum", Gender.FEMALE, null, "A3", null),
                 ),
+            )
+    }
+
+    @Test fun reviewPay() = shot("06_review_pay") {
+        ReviewPayScreen(onBack = {}, onPaid = {}, secondsLeft = 9 * 60 + 12, onCancel = {}, booking = busHeld())
+    }
+
+    @Test fun reviewPromo() = shot("27_review_promo") {
+        val b = busHeld()
+        ReviewPayScreen(
+            onBack = {}, onPaid = {}, secondsLeft = 8 * 60 + 2, onCancel = {},
+            booking = b.copy(discount = Money.taka(150), total = b.total - Money.taka(150), promoCode = "JATRI150"),
+            promo = com.jatri.feature.payment.PromoState(),
+        )
+    }
+
+    @Test fun reviewPromoError() = shot("27b_review_promo_error") {
+        ReviewPayScreen(
+            onBack = {}, onPaid = {}, secondsLeft = 8 * 60 + 2, onCancel = {}, booking = busHeld(),
+            promo = com.jatri.feature.payment.PromoState(
+                error = com.jatri.core.model.AppError.Api("promo_wrong_mode", "This code isn't valid for this kind of ticket.", "এই কোডটি এই ধরনের টিকিটে চলবে না।"),
+            ),
+        )
+    }
+
+    private val savedTravellers = listOf(
+        com.jatri.core.model.SavedTraveller("t1", "রহিম উদ্দিন", "Rahim", "Uddin", Gender.MALE, LocalDate.of(1990, 5, 1), nid = "1990123456789"),
+        com.jatri.core.model.SavedTraveller("t2", "Ayesha Rahman", "Ayesha", "Rahman", Gender.FEMALE, LocalDate.of(2017, 2, 14),
+            passportNo = "A01234567", passportExpiry = LocalDate.of(2030, 1, 1)),
+    )
+
+    @Test fun travellers() = shot("28_saved_travellers") {
+        com.jatri.feature.account.TravellersScreen(com.jatri.feature.account.TravellersUiState(loading = false, items = savedTravellers))
+    }
+
+    @Test fun priceAlerts() = shot("29_price_alerts") {
+        com.jatri.feature.account.PriceAlertsScreen(
+            com.jatri.feature.account.PriceAlertsUiState(
+                loading = false,
+                items = listOf(
+                    com.jatri.core.model.PriceAlert("a1", TravelMode.BUS, dhakaCox.from.id, dhakaCox.to.id, today.plusDays(7), Money.taka(1100), Money.taka(1250), true),
+                    com.jatri.core.model.PriceAlert("a2", TravelMode.TRAIN, rail.from.id, rail.to.id, today.plusDays(20), Money.taka(500), null, true),
+                ),
+                places = mapOf(dhakaCox.from.id to dhakaCox.from, dhakaCox.to.id to dhakaCox.to, rail.from.id to rail.from, rail.to.id to rail.to),
             ),
         )
     }
@@ -415,6 +454,7 @@ abstract class ScreenshotTest(private val name: String, private val dark: Boolea
                     com.jatri.feature.booking.PassengerForm("CHA-6", false, "রহিম উদ্দিন", Gender.MALE, "34", "", nidError = true),
                     com.jatri.feature.booking.PassengerForm("CHA-7", false, "Ayesha Rahman", Gender.FEMALE, "9"),
                 ),
+                travellers = savedTravellers,
             ),
         )
     }

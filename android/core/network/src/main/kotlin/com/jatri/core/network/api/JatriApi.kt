@@ -4,6 +4,11 @@ import com.jatri.core.network.model.ApiEnvelope
 import com.jatri.core.network.model.AuthResponse
 import com.jatri.core.network.model.BookingCreateRequest
 import com.jatri.core.network.model.BookingDto
+import com.jatri.core.network.model.OfferDto
+import com.jatri.core.network.model.PriceAlertDto
+import com.jatri.core.network.model.PriceAlertRequest
+import com.jatri.core.network.model.PromoRequest
+import com.jatri.core.network.model.TravellerDto
 import com.jatri.core.network.model.CancelQuoteDto
 import com.jatri.core.network.model.CancelRequest
 import com.jatri.core.network.model.DeviceRequest
@@ -37,6 +42,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Streaming
@@ -115,6 +121,36 @@ interface JatriApi {
 
     @POST("bookings/{id}/cancel")
     suspend fun cancelBooking(@Path("id") id: String, @Body body: CancelRequest = CancelRequest()): ApiEnvelope<BookingDto>
+
+    @GET("offers")
+    suspend fun offers(@Query("mode") mode: String? = null): ApiEnvelope<List<OfferDto>>
+
+    @POST("bookings/{id}/promo")
+    suspend fun applyPromo(@Path("id") id: String, @Body body: PromoRequest): ApiEnvelope<BookingDto>
+
+    @DELETE("bookings/{id}/promo")
+    suspend fun removePromo(@Path("id") id: String): ApiEnvelope<BookingDto>
+
+    @GET("me/travellers")
+    suspend fun travellers(): ApiEnvelope<List<TravellerDto>>
+
+    @POST("me/travellers")
+    suspend fun addTraveller(@Body body: TravellerDto): ApiEnvelope<TravellerDto>
+
+    @PUT("me/travellers/{id}")
+    suspend fun editTraveller(@Path("id") id: String, @Body body: TravellerDto): ApiEnvelope<TravellerDto>
+
+    @DELETE("me/travellers/{id}")
+    suspend fun deleteTraveller(@Path("id") id: String): ApiEnvelope<JsonElement?>
+
+    @GET("price-alerts")
+    suspend fun priceAlerts(): ApiEnvelope<List<PriceAlertDto>>
+
+    @POST("price-alerts")
+    suspend fun addPriceAlert(@Body body: PriceAlertRequest): ApiEnvelope<PriceAlertDto>
+
+    @DELETE("price-alerts/{id}")
+    suspend fun deletePriceAlert(@Path("id") id: String): ApiEnvelope<JsonElement?>
 
     @GET("notifications")
     suspend fun notifications(@Query("limit") limit: Int = 30, @Query("before") before: String? = null): ApiEnvelope<NotificationPageDto>

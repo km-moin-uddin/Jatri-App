@@ -57,6 +57,7 @@ data class Booking(
     val cabinClass: CabinClass? = null,
     val fareBrand: FareBrand? = null,
     val fareRules: FareRules? = null,
+    val promoCode: String? = null,
     /** Cancellation & refund (Phase 7). */
     val cancelledAt: Instant? = null,
     val refund: Refund? = null,
@@ -173,6 +174,8 @@ data class AppNotification(
     val bookingId: String?,
     val isRead: Boolean,
     val createdAt: Instant,
+    /** Extra fields, e.g. a price alert's mode / from_id / to_id / date. */
+    val data: Map<String, String> = emptyMap(),
 ) {
     fun title(language: AppLanguage) = if (language == AppLanguage.BANGLA) titleBn else titleEn
     fun body(language: AppLanguage) = if (language == AppLanguage.BANGLA) bodyBn else bodyEn
