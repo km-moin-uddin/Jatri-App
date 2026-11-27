@@ -73,12 +73,30 @@ import com.jatri.feature.payment.navigation.navigateToReviewPay
 import com.jatri.feature.payment.navigation.paymentScreens
 import com.jatri.feature.train.navigation.navigateToTrainResults
 import com.jatri.feature.train.navigation.trainScreens
+import com.jatri.feature.trips.navigation.navigateToTicket
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import androidx.compose.runtime.LaunchedEffect
 import com.jatri.feature.trips.navigation.tripsScreens
 import kotlinx.coroutines.flow.map
 
 @Composable
-fun JatriApp(startDestination: Any, networkMonitor: NetworkMonitor, isLoggedIn: () -> Boolean) {
+fun JatriApp(
+    startDestination: Any,
+    networkMonitor: NetworkMonitor,
+    isLoggedIn: () -> Boolean,
+    openBooking: StateFlow<String?> = MutableStateFlow(null),
+    onBookingOpened: () -> Unit = {},
+) {
     val navController = rememberNavController()
+    // A tapped reminder opens its ticket (offline copy if needed).
+    val bookingToOpen by openBooking.collectAsStateWithLifecycle()
+    LaunchedEffect(bookingToOpen) {
+        bookingToOpen?.let {
+            navController.navigateToTicket(it)
+            onBookingOpened()
+        }
+    }
     val offlineFlow = remember(networkMonitor) { networkMonitor.isOnline.map { !it } }
     val isOffline by offlineFlow.collectAsStateWithLifecycle(initialValue = false)
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -166,14 +184,18 @@ private fun JatriNavHost(navController: NavHostController, startDestination: Any
             onViewTrips = { navController.navigateToTab(TopLevelDestination.TRIPS) },
             onGoHome = { navController.navigateToTab(TopLevelDestination.HOME) },
         )
-        tripsScreens(navController, onSearchTickets = { navController.navigateToTab(TopLevelDestination.HOME) })
+        tripsScreens(
+            navController,
+            onSearchTickets = { navController.navigateToTab(TopLevelDestination.HOME) },
+            onLogin = { navController.navigateToLogin() },
+        )
         offersScreen()
         accountScreens(
             navController = navController,
             onLoginClick = { navController.navigateToLogin() },
             onNotificationsClick = { navController.navigateToNotifications() },
         )
-        notificationsScreen(onBack = { navController.popBackStack() })
+        notificationsScreen(onBack = { navController.popBackStack() }, onOpenBooking = { navController.navigateToTicket(it) })
     }
 }
 

@@ -4,6 +4,11 @@ import com.jatri.core.network.model.ApiEnvelope
 import com.jatri.core.network.model.AuthResponse
 import com.jatri.core.network.model.BookingCreateRequest
 import com.jatri.core.network.model.BookingDto
+import com.jatri.core.network.model.CancelQuoteDto
+import com.jatri.core.network.model.CancelRequest
+import com.jatri.core.network.model.DeviceRequest
+import com.jatri.core.network.model.NotificationDto
+import com.jatri.core.network.model.NotificationPageDto
 import com.jatri.core.network.model.BusSearchRequest
 import com.jatri.core.network.model.BusTripDto
 import com.jatri.core.network.model.FlightBookingRequest
@@ -105,8 +110,26 @@ interface JatriApi {
     @GET("bookings/{id}")
     suspend fun booking(@Path("id") id: String): ApiEnvelope<BookingDto>
 
+    @GET("bookings/{id}/cancel-quote")
+    suspend fun cancelQuote(@Path("id") id: String): ApiEnvelope<CancelQuoteDto>
+
     @POST("bookings/{id}/cancel")
-    suspend fun cancelBooking(@Path("id") id: String): ApiEnvelope<BookingDto>
+    suspend fun cancelBooking(@Path("id") id: String, @Body body: CancelRequest = CancelRequest()): ApiEnvelope<BookingDto>
+
+    @GET("notifications")
+    suspend fun notifications(@Query("limit") limit: Int = 30, @Query("before") before: String? = null): ApiEnvelope<NotificationPageDto>
+
+    @POST("notifications/{id}/read")
+    suspend fun markNotificationRead(@Path("id") id: String): ApiEnvelope<NotificationDto>
+
+    @POST("notifications/read-all")
+    suspend fun markAllNotificationsRead(): ApiEnvelope<JsonElement?>
+
+    @POST("devices")
+    suspend fun registerDevice(@Body body: DeviceRequest): ApiEnvelope<JsonElement?>
+
+    @DELETE("devices/{token}")
+    suspend fun unregisterDevice(@Path("token") token: String): ApiEnvelope<JsonElement?>
 
     @POST("payments/init")
     suspend fun initPayment(

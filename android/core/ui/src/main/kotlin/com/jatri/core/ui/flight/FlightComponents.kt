@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jatri.core.common.format.DateTimeFormats
+import com.jatri.core.common.format.localizeKeepingCodes
 import com.jatri.core.common.format.format
 import com.jatri.core.common.format.localizeDigits
 import com.jatri.core.common.format.localized
@@ -102,7 +103,7 @@ fun JourneyDetails(title: String, journey: FlightJourney, modifier: Modifier = M
 private fun LegBlock(leg: FlightLeg) {
     val lang = JatriTheme.language
     Text(
-        "${leg.carrierName} · ${leg.flightNumber.localizeDigits(lang)} · ${leg.aircraft}",
+        "${leg.carrierName} · ${leg.flightNumber.localizeKeepingCodes(lang)} · ${leg.aircraft}",
         style = MaterialTheme.typography.labelMedium,
         color = JatriTheme.colors.textSecondary,
     )
@@ -236,7 +237,7 @@ private fun BookedLeg(seg: BookingSegment, places: (String) -> Location?) {
     val lang = JatriTheme.language
     fun code(id: String) = places(id)?.code ?: id.removePrefix("air_")
     Text(
-        "${seg.number.localizeDigits(lang)} · ${code(seg.fromId)} ${DateTimeFormats.time(seg.departAt, lang)} → " +
+        "${seg.number.localizeKeepingCodes(lang)} · ${code(seg.fromId)} ${DateTimeFormats.time(seg.departAt, lang)} → " +
             "${code(seg.toId)} ${DateTimeFormats.time(seg.arriveAt, lang)}",
         style = MaterialTheme.typography.bodyMedium,
     )

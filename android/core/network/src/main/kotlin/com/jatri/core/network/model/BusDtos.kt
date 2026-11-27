@@ -127,6 +127,16 @@ data class BookingDto(
     val cabin: String? = null,
     @SerialName("fare_brand") val fareBrand: String? = null,
     @SerialName("fare_rules") val fareRules: FareRulesDto? = null,
+    @SerialName("cancelled_at") val cancelledAt: String? = null,
+    val refund: RefundDto? = null,
+)
+
+@Serializable
+data class RefundDto(
+    val amount: Long,
+    val fee: Long,
+    val status: String,
+    @SerialName("processed_at") val processedAt: String? = null,
 )
 
 @Serializable

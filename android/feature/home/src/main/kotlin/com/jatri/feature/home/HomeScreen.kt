@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -79,6 +80,10 @@ internal fun HomeRoute(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+        viewModel.refreshUnread()
+        onPauseOrDispose { }
+    }
     HomeScreen(
         state = state,
         actions = HomeActions(
@@ -158,7 +163,7 @@ fun HomeScreen(
         contentPadding = PaddingValues(bottom = Spacing.lg),
     ) {
         item(key = "header") {
-            HomeHeader(now = now, onNotificationsClick = actions.onNotificationsClick, onAccountClick = actions.onAccountClick)
+            HomeHeader(now = now, unread = state.unread, onNotificationsClick = actions.onNotificationsClick, onAccountClick = actions.onAccountClick)
         }
         item(key = "modes") {
             TravelModeTabs(
@@ -230,7 +235,7 @@ fun HomeScreen(
 
 /** Round bell + profile buttons, a small greeting and a big bold question, left-aligned. */
 @Composable
-private fun HomeHeader(now: LocalTime, onNotificationsClick: () -> Unit, onAccountClick: () -> Unit) {
+private fun HomeHeader(now: LocalTime, unread: Int, onNotificationsClick: () -> Unit, onAccountClick: () -> Unit) {
     val greeting = stringResource(
         when (now.hour) {
             in 5..11 -> R.string.home_greeting_morning
@@ -252,11 +257,26 @@ private fun HomeHeader(now: LocalTime, onNotificationsClick: () -> Unit, onAccou
                 color = JatriTheme.colors.textSecondary,
                 modifier = Modifier.weight(1f),
             )
-            CircleIconButton(
-                icon = JatriIcons.NotificationsOutlined,
-                contentDescription = stringResource(R.string.home_notifications),
-                onClick = onNotificationsClick,
-            )
+            Box {
+                CircleIconButton(
+                    icon = JatriIcons.NotificationsOutlined,
+                    contentDescription = if (unread > 0) {
+                        pluralStringResource(R.plurals.home_notifications_unread, unread, unread)
+                    } else {
+                        stringResource(R.string.home_notifications)
+                    },
+                    onClick = onNotificationsClick,
+                )
+                if (unread > 0) {
+                    Box(
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 10.dp, end = 10.dp)
+                            .size(10.dp)
+                            .background(JatriPalette.SunsetOrange, CircleShape),
+                    )
+                }
+            }
             Spacer(Modifier.width(Spacing.xs))
             CircleIconButton(
                 icon = JatriIcons.Person,

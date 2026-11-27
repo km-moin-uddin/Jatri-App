@@ -1,6 +1,12 @@
 package com.jatri.core.data.repository
 
+import com.jatri.core.model.AppError
+import com.jatri.core.model.AppException
 import com.jatri.core.model.Booking
+import com.jatri.core.model.CancelQuote
+import com.jatri.core.model.Refund
+import com.jatri.core.model.RefundStatus
+import com.jatri.core.network.model.CancelRequest
 import com.jatri.core.model.BookingPassenger
 import com.jatri.core.model.BookingSegment
 import com.jatri.core.model.BookingStatus
@@ -39,12 +45,21 @@ interface BusRepository {
     suspend fun seatMap(tripId: String): BusSeatMap
 }
 
-/** Bookings across modes. Phase 3 creates bus holds; payment confirms them in Phase 4. */
+/** Bookings across modes. Lists and tickets are cached on the phone so they open offline. */
 interface BookingRepository {
     suspend fun createBusHold(request: BusHoldRequest): Booking
+
+    /** From the server; falls back to the phone's copy when offline (then throws only if never cached). */
     suspend fun get(id: String): Booking
     suspend fun list(): List<Booking>
-    suspend fun cancel(id: String): Booking
+
+    /** The bookings last loaded, for offline use (empty if none). */
+    suspend fun cached(): List<Booking>
+
+    suspend fun cancelQuote(id: String): CancelQuote
+
+    /** Releases a hold, or cancels a ticket by its quote ([expectedRefund] = the quote's refund). */
+    suspend fun cancel(id: String, expectedRefund: Money? = null): Booking
 }
 
 @Singleton
@@ -89,7 +104,10 @@ internal class NetworkBusRepository @Inject constructor(
 }
 
 @Singleton
-internal class NetworkBookingRepository @Inject constructor(private val api: JatriApi) : BookingRepository {
+internal class NetworkBookingRepository @Inject constructor(
+    private val api: JatriApi,
+    private val cache: BookingCache,
+) : BookingRepository {
     override suspend fun createBusHold(request: BusHoldRequest): Booking {
         val body = BookingCreateRequest(
             tripId = request.tripId,
@@ -106,9 +124,27 @@ internal class NetworkBookingRepository @Inject constructor(private val api: Jat
         return apiCall { api.createBooking(body, request.idempotencyKey) }.toModel()
     }
 
-    override suspend fun get(id: String) = apiCall { api.booking(id) }.toModel()
-    override suspend fun list() = apiCall { api.bookings() }.map { it.toModel() }
-    override suspend fun cancel(id: String) = apiCall { api.cancelBooking(id) }.toModel()
+    override suspend fun get(id: String): Booking = try {
+        apiCall { api.booking(id) }.also { cache.put(it) }.toModel()
+    } catch (e: AppException) {
+        if (e.error !is AppError.Network) throw e
+        cache.get(id)?.toModel() ?: throw e
+    }
+
+    override suspend fun list(): List<Booking> = apiCall { api.bookings() }.also { cache.replaceAll(it) }.map { it.toModel() }
+
+    override suspend fun cached(): List<Booking> = cache.all().map { it.toModel() }
+
+    override suspend fun cancelQuote(id: String): CancelQuote = apiCall { api.cancelQuote(id) }.let {
+        CancelQuote(
+            cancellable = it.cancellable, paid = Money(it.paid), refund = Money(it.refund), fee = Money(it.fee),
+            nonRefundable = Money(it.nonRefundable), reason = it.reason, messageEn = it.messageEn, messageBn = it.messageBn,
+            deadline = it.deadline?.let(::parseInstant),
+        )
+    }
+
+    override suspend fun cancel(id: String, expectedRefund: Money?): Booking =
+        apiCall { api.cancelBooking(id, CancelRequest(expectedRefund?.paisa)) }.also { cache.put(it) }.toModel()
 }
 
 // ---- mapping -----------------------------------------------------------------------------
@@ -194,6 +230,15 @@ internal fun BookingDto.toModel() = Booking(
     },
     ticket = ticket?.let { Ticket(it.qrPayload, it.pdfUrl, parseInstant(it.issuedAt)) },
     taxes = Money(taxes),
+    cancelledAt = cancelledAt?.let(::parseInstant),
+    refund = refund?.let {
+        Refund(
+            amount = Money(it.amount),
+            fee = Money(it.fee),
+            status = runCatching { RefundStatus.valueOf(it.status.uppercase()) }.getOrDefault(RefundStatus.PENDING),
+            processedAt = it.processedAt?.let(::parseInstant),
+        )
+    },
     cabinClass = cabin?.let(::cabinClass),
     fareBrand = fareBrand?.let(::fareBrand),
     fareRules = fareRules?.toModel(),

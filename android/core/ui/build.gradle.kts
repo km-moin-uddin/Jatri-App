@@ -8,4 +8,5 @@ dependencies {
     api(projects.core.model)
     implementation(projects.core.common)
     implementation(libs.zxing.core)
+    implementation(libs.androidx.core.ktx)
 }

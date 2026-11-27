@@ -6,6 +6,8 @@ import com.jatri.core.data.repository.BusRepository
 import com.jatri.core.data.repository.FlightRepository
 import com.jatri.core.data.repository.NetworkFlightRepository
 import com.jatri.core.data.repository.NetworkTrainRepository
+import com.jatri.core.data.repository.NetworkNotificationRepository
+import com.jatri.core.data.repository.NotificationRepository
 import com.jatri.core.data.repository.TrainRepository
 import com.jatri.core.data.repository.NetworkBookingRepository
 import com.jatri.core.data.repository.NetworkBusRepository
@@ -38,6 +40,7 @@ internal abstract class DataModule {
     @Binds abstract fun bindsBusRepository(impl: NetworkBusRepository): BusRepository
     @Binds abstract fun bindsFlightRepository(impl: NetworkFlightRepository): FlightRepository
     @Binds abstract fun bindsTrainRepository(impl: NetworkTrainRepository): TrainRepository
+    @Binds abstract fun bindsNotificationRepository(impl: NetworkNotificationRepository): NotificationRepository
     @Binds abstract fun bindsBookingRepository(impl: NetworkBookingRepository): BookingRepository
     @Binds abstract fun bindsPaymentRepository(impl: NetworkPaymentRepository): PaymentRepository
 

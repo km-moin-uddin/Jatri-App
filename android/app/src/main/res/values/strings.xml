@@ -5,4 +5,11 @@
     <string name="nav_trips">My Trips</string>
     <string name="nav_offers">Offers</string>
     <string name="nav_account">Account</string>
+    <string name="reminder_channel">Journey reminders</string>
+    <string name="reminder_channel_desc">24 hours and 3 hours before each trip</string>
+    <string name="reminder_body">Departure %1$s · booking %2$s. Your ticket opens offline.</string>
+    <plurals name="reminder_title">
+        <item quantity="one">Your trip is in %1$d hour</item>
+        <item quantity="other">Your trip is in %1$d hours</item>
+    </plurals>
 </resources>

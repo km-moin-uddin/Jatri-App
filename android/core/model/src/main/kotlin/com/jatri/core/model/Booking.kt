@@ -57,8 +57,14 @@ data class Booking(
     val cabinClass: CabinClass? = null,
     val fareBrand: FareBrand? = null,
     val fareRules: FareRules? = null,
+    /** Cancellation & refund (Phase 7). */
+    val cancelledAt: Instant? = null,
+    val refund: Refund? = null,
 ) {
     val isFlight: Boolean get() = mode == TravelMode.FLIGHT
+
+    /** When the trip starts (first departure, local wall time). */
+    val departAt: LocalDateTime? get() = segments.minOfOrNull { it.departAt }
 
     /** Flights grouped by journey (outbound, return, ...). */
     val journeys: List<List<BookingSegment>> get() = segments.groupBy { it.journeyIndex }.toSortedMap().values.toList()
@@ -135,3 +141,39 @@ data class TrainHoldRequest(
     val expectedTotal: Money,
     val idempotencyKey: String,
 )
+
+enum class RefundStatus { PENDING, PROCESSING, REFUNDED, FAILED }
+
+data class Refund(val amount: Money, val fee: Money, val status: RefundStatus, val processedAt: Instant? = null)
+
+/** What cancelling now would give back, keep and why (from the server's fare rules). */
+data class CancelQuote(
+    val cancellable: Boolean,
+    val paid: Money,
+    val refund: Money,
+    val fee: Money,
+    val nonRefundable: Money,
+    /** too_late | already_departed | non_refundable | not_cancellable */
+    val reason: String?,
+    val messageEn: String,
+    val messageBn: String,
+    val deadline: Instant?,
+) {
+    fun message(language: AppLanguage) = if (language == AppLanguage.BANGLA) messageBn else messageEn
+}
+
+/** One inbox message. [bookingId] opens the ticket when tapped. */
+data class AppNotification(
+    val id: String,
+    val type: String,
+    val titleEn: String,
+    val titleBn: String,
+    val bodyEn: String,
+    val bodyBn: String,
+    val bookingId: String?,
+    val isRead: Boolean,
+    val createdAt: Instant,
+) {
+    fun title(language: AppLanguage) = if (language == AppLanguage.BANGLA) titleBn else titleEn
+    fun body(language: AppLanguage) = if (language == AppLanguage.BANGLA) bodyBn else bodyEn
+}
