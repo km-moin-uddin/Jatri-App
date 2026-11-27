@@ -44,9 +44,24 @@ class InvalidCallback(Exception):
     """Signature or validation failed: ignore the callback (and log it)."""
 
 
+@dataclass(frozen=True)
+class RefundResult:
+    """`done`: money returned; otherwise `ref` is followed with `refund_status` until it is."""
+
+    done: bool
+    ref: str | None = None
+    raw: dict = field(default_factory=dict)
+
+
 class PaymentGateway(Protocol):
     name: str
 
     async def create_session(self, req: CheckoutRequest) -> CheckoutSession: ...
 
     async def verify_callback(self, form: dict) -> VerifiedCallback: ...
+
+    async def refund(self, gateway_txn_id: str, amount_paisa: int, remarks: str) -> RefundResult: ...
+
+    async def refund_status(self, ref: str) -> str:
+        """processing | refunded | failed"""
+        ...

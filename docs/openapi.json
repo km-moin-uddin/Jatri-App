@@ -3,7 +3,7 @@
     "info": {
         "title": "Jatri API",
         "description": "Flight, bus and train ticket booking for Bangladesh. All responses use the `{success, data, error}` envelope.",
-        "version": "0.2.0"
+        "version": "0.7.0"
     },
     "paths": {
         "/api/v1/auth/otp/send": {
@@ -759,6 +759,7 @@
                     "bookings"
                 ],
                 "summary": "List Bookings",
+                "description": "Newest first, all modes (My Trips splits them into upcoming, completed and cancelled).",
                 "operationId": "list_bookings_api_v1_bookings_get",
                 "parameters": [
                     {
@@ -861,13 +862,73 @@
                 }
             }
         },
+        "/api/v1/bookings/{booking_id}/cancel-quote": {
+            "get": {
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Cancel Quote",
+                "description": "What cancelling now would give back (refund), keep (fee) and why, before the user confirms.",
+                "operationId": "cancel_quote_api_v1_bookings__booking_id__cancel_quote_get",
+                "parameters": [
+                    {
+                        "name": "booking_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Booking Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_CancelQuoteOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/bookings/{booking_id}/cancel": {
             "post": {
                 "tags": [
                     "bookings"
                 ],
                 "summary": "Cancel",
-                "description": "Phase 3: releases an unpaid hold. Paid bookings get cancellation + refund in Phase 7.",
+                "description": "An unpaid hold is released. A ticket is cancelled with the provider by its quote (send\n`expected_refund` from the quote; `refund_changed` if it moved), and the refund is started.",
                 "operationId": "cancel_api_v1_bookings__booking_id__cancel_post",
                 "parameters": [
                     {
@@ -897,6 +958,23 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/components/schemas/CancelIn"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ],
+                                "title": "Body"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1155,6 +1233,313 @@
                 }
             }
         },
+        "/api/v1/notifications": {
+            "get": {
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Inbox",
+                "operationId": "inbox_api_v1_notifications_get",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 30,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "before",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "date-time"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "created_at of the last item seen, for the next page",
+                            "title": "Before"
+                        },
+                        "description": "created_at of the last item seen, for the next page"
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NotificationPage_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications/{notification_id}/read": {
+            "post": {
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Mark Read",
+                "operationId": "mark_read_api_v1_notifications__notification_id__read_post",
+                "parameters": [
+                    {
+                        "name": "notification_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Notification Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NotificationOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications/read-all": {
+            "post": {
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Mark All Read",
+                "operationId": "mark_all_read_api_v1_notifications_read_all_post",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NoneType_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/devices": {
+            "post": {
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Register Device",
+                "description": "Registers this phone for push. A token moves to the account that registered it last.",
+                "operationId": "register_device_api_v1_devices_post",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeviceIn"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NoneType_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/devices/{token}": {
+            "delete": {
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Unregister Device",
+                "description": "On logout: stop pushing to this phone.",
+                "operationId": "unregister_device_api_v1_devices__token__delete",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Token"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NoneType_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "tags": [
@@ -1348,6 +1733,28 @@
                         "anyOf": [
                             {
                                 "$ref": "#/components/schemas/FareRulesOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "cancelled_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Cancelled At"
+                    },
+                    "refund": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/RefundInfo"
                             },
                             {
                                 "type": "null"
@@ -1594,6 +2001,97 @@
                 ],
                 "title": "BusTripOut"
             },
+            "CancelIn": {
+                "properties": {
+                    "expected_refund": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Expected Refund",
+                        "description": "The quote's refund; a different live amount returns refund_changed"
+                    }
+                },
+                "type": "object",
+                "title": "CancelIn"
+            },
+            "CancelQuoteOut": {
+                "properties": {
+                    "cancellable": {
+                        "type": "boolean",
+                        "title": "Cancellable"
+                    },
+                    "paid": {
+                        "type": "integer",
+                        "title": "Paid"
+                    },
+                    "refund": {
+                        "type": "integer",
+                        "title": "Refund",
+                        "description": "What goes back to the customer, paisa"
+                    },
+                    "fee": {
+                        "type": "integer",
+                        "title": "Fee",
+                        "description": "Cancellation fee kept, paisa"
+                    },
+                    "non_refundable": {
+                        "type": "integer",
+                        "title": "Non Refundable",
+                        "description": "Service charge, never refunded"
+                    },
+                    "reason": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Reason",
+                        "description": "too_late | already_departed | non_refundable | not_cancellable"
+                    },
+                    "message_en": {
+                        "type": "string",
+                        "title": "Message En"
+                    },
+                    "message_bn": {
+                        "type": "string",
+                        "title": "Message Bn"
+                    },
+                    "deadline": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Deadline",
+                        "description": "Last moment the booking can be cancelled"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "cancellable",
+                    "paid",
+                    "refund",
+                    "fee",
+                    "non_refundable",
+                    "reason",
+                    "message_en",
+                    "message_bn",
+                    "deadline"
+                ],
+                "title": "CancelQuoteOut"
+            },
             "CoachOut": {
                 "properties": {
                     "name": {
@@ -1633,6 +2131,28 @@
                     "rows"
                 ],
                 "title": "CoachOut"
+            },
+            "DeviceIn": {
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 20,
+                        "title": "Token",
+                        "description": "FCM registration token"
+                    },
+                    "platform": {
+                        "type": "string",
+                        "const": "android",
+                        "title": "Platform",
+                        "default": "android"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "token"
+                ],
+                "title": "DeviceIn"
             },
             "Envelope_AuthOut_": {
                 "properties": {
@@ -1700,6 +2220,39 @@
                 ],
                 "title": "Envelope[BookingOut]"
             },
+            "Envelope_CancelQuoteOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/CancelQuoteOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[CancelQuoteOut]"
+            },
             "Envelope_FlightOfferOut_": {
                 "properties": {
                     "success": {
@@ -1759,6 +2312,72 @@
                     "success"
                 ],
                 "title": "Envelope[NoneType]"
+            },
+            "Envelope_NotificationOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/NotificationOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[NotificationOut]"
+            },
+            "Envelope_NotificationPage_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/NotificationPage"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[NotificationPage]"
             },
             "Envelope_OtpSendOut_": {
                 "properties": {
@@ -2719,6 +3338,83 @@
                 ],
                 "title": "LogoutIn"
             },
+            "NotificationOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type"
+                    },
+                    "title_en": {
+                        "type": "string",
+                        "title": "Title En"
+                    },
+                    "title_bn": {
+                        "type": "string",
+                        "title": "Title Bn"
+                    },
+                    "body_en": {
+                        "type": "string",
+                        "title": "Body En"
+                    },
+                    "body_bn": {
+                        "type": "string",
+                        "title": "Body Bn"
+                    },
+                    "data": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Data"
+                    },
+                    "is_read": {
+                        "type": "boolean",
+                        "title": "Is Read"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "type",
+                    "title_en",
+                    "title_bn",
+                    "body_en",
+                    "body_bn",
+                    "data",
+                    "is_read",
+                    "created_at"
+                ],
+                "title": "NotificationOut"
+            },
+            "NotificationPage": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "$ref": "#/components/schemas/NotificationOut"
+                        },
+                        "type": "array",
+                        "title": "Items"
+                    },
+                    "unread": {
+                        "type": "integer",
+                        "title": "Unread"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "items",
+                    "unread"
+                ],
+                "title": "NotificationPage"
+            },
             "OtpSendIn": {
                 "properties": {
                     "phone": {
@@ -3090,6 +3786,48 @@
                     "refresh_token"
                 ],
                 "title": "RefreshIn"
+            },
+            "RefundInfo": {
+                "properties": {
+                    "amount": {
+                        "type": "integer",
+                        "title": "Amount"
+                    },
+                    "fee": {
+                        "type": "integer",
+                        "title": "Fee"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "processing",
+                            "refunded",
+                            "failed"
+                        ],
+                        "title": "Status"
+                    },
+                    "processed_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Processed At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "amount",
+                    "fee",
+                    "status",
+                    "processed_at"
+                ],
+                "title": "RefundInfo"
             },
             "SeatMapOut": {
                 "properties": {

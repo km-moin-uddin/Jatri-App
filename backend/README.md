@@ -52,8 +52,11 @@ uv run ruff check .
 | POST | `/trains/search` | `{from_id, to_id, date, travel_class?}`. Dates up to 10 days ahead; off-day trains left out |
 | GET | `/trains/{trip_id}/seats?travel_class=` | Coaches of one class with seat maps (`held` = someone is paying) |
 | POST | `/bookings` | `mode: "bus"` or `"train"` holds seats (train: NID for passengers 18+), `mode: "flight"` holds the fare with a PNR, for 10 min (`held`). Send `Idempotency-Key`; pass `expected_total` to detect price changes |
-| GET | `/bookings`, `/bookings/{id}` | Your bookings only (others get 404). Expired holds turn `cancelled` |
-| POST | `/bookings/{id}/cancel` | Releases an unpaid hold (paid cancellations + refunds: Phase 7) |
+| GET | `/bookings`, `/bookings/{id}` | Your bookings only (others get 404), with ticket and refund. Expired holds turn `cancelled` |
+| GET | `/bookings/{id}/cancel-quote` | Refund preview: what comes back, the fee, why, and the deadline |
+| POST | `/bookings/{id}/cancel` | `{expected_refund}`. Unpaid hold: released. Ticket: cancelled with the provider and refunded through the gateway (`refund_changed` if the quote moved) |
+| GET | `/notifications` | Inbox (newest first, `unread` count); `POST /notifications/{id}/read`, `POST /notifications/read-all` |
+| POST / DELETE | `/devices`, `/devices/{token}` | Register / remove an FCM token for push |
 | POST | `/payments/init` | `{booking_id, method}` → `checkout_url` to open in a browser tab. `Idempotency-Key` supported |
 | POST | `/payments/callback/{gateway}` | Server-to-server (IPN). Verified, idempotent; success → confirm → ticket |
 | GET | `/payments/{id}/status` | What the app polls after the gateway page |
@@ -76,7 +79,7 @@ The full OpenAPI spec is at `/api/v1/openapi.json`; a copy is in [`docs/openapi.
 ## Background worker
 
 ```bash
-uv run arq app.worker.WorkerSettings   # releases unpaid holds every minute
+uv run arq app.worker.WorkerSettings   # holds (1 min), refunds (5 min), reminders (10 min), flight changes (30 min)
 ```
 
 docker-compose starts it as the `worker` service.

@@ -198,6 +198,9 @@ class MockTrainProvider:
     async def get_status(self, provider_ref: str) -> str:
         return self._holds.get(provider_ref, "unknown")
 
+    async def get_delay_minutes(self, provider_ref: str) -> int:
+        return 0  # no live running information from this provider
+
 
 _instance = MockTrainProvider()
 

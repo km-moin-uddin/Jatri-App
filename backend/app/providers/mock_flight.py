@@ -85,6 +85,8 @@ class MockFlightProvider:
         self._holds: dict[str, str] = {}  # record locator -> held | ticketed | cancelled
         # Tests (and demos) can make the live price differ from what search showed.
         self.price_bump_paisa: int = 0
+        # Tests (and demos) can delay a booked flight: record locator -> minutes.
+        self.delays: dict[str, int] = {}
 
     # ---------------------------------------------------------------- ids
 
@@ -254,6 +256,10 @@ class MockFlightProvider:
 
     async def get_status(self, provider_ref: str) -> str:
         return self._holds.get(provider_ref, "unknown")
+
+    async def get_delay_minutes(self, provider_ref: str) -> int:
+        """Schedule change for a ticketed booking (0 = on time). Real GDS: schedule-change messages."""
+        return self.delays.get(provider_ref, 0)
 
 
 def local_time(location_id: str, at: datetime) -> datetime:
