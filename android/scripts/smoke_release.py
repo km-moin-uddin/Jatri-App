@@ -2,7 +2,7 @@
 """Smoke test for the minified release APK on an emulator (run by CI; needs `adb` on PATH).
 
 R8 problems (missing keep rules, serializers, Hilt) only show up at run time, so this installs the
-release APK, walks onboarding -> guest -> Home -> a bus search -> results, and fails on any crash.
+release APK, walks onboarding -> guest -> Home -> a popular route's search -> results, and fails on any crash.
 Usage: smoke_release.py path/to/app-release.apk
 """
 
@@ -51,9 +51,16 @@ def find_containing(root: ET.Element, parts: list[str]) -> ET.Element | None:
     return None
 
 
+def screen_size() -> tuple[int, int]:
+    m = re.search(r"(\d+)x(\d+)", adb("shell", "wm", "size"))
+    return (int(m.group(1)), int(m.group(2))) if m else (1080, 2400)
+
+
 def swipe(up: bool) -> None:
-    a, b = ("1600", "600") if up else ("600", "1600")
-    adb("shell", "input", "swipe", "540", a, "540", b, "300")
+    """Scrolls about half a screen, using the emulator's real size."""
+    w, h = screen_size()
+    a, b = (int(h * 0.75), int(h * 0.35)) if up else (int(h * 0.35), int(h * 0.75))
+    adb("shell", "input", "swipe", str(w // 2), str(a), str(w // 2), str(b), "400")
     time.sleep(1)
 
 
@@ -102,15 +109,15 @@ def main(apk: str) -> None:
     if (node.get("text") or "") in guest:
         tap(node)
     step("home is shown", home, press=False)
-    print("- pick the Dhaka → Cox's Bazar popular route", flush=True)
+    print("- pick the first popular route (e.g. Dhaka → Cox's Bazar)", flush=True)
     for _ in range(6):
-        node = find_containing(screen(), ["কক্সবাজার", "Cox"])
+        node = find_containing(screen(), ["→"])
         if node is not None:
             tap(node)
             break
         swipe(up=True)
     else:
-        sys.exit("Popular route not found on Home")
+        sys.exit(f"Popular route not found on Home. On screen: {[t for t in texts(screen()) if t]}")
     for _ in range(6):
         swipe(up=False)
     print("- search", flush=True)
