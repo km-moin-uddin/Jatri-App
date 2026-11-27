@@ -60,4 +60,8 @@
     <string name="pay_eticket_no">ই-টিকিট %1$s</string>
     <string name="pay_hold_timer_flight">%1$s সময়ের জন্য ভাড়া সংরক্ষিত</string>
     <string name="pay_class_coach">%1$s · কোচ %2$s</string>
+    <string name="pay_promo_apply">প্রয়োগ করুন</string>
+    <string name="pay_promo_applied">%1$s প্রয়োগ হয়েছে</string>
+    <string name="pay_promo_saved">আপনার সাশ্রয় %1$s</string>
+    <string name="pay_promo_remove">সরিয়ে দিন</string>
 </resources>

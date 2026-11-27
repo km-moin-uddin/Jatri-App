@@ -6,6 +6,7 @@ import com.jatri.core.network.model.BookingCreateRequest
 import com.jatri.core.network.model.BookingDto
 import com.jatri.core.network.model.CancelQuoteDto
 import com.jatri.core.network.model.NotificationDto
+import com.jatri.core.network.model.OfferDto
 import com.jatri.core.network.model.RefundDto
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -285,6 +286,46 @@ internal class MockBus {
         return no("too_late", "Tickets can be cancelled up to $lastH hours before departure.", "যাত্রার $lastH ঘণ্টা আগে পর্যন্ত টিকিট বাতিল করা যায়।")
     }
 
+    // ---- offers & promo codes (same launch codes and rules as the backend) ----
+
+    val offers: List<OfferDto> = listOf(
+        OfferDto("o1", "JATRI150", "৳150 off your first bus ticket", "প্রথম বাস টিকিটে ৳১৫০ ছাড়", "New users only · fares from ৳500",
+            "শুধু নতুন ব্যবহারকারীদের জন্য · ভাড়া ৳৫০০ থেকে", "flat", 15000, null, 50000, listOf("bus"), emptyList(), true, "2027-12-31"),
+        OfferDto("o2", "FLY8", "8% off flights", "ফ্লাইটে ৮% ছাড়", "Pay with bKash · up to ৳800", "বিকাশে পেমেন্টে · সর্বোচ্চ ৳৮০০",
+            "percent", 8, 80000, 0, listOf("flight"), listOf("bkash"), false, "2027-12-31"),
+        OfferDto("o3", "RAIL50", "৳50 off train tickets", "ট্রেন টিকিটে ৳৫০ ছাড়", "Pay with Nagad · fares from ৳300", "নগদে পেমেন্টে · ভাড়া ৳৩০০ থেকে",
+            "flat", 5000, null, 30000, listOf("train"), listOf("nagad"), false, "2027-12-31"),
+        OfferDto("o4", "WELCOME100", "৳100 off your first trip", "প্রথম যাত্রায় ৳১০০ ছাড়", "Flight, bus or train · from ৳1,000",
+            "ফ্লাইট, বাস বা ট্রেন · ৳১,০০০ থেকে", "flat", 10000, null, 100000, emptyList(), emptyList(), true, "2027-12-31"),
+    )
+
+    fun applyPromo(id: String, code: String): BookingDto {
+        val b = get(id)
+        if (b.status != "held") throw api("promo_not_allowed", "Codes can only be added before paying.", "পেমেন্টের আগেই শুধু কোড যোগ করা যায়।")
+        val o = offers.firstOrNull { it.code.equals(code.trim(), ignoreCase = true) }
+            ?: throw api("promo_invalid", "This promo code doesn't exist or has ended.", "এই প্রোমো কোডটি নেই বা মেয়াদ শেষ।")
+        if (o.modes.isNotEmpty() && b.mode !in o.modes) throw api("promo_wrong_mode", "This code isn't valid for this kind of ticket.", "এই কোডটি এই ধরনের টিকিটে চলবে না।")
+        val fare = b.baseFare + b.taxes
+        if (fare < o.minAmount) {
+            val taka = "%,d".format(o.minAmount / 100)
+            throw api("promo_min_amount", "This code needs a fare of at least ৳ $taka.", bn("এই কোডের জন্য ভাড়া অন্তত ৳ $taka হতে হবে।"))
+        }
+        val paidBefore = bookings.values.any { it.id != id && it.status in setOf("ticketed", "refunded") }
+        if (o.firstBookingOnly && paidBefore) throw api("promo_first_booking", "This code is for your first booking only.", "এই কোডটি শুধু প্রথম বুকিংয়ের জন্য।")
+        var d = if (o.discountType == "percent") fare * o.value / 100 else o.value
+        o.maxDiscount?.let { d = minOf(d, it) }
+        d = minOf(d, fare) / 100 * 100
+        val updated = b.copy(discount = d, totalAmount = b.totalAmount + b.discount - d, promoCode = o.code)
+        bookings[id] = updated
+        return updated
+    }
+
+    fun removePromo(id: String): BookingDto {
+        val b = get(id)
+        if (b.status != "held") throw api("promo_not_allowed", "Codes can only be added before paying.", "পেমেন্টের আগেই শুধু কোড যোগ করা যায়।")
+        return b.copy(discount = 0, totalAmount = b.totalAmount + b.discount, promoCode = null).also { bookings[id] = it }
+    }
+
     // ---- inbox (the backend's notifications) ----
 
     val inbox = mutableListOf<NotificationDto>()
@@ -307,10 +348,15 @@ internal class MockBus {
     private val payments = mutableMapOf<String, PaymentStatusDto>()
     private val paymentAmounts = mutableMapOf<String, Long>()
 
-    fun initPayment(bookingId: String): PaymentInitDto {
+    fun initPayment(bookingId: String, method: String = "bkash"): PaymentInitDto {
         val b = get(bookingId)
         if (b.status != "held") {
             throw api("booking_not_payable", "This booking can no longer be paid. Please choose seats again.", "এই বুকিংয়ের পেমেন্ট আর করা যাবে না। আবার সিট বেছে নিন।")
+        }
+        offers.firstOrNull { it.code == b.promoCode }?.takeIf { it.methods.isNotEmpty() && method !in it.methods }?.let { o ->
+            val en = o.methods.joinToString(" or ") { mapOf("bkash" to "bKash", "nagad" to "Nagad", "rocket" to "Rocket", "card" to "card")[it] ?: it }
+            val bnNames = o.methods.joinToString(" বা ") { mapOf("bkash" to "বিকাশ", "nagad" to "নগদ", "rocket" to "রকেট", "card" to "কার্ড")[it] ?: it }
+            throw api("promo_method", "Your promo code needs payment by $en.", "আপনার প্রোমো কোডের জন্য $bnNames দিয়ে পেমেন্ট করতে হবে।")
         }
         val id = UUID.randomUUID().toString()
         payments[id] = PaymentStatusDto(id, "initiated", null, b.id, b.status, b.bookingRef)

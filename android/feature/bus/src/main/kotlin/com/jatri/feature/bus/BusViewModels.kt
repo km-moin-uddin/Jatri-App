@@ -29,6 +29,9 @@ import kotlinx.coroutines.launch
 import java.time.Duration
 import java.time.LocalDate
 import javax.inject.Inject
+import com.jatri.core.data.repository.PriceAlertRepository
+import com.jatri.core.model.TravelMode
+import com.jatri.core.ui.result.PriceAlertStatus
 
 data class BusResultsUiState(
     val args: BusResultsDestination,
@@ -38,8 +41,12 @@ data class BusResultsUiState(
     val error: AppError? = null,
     val trips: List<BusTrip> = emptyList(),
     val sort: ResultSort = ResultSort.EARLIEST,
+    val alert: PriceAlertStatus = PriceAlertStatus.IDLE,
+    /** One-shot: true = alert saved, false = it failed. */
+    val alertResult: Boolean? = null,
 ) {
     val date: LocalDate get() = LocalDate.parse(args.date)
+    val lowest: Money? get() = trips.minOfOrNull { it.price }
     val sorted: List<BusTrip>
         get() = when (sort) {
             ResultSort.CHEAPEST -> trips.sortedBy { it.price }
@@ -53,6 +60,7 @@ class BusResultsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val locations: LocationRepository,
     private val buses: BusRepository,
+    private val alerts: PriceAlertRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(BusResultsUiState(savedStateHandle.toRoute<BusResultsDestination>()))
     val state: StateFlow<BusResultsUiState> = _state.asStateFlow()
@@ -64,13 +72,24 @@ class BusResultsViewModel @Inject constructor(
 
     /** Date pill tapped: search the same route on another day. */
     fun setDate(date: LocalDate) {
-        _state.update { it.copy(args = it.args.copy(date = date.toString())) }
+        _state.update { it.copy(args = it.args.copy(date = date.toString()), alert = PriceAlertStatus.IDLE) }
         load()
     }
 
     fun retry() = load()
 
     fun setSort(sort: ResultSort) = _state.update { it.copy(sort = sort) }
+
+    fun createAlert(target: Money) {
+        val args = _state.value.args
+        _state.update { it.copy(alert = PriceAlertStatus.SAVING) }
+        viewModelScope.launch {
+            val ok = runCatching { alerts.create(TravelMode.BUS, args.fromId, args.toId, LocalDate.parse(args.date), target) }.isSuccess
+            _state.update { it.copy(alert = if (ok) PriceAlertStatus.SAVED else PriceAlertStatus.IDLE, alertResult = ok) }
+        }
+    }
+
+    fun alertShown() = _state.update { it.copy(alertResult = null) }
 
     private fun load() {
         job?.cancel()

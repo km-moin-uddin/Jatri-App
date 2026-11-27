@@ -8,7 +8,9 @@ import com.jatri.feature.account.AccountRoute
 import com.jatri.feature.account.AccountSubPage
 import com.jatri.feature.account.AccountSubPageScreen
 import com.jatri.feature.account.HelpScreen
+import com.jatri.feature.account.PriceAlertsRoute
 import com.jatri.feature.account.ProfileRoute
+import com.jatri.feature.account.TravellersRoute
 import kotlinx.serialization.Serializable
 
 @Serializable data object AccountDestination
@@ -30,10 +32,11 @@ fun NavGraphBuilder.accountScreens(
     }
     composable<AccountSubPageDestination> { entry ->
         val page = entry.toRoute<AccountSubPageDestination>().page
-        if (page == AccountSubPage.PROFILE) {
-            ProfileRoute(onBack = { navController.popBackStack() })
-        } else {
-            AccountSubPageScreen(page = page, onBack = { navController.popBackStack() })
+        when (page) {
+            AccountSubPage.PROFILE -> ProfileRoute(onBack = { navController.popBackStack() })
+            AccountSubPage.SAVED_TRAVELLERS -> TravellersRoute(onBack = { navController.popBackStack() })
+            AccountSubPage.PRICE_ALERTS -> PriceAlertsRoute(onBack = { navController.popBackStack() })
+            else -> AccountSubPageScreen(page = page, onBack = { navController.popBackStack() })
         }
     }
     composable<HelpDestination> { HelpScreen(onBack = { navController.popBackStack() }) }

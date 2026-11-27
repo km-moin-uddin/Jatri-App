@@ -55,6 +55,10 @@ uv run ruff check .
 | GET | `/bookings`, `/bookings/{id}` | Your bookings only (others get 404), with ticket and refund. Expired holds turn `cancelled` |
 | GET | `/bookings/{id}/cancel-quote` | Refund preview: what comes back, the fee, why, and the deadline |
 | POST | `/bookings/{id}/cancel` | `{expected_refund}`. Unpaid hold: released. Ticket: cancelled with the provider and refunded through the gateway (`refund_changed` if the quote moved) |
+| GET | `/offers?mode=` | Running promo codes (public) |
+| POST / DELETE | `/bookings/{id}/promo` | `{code}` on a held booking: `discount` and `total_amount` change at once (`promo_invalid`, `promo_wrong_mode`, `promo_min_amount`, `promo_first_booking`, `promo_used_up`, `payment_in_progress`; `promo_method` at pay time) |
+| GET / POST / PUT / DELETE | `/me/travellers` | Saved travellers (max 20); NID/passport encrypted at rest, returned only to their owner |
+| GET / POST / DELETE | `/price-alerts` | Watch a route + day for a target fare (max 10); a job checks every 30 min and notifies once per new low |
 | GET | `/notifications` | Inbox (newest first, `unread` count); `POST /notifications/{id}/read`, `POST /notifications/read-all` |
 | POST / DELETE | `/devices`, `/devices/{token}` | Register / remove an FCM token for push |
 | POST | `/payments/init` | `{booking_id, method}` → `checkout_url` to open in a browser tab. `Idempotency-Key` supported |
@@ -79,7 +83,7 @@ The full OpenAPI spec is at `/api/v1/openapi.json`; a copy is in [`docs/openapi.
 ## Background worker
 
 ```bash
-uv run arq app.worker.WorkerSettings   # holds (1 min), refunds (5 min), reminders (10 min), flight changes (30 min)
+uv run arq app.worker.WorkerSettings   # holds (1 min), refunds (5 min), reminders (10 min), flight changes + price alerts (30 min)
 ```
 
 docker-compose starts it as the `worker` service.

@@ -58,4 +58,5 @@
     <string name="booking_train_nid">NID number (required)</string>
     <string name="booking_train_nid_child">NID or birth registration number (optional under 18)</string>
     <string name="booking_train_nid_required">Passengers aged 18+ need an NID number</string>
+    <string name="booking_saved_travellers">Saved travellers</string>
 </resources>

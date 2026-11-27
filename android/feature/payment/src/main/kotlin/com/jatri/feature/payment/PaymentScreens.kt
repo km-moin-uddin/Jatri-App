@@ -124,6 +124,7 @@ internal fun ReviewPayRoute(
             onCancel = { viewModel.cancel(onHoldGone) },
             cancelling = state.cancelling,
             paying = state.paying,
+            promo = PromoState(state.promoBusy, state.promoError, viewModel::applyPromo, viewModel::clearPromoError),
             onPay = { method ->
                 viewModel.pay(method) { start ->
                     val demo = payments.isDemo(start.checkoutUrl)
@@ -157,6 +158,7 @@ fun ReviewPayScreen(
     cancelling: Boolean = false,
     onPay: ((PaymentMethod) -> Unit)? = null,
     paying: Boolean = false,
+    promo: PromoState? = null,
 ) {
     val lang = JatriTheme.language
     var method by rememberSaveable { mutableStateOf(PayMethod.BKASH) }
@@ -225,7 +227,11 @@ fun ReviewPayScreen(
                 HorizontalDivider(Modifier.padding(vertical = Spacing.xs), color = JatriTheme.colors.divider)
                 PriceRow(stringResource(R.string.pay_total), total.format(lang), bold = true)
             }
-            JatriTextField(value = "", onValueChange = {}, label = stringResource(R.string.pay_promo), enabled = false)
+            if (booking != null && promo != null) {
+                PromoField(booking, promo)
+            } else {
+                JatriTextField(value = "", onValueChange = {}, label = stringResource(R.string.pay_promo), enabled = false)
+            }
             JatriCard {
                 Text(stringResource(R.string.pay_method), style = MaterialTheme.typography.titleMedium)
                 Column(Modifier.selectableGroup()) {
@@ -272,6 +278,56 @@ fun ReviewPayScreen(
             }
             Spacer(Modifier.height(Spacing.md))
         }
+    }
+}
+
+/** Promo code input and its callbacks; [onApply] with "" removes the code. */
+data class PromoState(
+    val busy: Boolean = false,
+    val error: com.jatri.core.model.AppError? = null,
+    val onApply: (String) -> Unit = {},
+    val onClearError: () -> Unit = {},
+)
+
+@Composable
+private fun PromoField(booking: Booking, promo: PromoState) {
+    val lang = JatriTheme.language
+    var code by rememberSaveable { mutableStateOf("") }
+    val applied = booking.promoCode
+    if (applied != null) {
+        JatriCard {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(JatriIcons.Offer, contentDescription = null, tint = JatriTheme.colors.success)
+                Spacer(Modifier.width(Spacing.sm))
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.pay_promo_applied, applied), style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        stringResource(R.string.pay_promo_saved, booking.discount.format(lang)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = JatriTheme.colors.success,
+                    )
+                }
+                JatriTextButton(text = stringResource(R.string.pay_promo_remove), onClick = { promo.onApply("") }, color = JatriTheme.colors.danger)
+            }
+        }
+        return
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        JatriTextField(
+            value = code,
+            onValueChange = { code = it.filter(Char::isLetterOrDigit).uppercase().take(20); promo.onClearError() },
+            label = stringResource(R.string.pay_promo),
+            error = promo.error?.text(),
+            modifier = Modifier.weight(1f),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Characters,
+            ),
+        )
+        Spacer(Modifier.width(Spacing.xs))
+        com.jatri.core.designsystem.component.JatriSmallButton(
+            text = stringResource(R.string.pay_promo_apply),
+            onClick = { if (code.length >= 3 && !promo.busy) promo.onApply(code) },
+        )
     }
 }
 

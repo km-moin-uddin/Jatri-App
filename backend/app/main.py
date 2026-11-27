@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 
-from app.api.v1 import auth, bookings, buses, flights, locations, me, notifications, payments, trains
+from app.api.v1 import auth, bookings, buses, engagement, flights, locations, me, notifications, payments, trains
 from app.core.envelope import install_error_handlers, ok
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Jatri API",
-        version="0.7.0",
+        version="0.8.0",
         description="Flight, bus and train ticket booking for Bangladesh. All responses use the "
         "`{success, data, error}` envelope.",
         openapi_url="/api/v1/openapi.json",
@@ -24,6 +24,7 @@ def create_app() -> FastAPI:
         bookings.router,
         payments.router,
         notifications.router,
+        engagement.router,
     ):
         app.include_router(router, prefix="/api/v1")
 

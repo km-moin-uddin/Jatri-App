@@ -26,6 +26,10 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
+import com.jatri.core.model.PassengerType
+import com.jatri.core.model.TravelMode
+import com.jatri.core.data.repository.PriceAlertRepository
+import com.jatri.core.ui.result.PriceAlertStatus
 
 /** When the first flight takes off (local time). */
 enum class DepartSlot(val hours: IntRange) { EARLY(0..5), MORNING(6..11), AFTERNOON(12..17), EVENING(18..23) }
@@ -60,6 +64,9 @@ data class FlightResultsUiState(
     val sort: ResultSort = ResultSort.CHEAPEST,
     val filters: FlightFilters = FlightFilters(),
     val showFilters: Boolean = false,
+    val alert: PriceAlertStatus = PriceAlertStatus.IDLE,
+    /** One-shot: true = alert saved, false = it failed. */
+    val alertResult: Boolean? = null,
 ) {
     val tripType: TripType get() = runCatching { TripType.valueOf(args.tripType) }.getOrDefault(TripType.ONE_WAY)
     val date: LocalDate get() = args.searchLegs.first().date
@@ -68,6 +75,11 @@ data class FlightResultsUiState(
     val cabin: CabinClass get() = runCatching { CabinClass.valueOf(args.cabin) }.getOrDefault(CabinClass.ECONOMY)
 
     val allAirlines: List<String> get() = offers.flatMap { it.airlines }.distinct().sorted()
+    /** Lowest one-adult fare; alerts only for one-way economy (what the server checks). */
+    val alertLowest: Money?
+        get() = offers.takeIf { tripType == TripType.ONE_WAY && cabin == CabinClass.ECONOMY && !loading }
+            ?.mapNotNull { o -> o.fares.firstOrNull { it.type == PassengerType.ADULT }?.let { it.base + it.tax + Money(o.serviceCharge.paisa / passengers.coerceAtLeast(1)) } }
+            ?.minOrNull()
     val priceRange: ClosedRange<Long>? get() = offers.takeIf { it.isNotEmpty() }?.let { o -> o.minOf { it.price.paisa }..o.maxOf { it.price.paisa } }
 
     val visible: List<FlightOffer>
@@ -85,6 +97,7 @@ class FlightResultsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val flights: FlightRepository,
     private val locations: LocationRepository,
+    private val alerts: PriceAlertRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(FlightResultsUiState(savedStateHandle.toRoute<FlightResultsDestination>()))
     val state: StateFlow<FlightResultsUiState> = _state.asStateFlow()
@@ -99,9 +112,20 @@ class FlightResultsViewModel @Inject constructor(
         val legs = _state.value.args.searchLegs
         val shift = ChronoUnit.DAYS.between(legs.first().date, date)
         val moved = legs.map { it.copy(date = it.date.plusDays(shift)) }
-        _state.update { it.copy(args = it.args.withLegs(moved), offers = emptyList()) }
+        _state.update { it.copy(args = it.args.withLegs(moved), offers = emptyList(), alert = PriceAlertStatus.IDLE) }
         load()
     }
+
+    fun createAlert(target: Money) {
+        val leg = _state.value.args.searchLegs.first()
+        _state.update { it.copy(alert = PriceAlertStatus.SAVING) }
+        viewModelScope.launch {
+            val ok = runCatching { alerts.create(TravelMode.FLIGHT, leg.fromId, leg.toId, leg.date, target) }.isSuccess
+            _state.update { it.copy(alert = if (ok) PriceAlertStatus.SAVED else PriceAlertStatus.IDLE, alertResult = ok) }
+        }
+    }
+
+    fun alertShown() = _state.update { it.copy(alertResult = null) }
 
     fun retry() = load()
 

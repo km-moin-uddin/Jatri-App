@@ -3,7 +3,7 @@
     "info": {
         "title": "Jatri API",
         "description": "Flight, bus and train ticket booking for Bangladesh. All responses use the `{success, data, error}` envelope.",
-        "version": "0.7.0"
+        "version": "0.8.0"
     },
     "paths": {
         "/api/v1/auth/otp/send": {
@@ -1540,6 +1540,582 @@
                 }
             }
         },
+        "/api/v1/offers": {
+            "get": {
+                "tags": [
+                    "offers & profile"
+                ],
+                "summary": "Offers",
+                "description": "Running offers (public). `mode` keeps those valid for that kind of ticket.",
+                "operationId": "offers_api_v1_offers_get",
+                "parameters": [
+                    {
+                        "name": "mode",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "pattern": "^(flight|bus|train)$"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Mode"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_list_OfferOut__"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings/{booking_id}/promo": {
+            "post": {
+                "tags": [
+                    "offers & profile"
+                ],
+                "summary": "Apply Promo",
+                "description": "Applies a code to a held booking: `discount` and `total_amount` change at once. One code per\nbooking (a new one replaces the old). Codes may need a payment method (`promo_method` at pay time).",
+                "operationId": "apply_promo_api_v1_bookings__booking_id__promo_post",
+                "parameters": [
+                    {
+                        "name": "booking_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Booking Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PromoIn"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_BookingOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "offers & profile"
+                ],
+                "summary": "Remove Promo",
+                "operationId": "remove_promo_api_v1_bookings__booking_id__promo_delete",
+                "parameters": [
+                    {
+                        "name": "booking_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Booking Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_BookingOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/me/travellers": {
+            "get": {
+                "tags": [
+                    "offers & profile"
+                ],
+                "summary": "Travellers",
+                "operationId": "travellers_api_v1_me_travellers_get",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_list_TravellerOut__"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "offers & profile"
+                ],
+                "summary": "Add Traveller",
+                "operationId": "add_traveller_api_v1_me_travellers_post",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TravellerIn"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_TravellerOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/me/travellers/{traveller_id}": {
+            "put": {
+                "tags": [
+                    "offers & profile"
+                ],
+                "summary": "Edit Traveller",
+                "operationId": "edit_traveller_api_v1_me_travellers__traveller_id__put",
+                "parameters": [
+                    {
+                        "name": "traveller_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Traveller Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TravellerIn"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_TravellerOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "offers & profile"
+                ],
+                "summary": "Remove Traveller",
+                "operationId": "remove_traveller_api_v1_me_travellers__traveller_id__delete",
+                "parameters": [
+                    {
+                        "name": "traveller_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Traveller Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NoneType_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/price-alerts": {
+            "get": {
+                "tags": [
+                    "offers & profile"
+                ],
+                "summary": "Price Alerts",
+                "operationId": "price_alerts_api_v1_price_alerts_get",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_list_PriceAlertOut__"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "offers & profile"
+                ],
+                "summary": "Add Price Alert",
+                "description": "Starts watching a route and day; `last_price` is today's lowest fare per person.",
+                "operationId": "add_price_alert_api_v1_price_alerts_post",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PriceAlertIn"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_PriceAlertOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/price-alerts/{alert_id}": {
+            "delete": {
+                "tags": [
+                    "offers & profile"
+                ],
+                "summary": "Remove Price Alert",
+                "operationId": "remove_price_alert_api_v1_price_alerts__alert_id__delete",
+                "parameters": [
+                    {
+                        "name": "alert_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Alert Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NoneType_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "tags": [
@@ -1738,6 +2314,18 @@
                                 "type": "null"
                             }
                         ]
+                    },
+                    "promo_code": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Promo Code",
+                        "description": "Applied promo code; `discount` holds its amount"
                     },
                     "cancelled_at": {
                         "anyOf": [
@@ -2478,6 +3066,39 @@
                 ],
                 "title": "Envelope[PaymentStatusOut]"
             },
+            "Envelope_PriceAlertOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/PriceAlertOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[PriceAlertOut]"
+            },
             "Envelope_SeatMapOut_": {
                 "properties": {
                     "success": {
@@ -2576,6 +3197,39 @@
                     "success"
                 ],
                 "title": "Envelope[TrainSeatMapOut]"
+            },
+            "Envelope_TravellerOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TravellerOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[TravellerOut]"
             },
             "Envelope_UserOut_": {
                 "properties": {
@@ -2758,6 +3412,80 @@
                 ],
                 "title": "Envelope[list[LocationOut]]"
             },
+            "Envelope_list_OfferOut__": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/OfferOut"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Data"
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[list[OfferOut]]"
+            },
+            "Envelope_list_PriceAlertOut__": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/PriceAlertOut"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Data"
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[list[PriceAlertOut]]"
+            },
             "Envelope_list_TrainTripOut__": {
                 "properties": {
                     "success": {
@@ -2794,6 +3522,43 @@
                     "success"
                 ],
                 "title": "Envelope[list[TrainTripOut]]"
+            },
+            "Envelope_list_TravellerOut__": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/TravellerOut"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Data"
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[list[TravellerOut]]"
             },
             "FareRulesOut": {
                 "properties": {
@@ -3415,6 +4180,106 @@
                 ],
                 "title": "NotificationPage"
             },
+            "OfferOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "code": {
+                        "type": "string",
+                        "title": "Code"
+                    },
+                    "title_en": {
+                        "type": "string",
+                        "title": "Title En"
+                    },
+                    "title_bn": {
+                        "type": "string",
+                        "title": "Title Bn"
+                    },
+                    "subtitle_en": {
+                        "type": "string",
+                        "title": "Subtitle En"
+                    },
+                    "subtitle_bn": {
+                        "type": "string",
+                        "title": "Subtitle Bn"
+                    },
+                    "discount_type": {
+                        "type": "string",
+                        "enum": [
+                            "flat",
+                            "percent"
+                        ],
+                        "title": "Discount Type"
+                    },
+                    "value": {
+                        "type": "integer",
+                        "title": "Value",
+                        "description": "Flat: paisa. Percent: whole percent"
+                    },
+                    "max_discount": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Max Discount"
+                    },
+                    "min_amount": {
+                        "type": "integer",
+                        "title": "Min Amount"
+                    },
+                    "modes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Modes",
+                        "description": "Empty = every mode"
+                    },
+                    "methods": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Methods",
+                        "description": "Payment methods the code needs; empty = any"
+                    },
+                    "first_booking_only": {
+                        "type": "boolean",
+                        "title": "First Booking Only"
+                    },
+                    "valid_to": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Valid To"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "code",
+                    "title_en",
+                    "title_bn",
+                    "subtitle_en",
+                    "subtitle_bn",
+                    "discount_type",
+                    "value",
+                    "max_discount",
+                    "min_amount",
+                    "modes",
+                    "methods",
+                    "first_booking_only",
+                    "valid_to"
+                ],
+                "title": "OfferOut"
+            },
             "OtpSendIn": {
                 "properties": {
                     "phone": {
@@ -3771,6 +4636,128 @@
                     "booking_ref"
                 ],
                 "title": "PaymentStatusOut"
+            },
+            "PriceAlertIn": {
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "flight",
+                            "bus",
+                            "train"
+                        ],
+                        "title": "Mode"
+                    },
+                    "from_id": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "title": "From Id"
+                    },
+                    "to_id": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "title": "To Id"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Date"
+                    },
+                    "target_price": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Target Price",
+                        "description": "Paisa per person; alert when the lowest fare is at or below it"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "mode",
+                    "from_id",
+                    "to_id",
+                    "date",
+                    "target_price"
+                ],
+                "title": "PriceAlertIn"
+            },
+            "PriceAlertOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "mode": {
+                        "type": "string",
+                        "title": "Mode"
+                    },
+                    "from_id": {
+                        "type": "string",
+                        "title": "From Id"
+                    },
+                    "to_id": {
+                        "type": "string",
+                        "title": "To Id"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Date"
+                    },
+                    "target_price": {
+                        "type": "integer",
+                        "title": "Target Price"
+                    },
+                    "last_price": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Last Price",
+                        "description": "Lowest fare per person at the last check"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "title": "Is Active"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "mode",
+                    "from_id",
+                    "to_id",
+                    "date",
+                    "target_price",
+                    "last_price",
+                    "is_active",
+                    "created_at"
+                ],
+                "title": "PriceAlertOut"
+            },
+            "PromoIn": {
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 3,
+                        "title": "Code"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "code"
+                ],
+                "title": "PromoIn"
             },
             "RefreshIn": {
                 "properties": {
@@ -4502,6 +5489,243 @@
                     "classes"
                 ],
                 "title": "TrainTripOut"
+            },
+            "TravellerIn": {
+                "properties": {
+                    "full_name": {
+                        "type": "string",
+                        "maxLength": 80,
+                        "minLength": 2,
+                        "title": "Full Name",
+                        "description": "As on the NID (bus, train)"
+                    },
+                    "given_name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 40,
+                                "pattern": "^[A-Za-z][A-Za-z .'-]*$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Given Name"
+                    },
+                    "surname": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 40,
+                                "pattern": "^[A-Za-z][A-Za-z .'-]*$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Surname"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female",
+                            "other"
+                        ],
+                        "title": "Gender"
+                    },
+                    "date_of_birth": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Date Of Birth"
+                    },
+                    "nationality": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{2}$",
+                        "title": "Nationality",
+                        "default": "BD"
+                    },
+                    "nid_number": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^\\d{10}$|^\\d{13}$|^\\d{17}$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Nid Number"
+                    },
+                    "passport_no": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^[A-Z0-9]{6,9}$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Passport No"
+                    },
+                    "passport_expiry": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Passport Expiry"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "full_name",
+                    "gender"
+                ],
+                "title": "TravellerIn"
+            },
+            "TravellerOut": {
+                "properties": {
+                    "full_name": {
+                        "type": "string",
+                        "maxLength": 80,
+                        "minLength": 2,
+                        "title": "Full Name",
+                        "description": "As on the NID (bus, train)"
+                    },
+                    "given_name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 40,
+                                "pattern": "^[A-Za-z][A-Za-z .'-]*$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Given Name"
+                    },
+                    "surname": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 40,
+                                "pattern": "^[A-Za-z][A-Za-z .'-]*$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Surname"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female",
+                            "other"
+                        ],
+                        "title": "Gender"
+                    },
+                    "date_of_birth": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Date Of Birth"
+                    },
+                    "nationality": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{2}$",
+                        "title": "Nationality",
+                        "default": "BD"
+                    },
+                    "nid_number": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^\\d{10}$|^\\d{13}$|^\\d{17}$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Nid Number"
+                    },
+                    "passport_no": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^[A-Z0-9]{6,9}$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Passport No"
+                    },
+                    "passport_expiry": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Passport Expiry"
+                    },
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "type": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "adult",
+                                    "child",
+                                    "infant"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Type",
+                        "description": "From the date of birth, today"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "full_name",
+                    "gender",
+                    "id",
+                    "type"
+                ],
+                "title": "TravellerOut",
+                "description": "The owner gets the full ID numbers back to fill passenger forms (encrypted at rest)."
             },
             "UserOut": {
                 "properties": {

@@ -3,7 +3,7 @@
 One Android app to search, compare, book and pay for **flight, bus and train tickets in Bangladesh**.
 "Jatri" is a working name.
 
-> **Status: Phase 7 (My Trips, cancellation & refunds, notifications) is done.** Built so far:
+> **Status: Phase 8 (offers & promo codes, saved travellers, price alerts) is done.** Built so far:
 > - Phase 1: foundation and the v2 "soft neutral" style.
 > - Phase 2: phone OTP login and the FastAPI backend.
 > - Phase 3: bus search, seat map and booking hold.
@@ -11,6 +11,7 @@ One Android app to search, compare, book and pay for **flight, bus and train tic
 > - Phase 5: flight search (one way, round trip, multi-city), filters, fare rules, passengers, PNR hold, e-tickets.
 > - Phase 6: train search with classes and off days, coach & seat selection, NID-checked passengers, hold, pay, e-ticket.
 > - Phase 7: My Trips (offline), ticket timeline, cancellation with refund preview, refunds, notifications, reminders.
+> - Phase 8: offers and promo codes, saved travellers, price-drop alerts.
 
 | Bangla · light | English · light | Bangla · dark |
 |---|---|---|
@@ -75,6 +76,30 @@ cd android
 The first launch shows onboarding (choose Bangla or English), then Home. Walk through it: pick
 cities, then Search, a result, a seat or class, passenger details, Review & pay, and the success
 screen. Every step in that flow can be reached.
+
+## Phase 8 — offers, saved travellers, price alerts
+
+| Promo applied | Saved travellers | Quick fill | Price alerts |
+|---|---|---|---|
+| ![](docs/screenshots/phase8/bn_light_27_review_promo.png) | ![](docs/screenshots/phase8/bn_light_28_saved_travellers.png) | ![](docs/screenshots/phase8/bn_light_20_train_passengers.png) | ![](docs/screenshots/phase8/bn_light_29_price_alerts.png) |
+
+- **Offers** come from the server (`GET /offers`, optional `?mode=`). Each has rules: travel modes,
+  minimum fare, maximum discount, payment methods, first booking only, per-user limit, total limit,
+  validity dates. Seeded codes (sample, mocked): `JATRI150` (bus, first booking), `FLY8` (8% off
+  flights with bKash, up to ৳800), `RAIL50` (trains with Nagad), `WELCOME100` (any first trip from ৳1,000).
+- **Promo codes on the review screen** (`POST/DELETE /bookings/{id}/promo`): the server checks the
+  rules and recalculates the total on the held booking; one code per booking, a new one replaces the
+  old. The code is locked while a gateway page is open, checked again against the payment method,
+  marked *used* when the ticket is issued, and freed if the hold is cancelled or expires. Refunds are
+  based on what was actually paid.
+- **Saved travellers** (Account → Saved travellers, `/me/travellers`): name as on NID, passport
+  names, gender, date of birth, NID, passport and expiry. NID and passport numbers are **encrypted at
+  rest** and only returned to their owner. In every passenger form a row of chips fills a passenger in
+  one tap (flights only offer travellers whose age fits the seat: adult, child or infant).
+- **Price alerts** (bell on bus, train and one-way economy flight results, `/price-alerts`): pick a
+  price under today's lowest fare. A job checks every 30 minutes and sends a *price drop*
+  notification (inbox + push) once per new low. Up to 10 active alerts; past dates switch off;
+  trains are checked once the 10-day sale window opens. Manage them in Account → Price alerts.
 
 ## Phase 7 — My Trips, cancellation & refunds, notifications
 
@@ -272,7 +297,9 @@ to `10.0.2.2` and `localhost`. Release builds are HTTPS-only.
 | Push messages on the phone | The server sends FCM pushes when `JATRI_PUSH_PROVIDER=fcm`; the app doesn't include Firebase yet, so it has no token to register (reminders still work, scheduled on the phone) | When a Firebase project (`google-services.json`) is added |
 | E-mail with the PDF | Logged by the server unless SMTP is configured | When SMTP settings are added |
 | Refunds | Mock gateway refunds at once; SSLCommerz refund API is ready | With the SSLCommerz sandbox |
-| Offers, popular routes | Sample promo codes | Phase 8 |
+| Offers & promo codes | Real rules and redemptions; the four seeded codes are samples (the demo APK has the same four) | When marketing sets real offers |
+| Price alerts | Real job; fares come from the mock providers | With the real providers |
+| Popular routes on Home | Sample list in the app | Later (from search data) |
 | Hotline number | Placeholder `+8809600000000` in `HelpScreen` | Before release |
 
 Every placeholder screen shows a "Coming in Phase N" banner, so sample data can't be mistaken for
@@ -377,4 +404,12 @@ big bold left-aligned headlines.
 
 ফোনে পুশ নোটিফিকেশনের জন্য Firebase প্রজেক্ট লাগবে।
 
-**পরের ধাপ:** Phase 8। এতে অফার ও প্রোমো কোড, সংরক্ষিত যাত্রী আর ভাড়া কমার সতর্কবার্তা আসবে।
+**Phase 8 সম্পন্ন:**
+- অফার সার্ভার থেকে আসে, প্রতিটির নিয়মসহ (কোন যাত্রায়, ন্যূনতম ভাড়া, সর্বোচ্চ ছাড়, কোন পেমেন্টে, শুধু প্রথম বুকিং)।
+- পেমেন্টের আগে প্রোমো কোড দিলে সার্ভার মোট দাম নতুন করে হিসাব করে। টিকিট হলে কোড "ব্যবহৃত", হোল্ড বাতিল হলে আবার ব্যবহার করা যায়।
+- সংরক্ষিত যাত্রী: এনআইডি ও পাসপোর্ট নম্বর এনক্রিপ্ট করে রাখা হয়। যাত্রীর ফর্মে এক ট্যাপে তথ্য বসে যায়।
+- ভাড়া কমার সতর্কবার্তা: রেজাল্টের ঘণ্টা বোতাম থেকে দাম ঠিক করুন, ভাড়া সেই দামে নামলে নোটিফিকেশন আসে।
+
+নমুনা কোড: JATRI150, FLY8, RAIL50, WELCOME100 (এগুলো mock)।
+
+**পরের ধাপ:** Phase 9। টেস্টিং, পারফরম্যান্স, নিরাপত্তা যাচাই আর Play Store রিলিজ বিল্ড।

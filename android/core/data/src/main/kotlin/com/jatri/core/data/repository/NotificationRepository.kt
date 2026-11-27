@@ -66,6 +66,7 @@ internal fun NotificationDto.toModel() = AppNotification(
     bookingId = data["booking_id"]?.jsonPrimitive?.contentOrNull,
     isRead = isRead,
     createdAt = parseInstant(createdAt),
+    data = data.mapValues { (_, v) -> v.jsonPrimitive.contentOrNull.orEmpty() },
 )
 
 /** For contract tests in this module's test source set. */

@@ -1,0 +1,17 @@
+{
+ "success": true,
+ "data": [
+  {
+   "id": "c1348199-2ec5-4dae-85ff-86ca72952e07",
+   "mode": "bus",
+   "from_id": "bus_dhaka",
+   "to_id": "bus_coxsbazar",
+   "date": "2026-12-03",
+   "target_price": 120000,
+   "last_price": 90000,
+   "is_active": true,
+   "created_at": "2026-11-27T14:01:02.971450Z"
+  }
+ ],
+ "error": null
+}

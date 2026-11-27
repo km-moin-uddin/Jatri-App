@@ -1,0 +1,80 @@
+{
+ "success": true,
+ "data": [
+  {
+   "id": "aa15f87a-7515-4d21-b47b-58a91c79deb6",
+   "code": "FLY8",
+   "title_en": "8% off flights",
+   "title_bn": "ফ্লাইটে ৮% ছাড়",
+   "subtitle_en": "Pay with bKash · up to ৳800",
+   "subtitle_bn": "বিকাশে পেমেন্টে · সর্বোচ্চ ৳৮০০",
+   "discount_type": "percent",
+   "value": 8,
+   "max_discount": 80000,
+   "min_amount": 0,
+   "modes": [
+    "flight"
+   ],
+   "methods": [
+    "bkash"
+   ],
+   "first_booking_only": false,
+   "valid_to": "2027-12-31"
+  },
+  {
+   "id": "0f150204-9499-4d46-b802-8cf411b6c62b",
+   "code": "JATRI150",
+   "title_en": "৳150 off your first bus ticket",
+   "title_bn": "প্রথম বাস টিকিটে ৳১৫০ ছাড়",
+   "subtitle_en": "New users only · fares from ৳500",
+   "subtitle_bn": "শুধু নতুন ব্যবহারকারীদের জন্য · ভাড়া ৳৫০০ থেকে",
+   "discount_type": "flat",
+   "value": 15000,
+   "max_discount": null,
+   "min_amount": 50000,
+   "modes": [
+    "bus"
+   ],
+   "methods": [],
+   "first_booking_only": true,
+   "valid_to": "2027-12-31"
+  },
+  {
+   "id": "d0a079ac-c2a9-4d7b-ad3c-4b06dead022c",
+   "code": "RAIL50",
+   "title_en": "৳50 off train tickets",
+   "title_bn": "ট্রেন টিকিটে ৳৫০ ছাড়",
+   "subtitle_en": "Pay with Nagad · fares from ৳300",
+   "subtitle_bn": "নগদে পেমেন্টে · ভাড়া ৳৩০০ থেকে",
+   "discount_type": "flat",
+   "value": 5000,
+   "max_discount": null,
+   "min_amount": 30000,
+   "modes": [
+    "train"
+   ],
+   "methods": [
+    "nagad"
+   ],
+   "first_booking_only": false,
+   "valid_to": "2027-12-31"
+  },
+  {
+   "id": "e0c82d21-3c91-48a3-a378-f46d3cf2d45e",
+   "code": "WELCOME100",
+   "title_en": "৳100 off your first trip",
+   "title_bn": "প্রথম যাত্রায় ৳১০০ ছাড়",
+   "subtitle_en": "Flight, bus or train · from ৳1,000",
+   "subtitle_bn": "ফ্লাইট, বাস বা ট্রেন · ৳১,০০০ থেকে",
+   "discount_type": "flat",
+   "value": 10000,
+   "max_discount": null,
+   "min_amount": 100000,
+   "modes": [],
+   "methods": [],
+   "first_booking_only": true,
+   "valid_to": "2027-12-31"
+  }
+ ],
+ "error": null
+}

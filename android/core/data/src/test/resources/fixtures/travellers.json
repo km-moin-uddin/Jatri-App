@@ -1,0 +1,19 @@
+{
+ "success": true,
+ "data": [
+  {
+   "full_name": "রহিম উদ্দিন",
+   "given_name": "Rahim",
+   "surname": "Uddin",
+   "gender": "male",
+   "date_of_birth": "1990-05-01",
+   "nationality": "BD",
+   "nid_number": "1990123456789",
+   "passport_no": null,
+   "passport_expiry": null,
+   "id": "fcb69fb3-2705-48fa-9f87-c1ca102e7bcf",
+   "type": "adult"
+  }
+ ],
+ "error": null
+}

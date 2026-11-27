@@ -303,19 +303,23 @@ async def expire_if_needed(db: AsyncSession, providers: Providers, store: KeyVal
         expires = expires.replace(tzinfo=now().tzinfo)
     if expires > now():
         return booking
-    await _release_hold(providers, store, booking)
+    await _release_hold(providers, store, booking, db)
     booking.status = "cancelled"
     await db.commit()
     await db.refresh(booking)
     return booking
 
 
-async def _release_hold(providers: Providers, store: KeyValueStore, booking: Booking) -> None:
+async def _release_hold(providers: Providers, store: KeyValueStore, booking: Booking, db: AsyncSession | None = None) -> None:
     for seg in booking.segments:
         if seg.seat_numbers:
             await store.release([seat_key(seg.trip_id, n) for n in seg.seat_numbers], str(booking.id))
     if booking.provider_booking_ref:
         await providers.get(booking.provider).cancel(booking.provider_booking_ref)
+    if db is not None:
+        from app.services.offers import release
+
+        await release(db, booking.id)  # the promo code can be used again
 
 
 async def get_owned(db: AsyncSession, providers: Providers, store: KeyValueStore, user: User, booking_id: uuid.UUID) -> Booking:
@@ -337,7 +341,7 @@ async def cancel_hold(db: AsyncSession, providers: Providers, store: KeyValueSto
         return booking
     if booking.status != "held":
         raise BookingErrors.not_cancellable()  # paid bookings: cancellation + refund in Phase 7
-    await _release_hold(providers, store, booking)
+    await _release_hold(providers, store, booking, db)
     booking.status = "cancelled"
     await db.commit()
     await db.refresh(booking)
@@ -373,6 +377,7 @@ def booking_out(b: Booking, ticket=None, refund=None) -> BookingOut:
         cabin=(b.details or {}).get("cabin"),
         fare_brand=(b.details or {}).get("fare_brand"),
         fare_rules=(b.details or {}).get("rules"),
+        promo_code=(b.details or {}).get("promo_code"),
         cancelled_at=(b.details or {}).get("cancelled_at"),
         refund=RefundInfo(amount=refund.amount, fee=refund.fee, status=refund.status, processed_at=refund.processed_at)
         if refund

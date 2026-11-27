@@ -127,4 +127,13 @@
     <string name="ui_total_incl_tax">incl. taxes</string>
     <string name="ui_no_pdf_app">No app on this phone can open PDFs.</string>
     <string name="ui_no_calendar_app">No calendar app found on this phone.</string>
+    <string name="ui_price_alert">Price alert</string>
+    <string name="ui_price_alert_title">Tell me when it\'s cheaper</string>
+    <string name="ui_price_alert_body">The lowest fare today is %s per person. We\'ll notify you when it drops to your price.</string>
+    <string name="ui_price_alert_target">Your price per person (৳)</string>
+    <string name="ui_price_alert_too_high">Pick a price below today\'s lowest fare</string>
+    <string name="ui_price_alert_save">Set alert</string>
+    <string name="ui_price_alert_cancel">Cancel</string>
+    <string name="ui_price_alert_saved">Price alert set. We\'ll let you know.</string>
+    <string name="ui_price_alert_failed">Couldn\'t set the alert. Please try again.</string>
 </resources>

@@ -48,6 +48,10 @@ import com.jatri.core.model.StopPoint
 import com.jatri.core.ui.result.BusResultCard
 import com.jatri.core.ui.result.ResultsScaffold
 import com.jatri.core.ui.result.routeSubtitle
+import com.jatri.core.ui.result.PriceAlertAction
+import com.jatri.core.ui.result.PriceAlertSnackbar
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
 import com.jatri.core.ui.result.routeTitle
 import com.jatri.core.ui.seat.SeatMap
 import com.jatri.core.ui.text
@@ -60,9 +64,13 @@ internal fun BusResultsRoute(
     viewModel: BusResultsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbar = remember { SnackbarHostState() }
+    PriceAlertSnackbar(state.alertResult, snackbar, viewModel::alertShown)
     ResultsScaffold(
         title = routeTitle(state.from, state.to),
         subtitle = routeSubtitle(state.date, 1),
+        actions = { PriceAlertAction(state.lowest.takeUnless { state.loading }, state.alert, viewModel::createAlert) },
+        snackbarHost = snackbar,
         loading = state.loading,
         count = state.trips.size,
         sort = state.sort,

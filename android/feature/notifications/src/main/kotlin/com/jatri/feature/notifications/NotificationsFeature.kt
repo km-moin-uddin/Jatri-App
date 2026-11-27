@@ -168,6 +168,7 @@ private fun iconFor(type: String): ImageVector = when (type) {
     "refund_processed" -> JatriIcons.Payments
     "journey_reminder" -> JatriIcons.Time
     "flight_changed" -> JatriIcons.Flight
+    "price_drop" -> JatriIcons.Offer
     else -> JatriIcons.Notifications
 }
 

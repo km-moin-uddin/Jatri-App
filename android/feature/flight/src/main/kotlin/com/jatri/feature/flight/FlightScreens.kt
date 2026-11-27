@@ -20,6 +20,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,8 +69,12 @@ internal fun FlightResultsRoute(
     viewModel: FlightResultsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbar = remember { SnackbarHostState() }
+    com.jatri.core.ui.result.PriceAlertSnackbar(state.alertResult, snackbar, viewModel::alertShown)
     FlightResultsScreen(
         state = state,
+        onCreateAlert = viewModel::createAlert,
+        snackbar = snackbar,
         onBack = onBack,
         onOfferClick = onOfferClick,
         onSortChange = viewModel::setSort,
@@ -94,12 +99,16 @@ fun FlightResultsScreen(
     onRetry: () -> Unit = {},
     onFilterClick: () -> Unit = {},
     onClearFilters: () -> Unit = {},
+    onCreateAlert: (com.jatri.core.model.Money) -> Unit = {},
+    snackbar: SnackbarHostState? = null,
 ) {
     val lang = JatriTheme.language
     val visible = state.visible
     ResultsScaffold(
         title = flightTitle(state),
         subtitle = flightSubtitle(state),
+        actions = { com.jatri.core.ui.result.PriceAlertAction(state.alertLowest, state.alert, onCreateAlert) },
+        snackbarHost = snackbar,
         loading = state.loading,
         count = visible.size,
         sort = state.sort,

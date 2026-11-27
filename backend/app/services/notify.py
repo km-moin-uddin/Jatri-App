@@ -179,3 +179,27 @@ async def flight_changed(db, settings, b: Booking, number: str, minutes: int) ->
         (f"ফ্লাইট {number} দেরিতে ছাড়বে", f"নতুন সময়: {when(b)} ({minutes} মিনিট পরে)। বুকিং {b.booking_ref}।"),
         {"booking_id": str(b.id)},
     )
+
+
+async def price_drop(db, settings, alert, price: int) -> None:
+    from app.services.ticket import _place_names
+
+    names = _place_names()
+    a = names.get(alert.from_id, (alert.from_id, alert.from_id))
+    b = names.get(alert.to_id, (alert.to_id, alert.to_id))
+    day = alert.date.strftime("%d %b")
+    await notify(
+        db,
+        settings,
+        alert.user_id,
+        "price_drop",
+        ("Price dropped 📉", f"{a[0]} → {b[0]} on {day} is now from {_taka(price)} (your target {_taka(alert.target_price)})."),
+        ("ভাড়া কমেছে 📉", f"{a[1]} → {b[1]}, {day}: এখন {_taka(price)} থেকে (আপনার লক্ষ্য {_taka(alert.target_price)})।"),
+        {
+            "alert_id": str(alert.id),
+            "mode": alert.mode,
+            "from_id": alert.from_id,
+            "to_id": alert.to_id,
+            "date": alert.date.isoformat(),
+        },
+    )

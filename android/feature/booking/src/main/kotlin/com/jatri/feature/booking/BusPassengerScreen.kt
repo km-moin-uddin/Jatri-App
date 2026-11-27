@@ -1,5 +1,7 @@
 package com.jatri.feature.booking
 
+import java.time.LocalDate
+import com.jatri.core.model.SavedTraveller
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -89,7 +91,7 @@ internal fun BusPassengerRoute(onBack: () -> Unit, onHeld: (String) -> Unit, vie
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
                 state.passengers.forEachIndexed { i, p ->
-                    PassengerCard(index = i, form = p, onChange = { t -> viewModel.update(i, t) })
+                    PassengerCard(index = i, form = p, onChange = { t -> viewModel.update(i, t) }, saved = state.travellers)
                 }
                 JatriCard {
                     Text(stringResource(R.string.booking_contact), style = MaterialTheme.typography.titleMedium)
@@ -125,6 +127,7 @@ internal fun PassengerCard(
     nidLabel: String = stringResource(R.string.booking_nid_optional),
     nidError: String = stringResource(R.string.booking_nid_error),
     seatLabel: String = form.seatNo,
+    saved: List<SavedTraveller> = emptyList(),
 ) {
     val lang = JatriTheme.language
     JatriCard {
@@ -138,6 +141,7 @@ internal fun PassengerCard(
             if (form.ladiesSeat) StatusChip(stringResource(R.string.booking_ladies_seat), StatusTone.Info)
         }
         Spacer(Modifier.height(Spacing.xs))
+        SavedTravellerChips(saved) { t -> onChange { it.fillFrom(t, LocalDate.now()) } }
         JatriTextField(
             value = form.name,
             onValueChange = { v -> onChange { it.copy(name = v.take(80), nameError = false) } },

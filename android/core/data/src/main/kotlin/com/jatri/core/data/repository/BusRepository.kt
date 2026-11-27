@@ -58,6 +58,10 @@ interface BookingRepository {
 
     suspend fun cancelQuote(id: String): CancelQuote
 
+    /** Promo code on a held booking: the server recalculates discount and total. */
+    suspend fun applyPromo(id: String, code: String): Booking
+    suspend fun removePromo(id: String): Booking
+
     /** Releases a hold, or cancels a ticket by its quote ([expectedRefund] = the quote's refund). */
     suspend fun cancel(id: String, expectedRefund: Money? = null): Booking
 }
@@ -134,6 +138,11 @@ internal class NetworkBookingRepository @Inject constructor(
     override suspend fun list(): List<Booking> = apiCall { api.bookings() }.also { cache.replaceAll(it) }.map { it.toModel() }
 
     override suspend fun cached(): List<Booking> = cache.all().map { it.toModel() }
+
+    override suspend fun applyPromo(id: String, code: String): Booking =
+        apiCall { api.applyPromo(id, com.jatri.core.network.model.PromoRequest(code.trim())) }.also { cache.put(it) }.toModel()
+
+    override suspend fun removePromo(id: String): Booking = apiCall { api.removePromo(id) }.also { cache.put(it) }.toModel()
 
     override suspend fun cancelQuote(id: String): CancelQuote = apiCall { api.cancelQuote(id) }.let {
         CancelQuote(
@@ -230,6 +239,7 @@ internal fun BookingDto.toModel() = Booking(
     },
     ticket = ticket?.let { Ticket(it.qrPayload, it.pdfUrl, parseInstant(it.issuedAt)) },
     taxes = Money(taxes),
+    promoCode = promoCode,
     cancelledAt = cancelledAt?.let(::parseInstant),
     refund = refund?.let {
         Refund(

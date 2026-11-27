@@ -120,6 +120,7 @@ fun TrainPassengerScreen(
                         ageLabel = stringResource(R.string.booking_age_required),
                         nidLabel = stringResource(if (adult) R.string.booking_train_nid else R.string.booking_train_nid_child),
                         nidError = stringResource(if (adult && p.nid.isEmpty()) R.string.booking_train_nid_required else R.string.booking_nid_error),
+                        saved = state.travellers,
                     )
                 }
                 JatriCard {

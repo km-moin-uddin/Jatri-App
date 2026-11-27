@@ -60,4 +60,8 @@
     <string name="pay_eticket_no">E-ticket %1$s</string>
     <string name="pay_hold_timer_flight">Fare held for %1$s</string>
     <string name="pay_class_coach">%1$s · Coach %2$s</string>
+    <string name="pay_promo_apply">Apply</string>
+    <string name="pay_promo_applied">%1$s applied</string>
+    <string name="pay_promo_saved">You save %1$s</string>
+    <string name="pay_promo_remove">Remove</string>
 </resources>

@@ -35,6 +35,8 @@ data class ReviewPayUiState(
     val expired: Boolean = false,
     val error: AppError? = null,
     val cancelling: Boolean = false,
+    val promoBusy: Boolean = false,
+    val promoError: AppError? = null,
 )
 
 @HiltViewModel
@@ -101,6 +103,25 @@ class ReviewPayViewModel @Inject constructor(
     }
 
     fun dismissPayError() = _state.update { it.copy(payError = null) }
+
+    /** Applies (or, with a blank code, removes) a promo code; the server recalculates the total. */
+    fun applyPromo(code: String) {
+        val id = bookingId ?: return
+        if (_state.value.promoBusy) return
+        viewModelScope.launch {
+            _state.update { it.copy(promoBusy = true, promoError = null) }
+            try {
+                val b = if (code.isBlank()) bookings.removePromo(id) else bookings.applyPromo(id, code)
+                _state.update { it.copy(booking = b) }
+            } catch (e: AppException) {
+                _state.update { it.copy(promoError = e.error) }
+            } finally {
+                _state.update { it.copy(promoBusy = false) }
+            }
+        }
+    }
+
+    fun clearPromoError() = _state.update { it.copy(promoError = null) }
 
     fun cancel(onDone: () -> Unit) {
         val id = bookingId ?: return onDone()

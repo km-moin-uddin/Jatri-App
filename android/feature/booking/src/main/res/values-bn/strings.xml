@@ -58,4 +58,5 @@
     <string name="booking_train_nid">এনআইডি নম্বর (আবশ্যক)</string>
     <string name="booking_train_nid_child">এনআইডি বা জন্মনিবন্ধন নম্বর (১৮-এর কম বয়সে ঐচ্ছিক)</string>
     <string name="booking_train_nid_required">১৮ বছর বা তার বেশি বয়সী যাত্রীর এনআইডি নম্বর লাগবে</string>
+    <string name="booking_saved_travellers">সেভ করা যাত্রী</string>
 </resources>

@@ -13,6 +13,12 @@ import com.jatri.core.network.model.CancelQuoteDto
 import com.jatri.core.network.model.CancelRequest
 import com.jatri.core.network.model.DeviceRequest
 import com.jatri.core.network.model.NotificationDto
+import com.jatri.core.network.model.OfferDto
+import com.jatri.core.network.model.PriceAlertDto
+import com.jatri.core.network.model.PriceAlertRequest
+import com.jatri.core.network.model.PromoRequest
+import com.jatri.core.network.model.SliceDto
+import com.jatri.core.network.model.TravellerDto
 import com.jatri.core.network.model.NotificationPageDto
 import com.jatri.core.network.model.FlightBookingRequest
 import com.jatri.core.network.model.FlightOfferDto
@@ -194,6 +200,79 @@ class MockJatriApi @Inject constructor() : JatriApi {
         return ApiEnvelope(true, null)
     }
 
+    override suspend fun offers(mode: String?): ApiEnvelope<List<OfferDto>> =
+        ApiEnvelope(true, bus.offers.filter { mode == null || it.modes.isEmpty() || mode in it.modes })
+
+    override suspend fun applyPromo(id: String, body: PromoRequest): ApiEnvelope<BookingDto> {
+        currentUser()
+        delay(LATENCY / 2)
+        return ApiEnvelope(true, bus.applyPromo(id, body.code))
+    }
+
+    override suspend fun removePromo(id: String): ApiEnvelope<BookingDto> {
+        currentUser()
+        return ApiEnvelope(true, bus.removePromo(id))
+    }
+
+    private val travellers = mutableListOf<TravellerDto>()
+
+    override suspend fun travellers(): ApiEnvelope<List<TravellerDto>> {
+        currentUser()
+        return ApiEnvelope(true, travellers.toList())
+    }
+
+    override suspend fun addTraveller(body: TravellerDto): ApiEnvelope<TravellerDto> {
+        currentUser()
+        if (travellers.size >= 20) throw api("too_many_travellers", "You can save up to 20 travellers.", "সর্বোচ্চ ২০ জন যাত্রী সংরক্ষণ করা যায়।")
+        val saved = body.copy(id = UUID.randomUUID().toString())
+        travellers.add(saved)
+        return ApiEnvelope(true, saved)
+    }
+
+    override suspend fun editTraveller(id: String, body: TravellerDto): ApiEnvelope<TravellerDto> {
+        currentUser()
+        val i = travellers.indexOfFirst { it.id == id }
+        if (i < 0) throw api("not_found", "Traveller not found.", "যাত্রী পাওয়া যায়নি।")
+        travellers[i] = body.copy(id = id)
+        return ApiEnvelope(true, travellers[i])
+    }
+
+    override suspend fun deleteTraveller(id: String): ApiEnvelope<JsonElement?> {
+        currentUser()
+        travellers.removeAll { it.id == id }
+        return ApiEnvelope(true, null)
+    }
+
+    private val alerts = mutableListOf<PriceAlertDto>()
+
+    override suspend fun priceAlerts(): ApiEnvelope<List<PriceAlertDto>> {
+        currentUser()
+        return ApiEnvelope(true, alerts.sortedBy { it.date })
+    }
+
+    override suspend fun addPriceAlert(body: PriceAlertRequest): ApiEnvelope<PriceAlertDto> {
+        currentUser()
+        if (alerts.count { it.isActive } >= 10) throw api("too_many_alerts", "You can keep up to 10 price alerts.", "সর্বোচ্চ ১০টি ভাড়া-সতর্কতা রাখা যায়।")
+        // Today's lowest fare per person, like the backend's check.
+        val lowest = runCatching {
+            when (body.mode) {
+                "bus" -> bus.search(body.fromId, body.toId, body.date, null).minOfOrNull { it.fare }
+                "train" -> train.search(body.fromId, body.toId, body.date, null).flatMap { it.classes }.minOfOrNull { it.fare }
+                else -> flight.search(FlightSearchRequest(listOf(SliceDto(body.fromId, body.toId, body.date)), 1, 0, 0, "economy")).minOfOrNull { it.total }
+            }
+        }.getOrNull()
+        val dto = PriceAlertDto(UUID.randomUUID().toString(), body.mode, body.fromId, body.toId, body.date, body.targetPrice, lowest, true,
+            java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC).toString())
+        alerts.add(dto)
+        return ApiEnvelope(true, dto)
+    }
+
+    override suspend fun deletePriceAlert(id: String): ApiEnvelope<JsonElement?> {
+        currentUser()
+        alerts.removeAll { it.id == id }
+        return ApiEnvelope(true, null)
+    }
+
     /** No push in demo mode. */
     override suspend fun registerDevice(body: DeviceRequest): ApiEnvelope<JsonElement?> = ApiEnvelope(true, null)
 
@@ -202,7 +281,7 @@ class MockJatriApi @Inject constructor() : JatriApi {
     override suspend fun initPayment(body: PaymentInitRequest, idempotencyKey: String): ApiEnvelope<PaymentInitDto> {
         currentUser()
         delay(LATENCY)
-        return ApiEnvelope(true, bus.initPayment(body.bookingId))
+        return ApiEnvelope(true, bus.initPayment(body.bookingId, body.method))
     }
 
     override suspend fun paymentStatus(id: String): ApiEnvelope<PaymentStatusDto> {
