@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query
 from app.api.deps import CurrentUser, DbSession
 from app.api.v1.buses import StoreDep
 from app.core.envelope import ok
+from app.core.ratelimit import limit
 from app.providers.registry import ProvidersDep
 from app.schemas.booking import BookingOut
 from app.schemas.common import Envelope
@@ -23,7 +24,9 @@ async def offers(db: DbSession, mode: Annotated[str | None, Query(pattern="^(fli
     return ok([OfferOut.model_validate(o, from_attributes=True) for o in await offers_service.active_offers(db, mode)])
 
 
-@router.post("/bookings/{booking_id}/promo", response_model=Envelope[BookingOut])
+@router.post(
+    "/bookings/{booking_id}/promo", response_model=Envelope[BookingOut], dependencies=[limit("promo", 10, 600, per="user")]
+)
 async def apply_promo(
     booking_id: uuid.UUID, body: PromoIn, user: CurrentUser, db: DbSession, providers: ProvidersDep, store: StoreDep
 ):

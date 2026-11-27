@@ -9,6 +9,9 @@ plugins {
 // phone with no server (OTP 123456).
 val apiBaseUrl = providers.gradleProperty("jatri.apiBaseUrl").getOrElse("http://10.0.2.2:8000/api/v1/")
 val useMockApi = providers.gradleProperty("jatri.useMockApi").getOrElse("true").toBoolean()
+// Optional certificate pins for the API host, e.g. -Pjatri.certPins=sha256/AAAA...=,sha256/BBBB...=
+// (current key + a backup key). Empty = no pinning. Get them from the real certificate before release.
+val certPins = providers.gradleProperty("jatri.certPins").getOrElse("")
 
 android {
     buildFeatures {
@@ -17,6 +20,7 @@ android {
     defaultConfig {
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("boolean", "USE_MOCK_API", useMockApi.toString())
+        buildConfigField("String", "CERT_PINS", "\"$certPins\"")
     }
 }
 

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Query
 from app.api.deps import AppSettings
 from app.api.v1.buses import StoreDep
 from app.core.envelope import ok
+from app.core.ratelimit import limit
 from app.providers.registry import ProvidersDep
 from app.schemas.common import Envelope
 from app.schemas.train import TrainClass, TrainSearchIn, TrainSeatMapOut, TrainTripOut
@@ -13,7 +14,7 @@ from app.services import train as service
 router = APIRouter(prefix="/trains", tags=["train"])
 
 
-@router.post("/search", response_model=Envelope[list[TrainTripOut]])
+@router.post("/search", response_model=Envelope[list[TrainTripOut]], dependencies=[limit("search", 60, 60)])
 async def search(body: TrainSearchIn, providers: ProvidersDep, store: StoreDep, settings: AppSettings):
     """Trains for one day, with seats left and fare per class. Only dates up to 10 days ahead
     (`outside_sale_window` otherwise); trains on their weekly off day are left out."""

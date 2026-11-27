@@ -23,11 +23,13 @@ class AppError(Exception):
         self.code = code
         self.message_en = message_en
         self.message_bn = message_bn
+        self.headers: dict[str, str] | None = None
 
 
-def _error(status: int, code: str, en: str, bn: str) -> JSONResponse:
+def _error(status: int, code: str, en: str, bn: str, headers: dict[str, str] | None = None) -> JSONResponse:
     return JSONResponse(
         status_code=status,
+        headers=headers,
         content={"success": False, "data": None, "error": {"code": code, "message_en": en, "message_bn": bn}},
     )
 
@@ -35,7 +37,7 @@ def _error(status: int, code: str, en: str, bn: str) -> JSONResponse:
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error(_: Request, exc: AppError) -> JSONResponse:
-        return _error(exc.status, exc.code, exc.message_en, exc.message_bn)
+        return _error(exc.status, exc.code, exc.message_en, exc.message_bn, exc.headers)
 
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, exc: RequestValidationError) -> JSONResponse:

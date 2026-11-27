@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 
 from app.api.deps import AppSettings
 from app.core.envelope import ok
+from app.core.ratelimit import limit
 from app.providers.mock_bus import MockBusProvider, get_bus_provider
 from app.schemas.bus import BusSearchIn, BusTripOut, SeatMapOut
 from app.schemas.common import Envelope
@@ -16,7 +17,7 @@ BusProviderDep = Annotated[MockBusProvider, Depends(get_bus_provider)]
 StoreDep = Annotated[KeyValueStore, Depends(get_store)]
 
 
-@router.post("/search", response_model=Envelope[list[BusTripOut]])
+@router.post("/search", response_model=Envelope[list[BusTripOut]], dependencies=[limit("search", 60, 60)])
 async def search(body: BusSearchIn, provider: BusProviderDep, store: StoreDep, settings: AppSettings):
     """Results are cached for a few minutes; live price and seats are re-checked at booking time."""
     trips = await service.search_buses(provider, store, settings, body.from_id, body.to_id, body.date, body.coach_type)

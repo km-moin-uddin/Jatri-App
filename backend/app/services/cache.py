@@ -22,6 +22,9 @@ class KeyValueStore(Protocol):
 
     async def owners(self, keys: list[str]) -> dict[str, str]: ...
 
+    async def hit(self, key: str, window: int) -> int:
+        """Counts one request in a fixed window of [window] seconds; returns the count so far."""
+
 
 class MemoryStore:
     def __init__(self) -> None:
@@ -57,6 +60,14 @@ class MemoryStore:
 
     async def owners(self, keys: list[str]) -> dict[str, str]:
         return {k: v for k in keys if (v := self._get(k)) is not None}
+
+    async def hit(self, key: str, window: int) -> int:
+        item = self._data.get(key)
+        if item is None or item[0] < time.monotonic():
+            item = (time.monotonic() + window, "0")
+        count = int(item[1]) + 1
+        self._data[key] = (item[0], str(count))
+        return count
 
 
 # Atomically SET NX every key, or roll back the ones we just set.
@@ -105,6 +116,13 @@ class RedisStore:
             return {}
         values = await self._redis.mget(keys)
         return {k: v for k, v in zip(keys, values, strict=True) if v is not None}
+
+    async def hit(self, key: str, window: int) -> int:
+        async with self._redis.pipeline(transaction=True) as pipe:
+            pipe.incr(key)
+            pipe.expire(key, window, nx=True)
+            count, _ = await pipe.execute()
+        return int(count)
 
 
 @lru_cache

@@ -1,5 +1,6 @@
 """Phone OTP login, token issuing, refresh rotation and logout."""
 
+import hmac
 import uuid
 from dataclasses import dataclass
 from datetime import timedelta
@@ -88,7 +89,7 @@ async def verify_otp(
     if otp.attempts >= settings.otp_max_attempts:
         raise Errors.otp_too_many_attempts()
 
-    if otp.otp_hash != hmac_hash(f"{phone}:{code}", settings):
+    if not hmac.compare_digest(otp.otp_hash, hmac_hash(f"{phone}:{code}", settings)):
         otp.attempts += 1
         if otp.attempts >= settings.otp_max_attempts:
             otp.consumed = True

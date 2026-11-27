@@ -29,6 +29,7 @@ dev = [
     "httpx>=0.27",
     "aiosqlite>=0.20",
     "ruff>=0.6",
+    "pytest-cov>=7.1.0",
 ]
 
 [tool.pytest.ini_options]
@@ -47,3 +48,14 @@ ignore = ["S101", "B008", "UP046"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S105", "S106"]
+
+[tool.coverage.run]
+source = ["app"]
+# SQLAlchemy's async engine runs code in greenlets; without this, lines after `await db...` look untested.
+concurrency = ["greenlet", "thread"]
+omit = ["app/worker.py"]  # ARQ entry point: its jobs are tested directly
+
+[tool.coverage.report]
+fail_under = 85
+skip_covered = true
+show_missing = true

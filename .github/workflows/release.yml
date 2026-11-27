@@ -45,6 +45,41 @@ jobs:
       - name: Name the APK after the tag
         run: cp android/app/build/outputs/apk/debug/app-debug.apk "Jatri-${TAG}-debug.apk"
 
+      # Play Store bundle: only when the upload key and the API address are configured
+      # (Settings → Secrets: JATRI_UPLOAD_KEYSTORE_BASE64, JATRI_KEYSTORE_PASSWORD, JATRI_KEY_ALIAS,
+      # JATRI_KEY_PASSWORD; Settings → Variables: JATRI_API_BASE_URL, optional JATRI_CERT_PINS).
+      # The bundle is kept as a private workflow artifact, never attached to the public release.
+      - name: Signed Play Store bundle (if configured)
+        working-directory: android
+        env:
+          KEYSTORE_B64: ${{ secrets.JATRI_UPLOAD_KEYSTORE_BASE64 }}
+          JATRI_KEYSTORE_PASSWORD: ${{ secrets.JATRI_KEYSTORE_PASSWORD }}
+          JATRI_KEY_ALIAS: ${{ secrets.JATRI_KEY_ALIAS }}
+          JATRI_KEY_PASSWORD: ${{ secrets.JATRI_KEY_PASSWORD }}
+          API_BASE_URL: ${{ vars.JATRI_API_BASE_URL }}
+          CERT_PINS: ${{ vars.JATRI_CERT_PINS }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$API_BASE_URL" ]; then
+            echo "No upload key or API address configured: skipping the Play Store bundle."
+            exit 0
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          export JATRI_KEYSTORE_FILE="$RUNNER_TEMP/upload.jks"
+          ./gradlew :app:bundleRelease -Pjatri.useMockApi=false -Pjatri.apiBaseUrl="$API_BASE_URL" \
+            -Pjatri.certPins="$CERT_PINS" -Pjatri.versionCode="${{ github.run_number }}0"
+          rm -f "$RUNNER_TEMP/upload.jks"
+          echo "AAB_BUILT=1" >> "$GITHUB_ENV"
+
+      - name: Keep the bundle and R8 mapping (private)
+        if: env.AAB_BUILT == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: jatri-${{ env.TAG }}-play-bundle
+          path: |
+            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/mapping/release/mapping.txt
+          retention-days: 90
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:

@@ -13,6 +13,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.CertificatePinner
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -43,12 +45,21 @@ object NetworkModule {
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
+        .apply { certificatePinner()?.let(::certificatePinner) }
         .apply {
             if (BuildConfig.DEBUG) {
                 // BASIC never logs headers or bodies, so tokens and NID numbers stay out of logs.
                 addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BASIC))
             }
         }
+
+    /** Pins the API host's keys when the build was given `jatri.certPins`; otherwise none. */
+    internal fun certificatePinner(pins: String = BuildConfig.CERT_PINS, baseUrl: String = BuildConfig.API_BASE_URL): CertificatePinner? {
+        val list = pins.split(',').map(String::trim).filter(String::isNotEmpty)
+        if (list.isEmpty()) return null
+        val host = baseUrl.toHttpUrl().host
+        return CertificatePinner.Builder().apply { list.forEach { add(host, it) } }.build()
+    }
 
     @Provides
     @Singleton

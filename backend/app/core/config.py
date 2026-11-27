@@ -63,6 +63,11 @@ class Settings(BaseSettings):
     smtp_password: str | None = None  # secret
     email_from: str = "Jatri <tickets@example.com>"
 
+    # Per-IP / per-user request limits (app/core/ratelimit.py). Off only in tests that need bursts.
+    rate_limits: bool = True
+    # Browser origins allowed to call the API (none: the Android app doesn't need CORS).
+    cors_origins: list[str] = []
+
     # Booking
     hold_minutes: int = 10
     max_bus_seats: int = 4
