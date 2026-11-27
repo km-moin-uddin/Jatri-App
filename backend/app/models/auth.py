@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, IdMixin
@@ -11,6 +11,7 @@ class AuthOtp(IdMixin, Base):
     """One OTP sent to a phone. Only the HMAC hash of the code is stored."""
 
     __tablename__ = "auth_otps"
+    __table_args__ = (Index("ix_auth_otps_phone_created", "phone", "created_at"),)  # cooldown / window checks
 
     phone: Mapped[str] = mapped_column(String(11), index=True)
     otp_hash: Mapped[str] = mapped_column(String(64))

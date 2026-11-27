@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import JSON, BigInteger, Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import JSON, BigInteger, Date, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.crypto import EncryptedString
@@ -12,7 +12,12 @@ class Booking(IdMixin, Base):
     """One booking. Money is always integer paisa."""
 
     __tablename__ = "bookings"
-    __table_args__ = (UniqueConstraint("user_id", "idempotency_key", name="uq_bookings_user_idempotency"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "idempotency_key", name="uq_bookings_user_idempotency"),
+        Index("ix_bookings_user_status", "user_id", "status"),
+        Index("ix_bookings_user_created", "user_id", "created_at"),  # My Trips, newest first
+        Index("ix_bookings_status_hold", "status", "hold_expires_at"),  # the hold-expiry job
+    )
 
     booking_ref: Mapped[str] = mapped_column(String(8), unique=True, index=True)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True, nullable=True)
@@ -50,7 +55,7 @@ class BookingSegment(IdMixin, Base):
     number: Mapped[str] = mapped_column(String(40))  # flight no / coach no / train no
     from_id: Mapped[str] = mapped_column(String(40))
     to_id: Mapped[str] = mapped_column(String(40))
-    depart_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    depart_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)  # reminders job
     arrive_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     travel_class: Mapped[str] = mapped_column(String(20))  # ac / non_ac / economy / snigdha ...
     seat_numbers: Mapped[list[str]] = mapped_column(JSON, default=list)

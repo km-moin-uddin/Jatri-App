@@ -11,6 +11,8 @@ class Settings(BaseSettings):
 
     env: str = Field(default="dev", description="dev | test | prod")
     database_url: str = "postgresql+asyncpg://jatri:jatri@localhost:5432/jatri"
+    db_pool_size: int = 10
+    db_max_overflow: int = 20
 
     # Signing key for access tokens and pepper for hashing OTPs / refresh tokens.
     # Must be set to a long random value in production (e.g. `openssl rand -hex 32`).

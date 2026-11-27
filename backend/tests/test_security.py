@@ -80,3 +80,37 @@ def test_production_hides_docs(monkeypatch):
     monkeypatch.setattr("app.main.get_settings", lambda: prod)
     app = create_app()
     assert app.docs_url is None and app.openapi_url is None
+
+
+async def test_deleting_the_account_anonymises_bookings(client, sms):
+    from sqlalchemy import func, select, text
+
+    from app.db.session import SessionLocal
+    from app.models import Booking, BookingPassenger, DeviceToken, SavedTraveller, User
+    from tests.test_payments import pay_on_mock_page, start_payment
+
+    tokens, _, _, paid = await held_booking(client, sms)
+    await pay_on_mock_page(client, await start_payment(client, tokens, paid["id"]))
+    _, _, _, held = await held_booking(client, sms)
+    h = auth(tokens)
+    await client.post("/api/v1/devices", json={"token": "push-1", "platform": "android"}, headers=h)
+    body = {"full_name": "Rahim", "gender": "male", "nid_number": "1990123456789"}
+    await client.post("/api/v1/me/travellers", json=body, headers=h)
+
+    assert (await client.delete("/api/v1/me", headers=h)).status_code == 200
+    assert (await client.get("/api/v1/me", headers=h)).status_code == 401
+    async with SessionLocal() as db:
+        assert await db.scalar(select(func.count()).select_from(User)) == 0
+        assert await db.scalar(select(func.count()).select_from(SavedTraveller)) == 0
+        assert await db.scalar(select(func.count()).select_from(DeviceToken)) == 0
+        bookings = {str(b.id): b for b in (await db.scalars(select(Booking))).all()}
+        assert bookings[paid["id"]].status == "ticketed" and bookings[paid["id"]].total_amount == paid["total_amount"]
+        assert bookings[held["id"]].status == "cancelled"  # the seat went back on sale
+        assert all(b.user_id is None and b.contact_phone == "" for b in bookings.values())
+        names = (await db.scalars(select(BookingPassenger.full_name))).all()
+        assert set(names) == {"Deleted user"}
+        raw = (await db.execute(text("select document_no from booking_passengers"))).scalars().all()
+        assert all(v is None for v in raw)
+    # Logging in again with the same number starts a fresh, empty account.
+    fresh = (await login(client, sms))["tokens"]
+    assert (await client.get("/api/v1/bookings", headers=auth(fresh))).json()["data"] == []

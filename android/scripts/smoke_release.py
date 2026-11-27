@@ -91,10 +91,17 @@ def step(name: str, labels: list[str], press: bool = True) -> None:
 def main(apk: str) -> None:
     adb("logcat", "-c", "-b", "all", check=False)
     adb("install", "-r", apk)
-    adb("shell", "am", "start", "-W", "-n", f"{PKG}/.MainActivity")
+    out = adb("shell", "am", "start", "-W", "-n", f"{PKG}/.MainActivity")
+    total = re.search(r"TotalTime: (\d+)", out)
+    print(f"- cold start: {total.group(1) if total else '?'} ms (emulator, no GPU)", flush=True)
     step("onboarding: skip", ["বাদ দিন", "Skip"])
-    step("login: continue as guest", ["অতিথি হিসেবে চালিয়ে যান", "Continue as guest"])
-    step("home is shown", ["কোথায় যেতে চান?", "Where would you like to go?"], press=False)
+    print("- login (if shown): continue as guest", flush=True)
+    home = ["কোথায় যেতে চান?", "Where would you like to go?"]
+    guest = ["অতিথি হিসেবে চালিয়ে যান", "Continue as guest"]
+    node = wait_for(home + guest)
+    if (node.get("text") or "") in guest:
+        tap(node)
+    step("home is shown", home, press=False)
     print("- pick the Dhaka → Cox's Bazar popular route", flush=True)
     for _ in range(6):
         node = find_containing(screen(), ["কক্সবাজার", "Cox"])
