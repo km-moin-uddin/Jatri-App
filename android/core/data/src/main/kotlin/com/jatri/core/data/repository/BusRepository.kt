@@ -175,6 +175,7 @@ internal fun BookingDto.toModel() = Booking(
             seatNumbers = it.seatNumbers,
             boardingPoint = it.boardingPoint?.toModel(),
             droppingPoint = it.droppingPoint?.toModel(),
+            coach = it.coach,
             journeyIndex = it.sliceIndex ?: 0,
             aircraft = it.aircraft,
             baggage = it.baggage,

@@ -59,4 +59,5 @@
     <string name="pay_document">ডকুমেন্ট %1$s</string>
     <string name="pay_eticket_no">ই-টিকিট %1$s</string>
     <string name="pay_hold_timer_flight">%1$s সময়ের জন্য ভাড়া সংরক্ষিত</string>
+    <string name="pay_class_coach">%1$s · কোচ %2$s</string>
 </resources>

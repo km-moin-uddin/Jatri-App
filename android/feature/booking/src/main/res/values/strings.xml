@@ -53,4 +53,9 @@
     <string name="booking_passport_expiry_short">Must be valid 6 months after the trip</string>
     <string name="booking_document_invalid">Enter a 10, 13 or 17-digit NID or a passport number</string>
     <string name="booking_flight_total">Total for %1$s passengers</string>
+    <string name="booking_train_note">Bangladesh Railway checks tickets against the passenger\'s NID. Write names as on the NID.</string>
+    <string name="booking_age_required">Age</string>
+    <string name="booking_train_nid">NID number (required)</string>
+    <string name="booking_train_nid_child">NID or birth registration number (optional under 18)</string>
+    <string name="booking_train_nid_required">Passengers aged 18+ need an NID number</string>
 </resources>

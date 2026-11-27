@@ -149,3 +149,16 @@ data class BusSeatMap(
     val maxSelectable: Int,
     val serviceChargePerSeat: Money,
 )
+
+/** One coach of a train class, e.g. "CHA" (Snigdha). Seat numbers carry the coach: "CHA-25". */
+data class TrainCoach(val name: String, val berth: Boolean, val layout: SeatLayout)
+
+/** Coaches and seats of one class of one train, plus what is needed to price a booking. */
+data class TrainSeatMap(
+    val trip: TrainTrip,
+    val trainClass: TrainClass,
+    val fare: Money,
+    val coaches: List<TrainCoach>,
+    val maxSelectable: Int,
+    val serviceChargePerSeat: Money,
+)

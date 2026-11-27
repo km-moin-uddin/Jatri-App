@@ -16,6 +16,8 @@ data class BookingSegment(
     val seatNumbers: List<String>,
     val boardingPoint: StopPoint?,
     val droppingPoint: StopPoint?,
+    /** Trains: the coach(es) of the seats. */
+    val coach: String? = null,
     /** Flights: which journey this flight belongs to (0 = outbound), aircraft and checked baggage. */
     val journeyIndex: Int = 0,
     val aircraft: String? = null,
@@ -120,4 +122,16 @@ data class FlightPassengerInput(
     val nationality: String = "BD",
     val documentNo: String? = null,
     val documentExpiry: java.time.LocalDate? = null,
+)
+
+/** What the train passenger form sends to hold seats. NID is required for passengers aged 18+. */
+data class TrainHoldRequest(
+    val tripId: String,
+    val trainClass: TrainClass,
+    val seats: List<String>,
+    val passengers: List<PassengerInput>,
+    val contactPhone: String,
+    val contactEmail: String?,
+    val expectedTotal: Money,
+    val idempotencyKey: String,
 )

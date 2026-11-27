@@ -84,6 +84,7 @@ data class SegmentDto(
     @SerialName("seat_numbers") val seatNumbers: List<String>,
     @SerialName("boarding_point") val boardingPoint: StopPointDto? = null,
     @SerialName("dropping_point") val droppingPoint: StopPointDto? = null,
+    val coach: String? = null,
     @SerialName("slice_index") val sliceIndex: Int? = null,
     @SerialName("from_code") val fromCode: String? = null,
     @SerialName("to_code") val toCode: String? = null,

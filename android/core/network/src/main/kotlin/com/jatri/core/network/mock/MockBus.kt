@@ -180,7 +180,15 @@ internal class MockBus {
         return dto
     }
 
-    /** Shared booking store: the mock flight provider keeps its holds here too. */
+    /** Seat locks shared with the mock train provider ("trip|seat" -> booking id). */
+    fun isHeld(tripId: String, seat: String): Boolean {
+        expireHolds()
+        return held.containsKey("$tripId|$seat")
+    }
+
+    fun lockSeats(tripId: String, seats: List<String>, bookingId: String) = seats.forEach { held["$tripId|$it"] = bookingId }
+
+    /** Shared booking store: the mock flight and train providers keep their holds here too. */
     fun existing(phone: String, key: String): BookingDto? = idempotency["$phone|$key"]?.let { bookings[it] }
 
     fun register(dto: BookingDto, phone: String, key: String): BookingDto {

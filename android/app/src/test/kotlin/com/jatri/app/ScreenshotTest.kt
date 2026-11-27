@@ -361,6 +361,94 @@ abstract class ScreenshotTest(private val name: String, private val dark: Boolea
         )
     }
 
+    // ---- Phase 6: trains -------------------------------------------------------------
+
+    private val rail get() = MockContent.popularRoutes.first { it.mode == TravelMode.TRAIN }
+
+    private fun trainSeatMap(): com.jatri.core.model.TrainSeatMap {
+        val trip = MockContent.trainTrips(today.plusDays(3), rail.from, rail.to).first()
+        fun coach(name: String, booked: Set<Int>, held: Set<Int>) = com.jatri.core.model.TrainCoach(
+            name, berth = false,
+            layout = com.jatri.core.model.SeatLayout(
+                (0 until 15).map { r ->
+                    (1..4).flatMap { c ->
+                        val n = r * 4 + c
+                        val state = when (n) {
+                            in booked -> com.jatri.core.model.SeatState.BOOKED
+                            in held -> com.jatri.core.model.SeatState.HELD
+                            else -> com.jatri.core.model.SeatState.AVAILABLE
+                        }
+                        val seat = com.jatri.core.model.Seat("$name-$n", state)
+                        if (c == 3) listOf(null, seat) else listOf(seat)
+                    }
+                },
+            ),
+        )
+        return com.jatri.core.model.TrainSeatMap(
+            trip, com.jatri.core.model.TrainClass.SNIGDHA, Money.taka(655),
+            listOf(coach("CHA", setOf(1, 2, 3, 5, 8, 9, 12, 13, 14, 20, 21, 26, 33, 40, 41, 47, 52, 55), setOf(17, 18)), coach("JA", (1..40).toSet(), emptySet())),
+            4, Money.taka(20),
+        )
+    }
+
+    @Test fun trainResults() = shot("18_train_results") {
+        com.jatri.feature.train.TrainResultsScreen(
+            state = com.jatri.feature.train.TrainResultsUiState(
+                args = com.jatri.feature.train.navigation.TrainResultsDestination(rail.from.id, rail.to.id, today.plusDays(3).toString(), "SNIGDHA", 2, 0),
+                from = rail.from, to = rail.to, loading = false,
+                trips = MockContent.trainTrips(today.plusDays(3), rail.from, rail.to),
+            ),
+            today = today,
+        )
+    }
+
+    @Test fun trainSeats() = shot("19_train_seats") {
+        com.jatri.feature.train.TrainSeatScreen(
+            state = com.jatri.feature.train.TrainSeatsUiState(loading = false, map = trainSeatMap(), selected = listOf("CHA-6", "CHA-7")),
+        )
+    }
+
+    @Test fun trainPassengers() = shot("20_train_passengers") {
+        com.jatri.feature.booking.TrainPassengerScreen(
+            state = com.jatri.feature.booking.TrainPassengerUiState(
+                loading = false, seatMap = trainSeatMap(), phone = "01712345678",
+                passengers = listOf(
+                    com.jatri.feature.booking.PassengerForm("CHA-6", false, "রহিম উদ্দিন", Gender.MALE, "34", "", nidError = true),
+                    com.jatri.feature.booking.PassengerForm("CHA-7", false, "Ayesha Rahman", Gender.FEMALE, "9"),
+                ),
+            ),
+        )
+    }
+
+    private fun trainBooking(status: BookingStatus): Booking {
+        val trip = MockContent.trainTrips(today.plusDays(3), rail.from, rail.to).first()
+        val ticketed = status == BookingStatus.TICKETED
+        return Booking(
+            id = "t1", ref = "JT8EU3", mode = TravelMode.TRAIN, status = status, holdExpiresAt = null,
+            baseFare = Money.taka(1310), serviceCharge = Money.taka(40), discount = Money.ZERO, total = Money.taka(1350),
+            contactPhone = "01712345678", contactEmail = null,
+            segments = listOf(
+                BookingSegment(trip.trainName, trip.trainNumber, trip.from.id, trip.to.id, trip.departAt, trip.arriveAt, "snigdha", listOf("CHA-6", "CHA-7"), null, null, coach = "CHA"),
+            ),
+            passengers = listOf(
+                BookingPassenger("রহিম উদ্দিন", Gender.MALE, 34, "CHA-6", "•••••••••6789", if (ticketed) "PNR-783E0218-1" else null),
+                BookingPassenger("Ayesha Rahman", Gender.FEMALE, 9, "CHA-7", null, if (ticketed) "PNR-783E0218-2" else null),
+            ),
+            ticket = if (ticketed) Ticket("JT1.JT8EU3.fc371ebba14b4d51af63ae46e00e19b4.Qm9vZ3Vz", "/pdf", java.time.Instant.EPOCH) else null,
+        )
+    }
+
+    @Test fun trainReviewPay() = shot("21_train_review_pay") {
+        ReviewPayScreen(onBack = {}, onPaid = {}, secondsLeft = 9 * 60 + 5, onCancel = {}, booking = trainBooking(BookingStatus.HELD))
+    }
+
+    @Test fun trainTicket() = shot("22_train_e_ticket") {
+        TicketResultScreen(
+            booking = trainBooking(BookingStatus.TICKETED), from = rail.from, to = rail.to, pdfBusy = false,
+            onOpenPdf = {}, onSharePdf = {}, onViewTrips = {}, onGoHome = {},
+        )
+    }
+
     @Test fun trips() = shot("08_trips") { TripsScreen(onSearchTickets = {}, onTicketClick = {}) }
 
     @Test fun offers() = shot("09_offers") { OffersScreen(MockContent.offers(today)) }

@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="train_phase">Phase 6 (ট্রেন মডিউল)</string>
     <string name="train_seat_title">কোচ ও সিট</string>
-    <string name="train_seat_note">রেলওয়ে পার্টনার সুবিধা দিলে এখানে কোচ ও সিট বাছাই করা যাবে। প্রত্যেক প্রাপ্তবয়স্ক যাত্রীর এনআইডি লাগবে।</string>
-    <string name="train_continue">যাত্রীর তথ্য দিতে এগিয়ে যান</string>
+    <string name="train_continue">এগিয়ে যান</string>
+    <string name="train_sale_note">যাত্রার ১০ দিন আগে থেকে টিকিট বিক্রি হয়। সাপ্তাহিক বন্ধের দিনে ট্রেন দেখানো হয় না।</string>
+    <string name="train_pick_seats">সর্বোচ্চ %1$sটি সিট বেছে নিন</string>
+    <string name="train_coach_free">কোচ %1$s · %2$sটি খালি</string>
+    <string name="train_fare_per_seat">প্রতি সিট %1$s</string>
+    <string name="train_berth_note">কেবিন বার্থ</string>
+    <string name="train_nid_note">পরের ধাপে ১৮ বছর বা তার বেশি বয়সী প্রত্যেক যাত্রীর এনআইডি নম্বর দিতে হবে।</string>
 </resources>

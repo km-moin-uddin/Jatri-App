@@ -4,6 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.jatri.core.model.SearchQuery
+import com.jatri.core.model.TrainClass
 import com.jatri.feature.train.TrainResultsRoute
 import com.jatri.feature.train.TrainSeatRoute
 import kotlinx.serialization.Serializable
@@ -32,7 +33,10 @@ fun NavController.navigateToTrainResults(query: SearchQuery) = navigate(
     ),
 )
 
-fun NavGraphBuilder.trainScreens(navController: NavController, onContinueToPassengers: () -> Unit) {
+fun NavGraphBuilder.trainScreens(
+    navController: NavController,
+    onContinueToPassengers: (tripId: String, trainClass: TrainClass, seats: List<String>) -> Unit,
+) {
     composable<TrainResultsDestination> {
         TrainResultsRoute(
             onBack = { navController.popBackStack() },

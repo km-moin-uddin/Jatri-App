@@ -214,6 +214,12 @@ fun TicketResultScreen(
                             color = JatriTheme.colors.textSecondary,
                         )
                         Text("${seg.carrier} · ${seg.number}", style = MaterialTheme.typography.bodyMedium, color = JatriTheme.colors.textSecondary)
+                        if (booking.mode == com.jatri.core.model.TravelMode.TRAIN) {
+                            Text(
+                                stringResource(R.string.pay_class_coach, trainClassLabel(seg.travelClass), seg.coach.orEmpty()),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
                         seg.boardingPoint?.let {
                             Text(it.name(lang) + " · " + DateTimeFormats.time(it.time, lang), style = MaterialTheme.typography.bodyMedium)
                         }

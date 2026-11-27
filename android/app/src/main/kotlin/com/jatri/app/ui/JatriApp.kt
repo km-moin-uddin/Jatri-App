@@ -150,7 +150,12 @@ private fun JatriNavHost(navController: NavHostController, startDestination: Any
                 )
             },
         )
-        trainScreens(navController, onContinueToPassengers = { toPassengers(PassengerDetailsDestination(mode = "train")) })
+        trainScreens(
+            navController,
+            onContinueToPassengers = { tripId, trainClass, seats ->
+                toPassengers(PassengerDetailsDestination(mode = "train", tripId = tripId, seats = seats.joinToString(","), travelClass = trainClass.name))
+            },
+        )
         bookingScreens(
             navController,
             onHeld = { bookingId -> navController.navigateToReviewPay(bookingId) },

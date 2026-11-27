@@ -12,6 +12,10 @@ import com.jatri.core.network.model.BusTripDto
 import com.jatri.core.network.model.FlightBookingRequest
 import com.jatri.core.network.model.FlightOfferDto
 import com.jatri.core.network.model.FlightSearchRequest
+import com.jatri.core.network.model.TrainBookingRequest
+import com.jatri.core.network.model.TrainSearchRequest
+import com.jatri.core.network.model.TrainSeatMapDto
+import com.jatri.core.network.model.TrainTripDto
 import com.jatri.core.network.model.SeatMapDto
 import com.jatri.core.network.model.LocationDto
 import com.jatri.core.network.model.OtpSendRequest
@@ -96,6 +100,22 @@ class MockJatriApi @Inject constructor() : JatriApi {
 
     private val bus = MockBus()
     private val flight = MockFlight(bus)
+    private val train = MockTrain(bus)
+
+    override suspend fun searchTrains(body: TrainSearchRequest): ApiEnvelope<List<TrainTripDto>> {
+        delay(LATENCY)
+        return ApiEnvelope(true, train.search(body.fromId, body.toId, body.date, body.travelClass))
+    }
+
+    override suspend fun trainSeats(tripId: String, travelClass: String): ApiEnvelope<TrainSeatMapDto> {
+        delay(LATENCY / 2)
+        return ApiEnvelope(true, train.seatMap(tripId, travelClass))
+    }
+
+    override suspend fun createTrainBooking(body: TrainBookingRequest, idempotencyKey: String): ApiEnvelope<BookingDto> {
+        delay(LATENCY)
+        return ApiEnvelope(true, train.create(body, idempotencyKey, currentUser().phone))
+    }
 
     override suspend fun searchFlights(body: FlightSearchRequest): ApiEnvelope<List<FlightOfferDto>> {
         delay(LATENCY * 2) // flight search is slower than bus search on real providers too

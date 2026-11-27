@@ -36,6 +36,8 @@ import com.jatri.core.common.format.DateTimeFormats
 import com.jatri.core.designsystem.component.ErrorState
 import com.jatri.core.designsystem.component.LoadingState
 import com.jatri.core.model.Booking
+import com.jatri.core.ui.label
+import com.jatri.core.model.TravelMode
 import com.jatri.core.ui.flight.BookedFlights
 import com.jatri.core.ui.flight.FareRulesCard
 import com.jatri.core.ui.flight.label
@@ -312,6 +314,12 @@ private fun TripSummary(booking: Booking) {
                 color = JatriTheme.colors.textSecondary,
             )
         }
+        if (booking.mode == TravelMode.TRAIN) {
+            Text(
+                stringResource(R.string.pay_class_coach, trainClassLabel(seg.travelClass), seg.coach.orEmpty()),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
         Text(stringResource(R.string.pay_seats, seg.seatNumbers.joinToString(", ")), style = MaterialTheme.typography.bodyMedium)
         HorizontalDivider(Modifier.padding(vertical = Spacing.xs), color = JatriTheme.colors.divider)
         Text(stringResource(R.string.pay_passengers), style = MaterialTheme.typography.titleSmall)
@@ -404,3 +412,8 @@ private fun SampleTicket() {
         },
     )
 }
+
+/** "snigdha" → "Snigdha"/"স্নিগ্ধা" through the shared TrainClass labels. */
+@Composable
+internal fun trainClassLabel(code: String): String =
+    com.jatri.core.model.TrainClass.entries.firstOrNull { it.name.equals(code, ignoreCase = true) }?.label() ?: code

@@ -9,6 +9,10 @@ import com.jatri.core.network.model.BusTripDto
 import com.jatri.core.network.model.FlightBookingRequest
 import com.jatri.core.network.model.FlightOfferDto
 import com.jatri.core.network.model.FlightSearchRequest
+import com.jatri.core.network.model.TrainBookingRequest
+import com.jatri.core.network.model.TrainSearchRequest
+import com.jatri.core.network.model.TrainSeatMapDto
+import com.jatri.core.network.model.TrainTripDto
 import com.jatri.core.network.model.SeatMapDto
 import com.jatri.core.network.model.LocationDto
 import com.jatri.core.network.model.OtpSendRequest
@@ -64,6 +68,18 @@ interface JatriApi {
 
     @GET("buses/{tripId}/seats")
     suspend fun busSeats(@Path("tripId") tripId: String): ApiEnvelope<SeatMapDto>
+
+    @POST("trains/search")
+    suspend fun searchTrains(@Body body: TrainSearchRequest): ApiEnvelope<List<TrainTripDto>>
+
+    @GET("trains/{tripId}/seats")
+    suspend fun trainSeats(@Path("tripId") tripId: String, @Query("travel_class") travelClass: String): ApiEnvelope<TrainSeatMapDto>
+
+    @POST("bookings")
+    suspend fun createTrainBooking(
+        @Body body: TrainBookingRequest,
+        @Header("Idempotency-Key") idempotencyKey: String,
+    ): ApiEnvelope<BookingDto>
 
     @POST("flights/search")
     suspend fun searchFlights(@Body body: FlightSearchRequest): ApiEnvelope<List<FlightOfferDto>>
