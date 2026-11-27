@@ -1,5 +1,6 @@
 from app.models.auth import AuthOtp, RefreshToken
 from app.models.booking import Booking, BookingPassenger, BookingSegment, Payment, Refund, Ticket
+from app.models.engagement import Offer, PriceAlert, PromoRedemption, SavedTraveller
 from app.models.location import Location
 from app.models.notification import DeviceToken, Notification
 from app.models.user import User
@@ -12,9 +13,13 @@ __all__ = [
     "DeviceToken",
     "Location",
     "Notification",
+    "Offer",
     "Payment",
+    "PriceAlert",
+    "PromoRedemption",
     "RefreshToken",
     "Refund",
+    "SavedTraveller",
     "Ticket",
     "User",
 ]

@@ -16,7 +16,7 @@ from app.models import Booking, Payment, Ticket, User
 from app.payments.base import CheckoutRequest, InvalidCallback
 from app.providers.base import ProviderError
 from app.providers.registry import Providers
-from app.services import notify
+from app.services import notify, offers
 from app.services.booking import BookingErrors, expire_if_needed, get_owned
 from app.services.cache import KeyValueStore, seat_key
 from app.services.ticket import qr_payload
@@ -67,6 +67,7 @@ async def init_payment(
     booking = await get_owned(db, providers, store, user, booking_id)
     if booking.status != "held":
         raise PaymentErrors.not_payable()
+    await offers.check_method(db, booking, method)
 
     if idempotency_key:
         existing = await db.scalar(
@@ -149,6 +150,7 @@ async def process_callback(
     booking = await db.get(Booking, payment.booking_id)
     await _confirm_and_ticket(db, providers, store, settings, booking, payment)
     if booking.status == "ticketed":
+        await offers.mark_used(db, booking)
         await notify.booking_confirmed(db, settings, booking)
     elif booking.status == "failed":
         await notify.booking_failed(db, settings, booking)

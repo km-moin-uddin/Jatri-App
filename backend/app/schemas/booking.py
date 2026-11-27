@@ -137,5 +137,6 @@ class BookingOut(BaseModel):
     cabin: str | None = None
     fare_brand: str | None = None
     fare_rules: FareRulesOut | None = None
+    promo_code: str | None = Field(default=None, description="Applied promo code; `discount` holds its amount")
     cancelled_at: datetime | None = None
     refund: RefundInfo | None = None

@@ -1,0 +1,73 @@
+{
+ "success": true,
+ "data": {
+  "id": "165a1b4f-952a-401f-aaad-b922ad8d6f2e",
+  "booking_ref": "JTSUVU",
+  "mode": "bus",
+  "status": "held",
+  "hold_expires_at": "2026-11-27T14:11:02.743704Z",
+  "base_fare": 140000,
+  "taxes": 0,
+  "service_charge": 3000,
+  "discount": 15000,
+  "total_amount": 128000,
+  "currency": "BDT",
+  "contact_phone": "01612345678",
+  "contact_email": null,
+  "segments": [
+   {
+    "trip_id": "mb~bus_dhaka~bus_coxsbazar~2026-12-03~2",
+    "carrier": "Test Express",
+    "number": "TE-29",
+    "from_id": "bus_dhaka",
+    "to_id": "bus_coxsbazar",
+    "depart_at": "2026-12-03T07:00:00Z",
+    "arrive_at": "2026-12-03T17:00:00Z",
+    "travel_class": "ac",
+    "seat_numbers": [
+     "A1"
+    ],
+    "boarding_point": {
+     "id": "bus_dhaka:0",
+     "name_en": "Gabtoli",
+     "name_bn": "গাবতলী",
+     "time": "2026-12-03T12:30:00+06:00"
+    },
+    "dropping_point": {
+     "id": "bus_coxsbazar:0",
+     "name_en": "Kolatoli",
+     "name_bn": "কলাতলী",
+     "time": "2026-12-03T23:00:00+06:00"
+    },
+    "coach": null,
+    "slice_index": null,
+    "from_code": null,
+    "to_code": null,
+    "aircraft": null,
+    "baggage": null
+   }
+  ],
+  "passengers": [
+   {
+    "full_name": "Rahim Uddin",
+    "ticket_number": null,
+    "type": "adult",
+    "gender": "male",
+    "age": 34,
+    "seat_no": "A1",
+    "document_masked": null,
+    "date_of_birth": null,
+    "nationality": null
+   }
+  ],
+  "created_at": "2026-11-27T14:01:02.739898Z",
+  "ticket": null,
+  "cabin": null,
+  "fare_brand": null,
+  "fare_rules": null,
+  "promo_code": "JATRI150",
+  "cancelled_at": null,
+  "refund": null
+ },
+ "error": null
+}

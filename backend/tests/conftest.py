@@ -16,12 +16,13 @@ from app.core.config import Settings, get_settings  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import engine  # noqa: E402
 from app.main import create_app  # noqa: E402
-from app.models import Location  # noqa: E402
+from app.models import Location, Offer  # noqa: E402
 from app.providers.mock_bus import MockBusProvider, get_bus_provider  # noqa: E402
 from app.providers.mock_flight import MockFlightProvider, get_flight_provider  # noqa: E402
 from app.providers.mock_train import MockTrainProvider, get_train_provider  # noqa: E402
 from app.providers.registry import Providers  # noqa: E402
 from app.seed import load_locations  # noqa: E402
+from app.seed.offers import seed_offers  # noqa: E402
 from app.services.cache import MemoryStore, RedisStore, get_store  # noqa: E402
 
 
@@ -45,6 +46,7 @@ async def db_schema():
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
         await conn.execute(insert(Location), [{"id": uuid.uuid4(), **row} for row in load_locations()])
+        await conn.execute(insert(Offer), [{"id": uuid.uuid4(), **row} for row in seed_offers()])
     yield
 
 
