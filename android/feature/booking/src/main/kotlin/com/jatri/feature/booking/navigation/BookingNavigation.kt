@@ -6,12 +6,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.jatri.feature.booking.BusPassengerRoute
 import com.jatri.feature.booking.FlightPassengerRoute
+import com.jatri.feature.booking.TrainPassengerRoute
 import com.jatri.feature.booking.PassengerPreviewScreen
 import kotlinx.serialization.Serializable
 
 /**
  * Passenger details. Buses carry the chosen trip/seats/points (comma-separated seats); flights
- * carry the offer id in [tripId]; trains still show the layout preview until Phase 6.
+ * carry the offer id in [tripId]; trains carry trip, class and comma-separated seats.
  */
 @Serializable
 data class PassengerDetailsDestination(
@@ -20,6 +21,8 @@ data class PassengerDetailsDestination(
     val seats: String = "",
     val boardingPointId: String = "",
     val droppingPointId: String = "",
+    /** Trains: the class (TrainClass name) of the chosen seats. */
+    val travelClass: String = "",
 )
 
 fun NavController.navigateToPassengerDetails(destination: PassengerDetailsDestination) = navigate(destination)
@@ -33,6 +36,8 @@ fun NavGraphBuilder.bookingScreens(
         val args = entry.toRoute<PassengerDetailsDestination>()
         if (args.mode == "bus") {
             BusPassengerRoute(onBack = { navController.popBackStack() }, onHeld = onHeld)
+        } else if (args.mode == "train" && args.tripId.isNotEmpty()) {
+            TrainPassengerRoute(onBack = { navController.popBackStack() }, onHeld = onHeld)
         } else if (args.mode == "flight" && args.tripId.isNotEmpty()) {
             FlightPassengerRoute(onBack = { navController.popBackStack() }, onHeld = onHeld)
         } else {

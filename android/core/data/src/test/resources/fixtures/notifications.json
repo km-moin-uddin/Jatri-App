@@ -1,0 +1,48 @@
+{
+ "success": true,
+ "data": {
+  "items": [
+   {
+    "id": "fa8e6836-ca2b-48ae-8ee3-41fb385e274a",
+    "type": "refund_processed",
+    "title_en": "Refund sent",
+    "title_bn": "রিফান্ড পাঠানো হয়েছে",
+    "body_en": "৳ 810 for booking JTM96Y has been refunded.",
+    "body_bn": "বুকিং JTM96Y-এর ৳ ৮১০ ফেরত দেওয়া হয়েছে।",
+    "data": {
+     "booking_id": "6fcbc879-8f8c-49b0-a186-f3ca7d45a6d9"
+    },
+    "is_read": false,
+    "created_at": "2026-11-27T11:52:39.085113Z"
+   },
+   {
+    "id": "1cbb23fb-3306-4b75-82b3-60673b1674f9",
+    "type": "booking_cancelled",
+    "title_en": "Booking cancelled",
+    "title_bn": "বুকিং বাতিল হয়েছে",
+    "body_en": "Dhaka → Cox's Bazar (JTM96Y) is cancelled. ৳ 810 will be refunded to your payment account.",
+    "body_bn": "ঢাকা → কক্সবাজার (JTM96Y) বাতিল হয়েছে। ৳ ৮১০ আপনার পেমেন্ট অ্যাকাউন্টে ফেরত যাবে।",
+    "data": {
+     "booking_id": "6fcbc879-8f8c-49b0-a186-f3ca7d45a6d9"
+    },
+    "is_read": false,
+    "created_at": "2026-11-27T11:52:39.048352Z"
+   },
+   {
+    "id": "c657a024-8321-4e94-b6ad-ccdb99683687",
+    "type": "booking_confirmed",
+    "title_en": "Ticket confirmed 🎉",
+    "title_bn": "টিকিট কনফার্ম হয়েছে 🎉",
+    "body_en": "Dhaka → Cox's Bazar, 03 Dec, 09:45. Booking JTM96Y. Your e-ticket is in My Trips.",
+    "body_bn": "ঢাকা → কক্সবাজার, ০৩ Dec, ০৯:৪৫। বুকিং JTM96Y। ই-টিকিট আমার যাত্রায় আছে।",
+    "data": {
+     "booking_id": "6fcbc879-8f8c-49b0-a186-f3ca7d45a6d9"
+    },
+    "is_read": false,
+    "created_at": "2026-11-27T11:52:38.952831Z"
+   }
+  ],
+  "unread": 3
+ },
+ "error": null
+}

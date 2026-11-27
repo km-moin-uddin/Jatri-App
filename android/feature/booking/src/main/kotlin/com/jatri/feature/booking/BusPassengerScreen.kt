@@ -117,7 +117,15 @@ internal fun BusPassengerRoute(onBack: () -> Unit, onHeld: (String) -> Unit, vie
 }
 
 @Composable
-private fun PassengerCard(index: Int, form: PassengerForm, onChange: ((PassengerForm) -> PassengerForm) -> Unit) {
+internal fun PassengerCard(
+    index: Int,
+    form: PassengerForm,
+    onChange: ((PassengerForm) -> PassengerForm) -> Unit,
+    ageLabel: String = stringResource(R.string.booking_age),
+    nidLabel: String = stringResource(R.string.booking_nid_optional),
+    nidError: String = stringResource(R.string.booking_nid_error),
+    seatLabel: String = form.seatNo,
+) {
     val lang = JatriTheme.language
     JatriCard {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
@@ -126,7 +134,7 @@ private fun PassengerCard(index: Int, form: PassengerForm, onChange: ((Passenger
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f),
             )
-            StatusChip(stringResource(R.string.booking_seat, form.seatNo), StatusTone.Neutral)
+            StatusChip(stringResource(R.string.booking_seat, seatLabel), StatusTone.Neutral)
             if (form.ladiesSeat) StatusChip(stringResource(R.string.booking_ladies_seat), StatusTone.Info)
         }
         Spacer(Modifier.height(Spacing.xs))
@@ -160,15 +168,15 @@ private fun PassengerCard(index: Int, form: PassengerForm, onChange: ((Passenger
         JatriTextField(
             value = form.age,
             onValueChange = { v -> onChange { it.copy(age = v.filter(Char::isDigit).take(3), ageError = false) } },
-            label = stringResource(R.string.booking_age),
+            label = ageLabel,
             error = if (form.ageError) stringResource(R.string.booking_age_error) else null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
         )
         JatriTextField(
             value = form.nid,
             onValueChange = { v -> onChange { it.copy(nid = v.filter(Char::isDigit).take(17), nidError = false) } },
-            label = stringResource(R.string.booking_nid_optional),
-            error = if (form.nidError) stringResource(R.string.booking_nid_error) else null,
+            label = nidLabel,
+            error = if (form.nidError) nidError else null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Next),
         )
     }

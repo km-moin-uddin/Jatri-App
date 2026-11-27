@@ -1,0 +1,15 @@
+{
+ "success": true,
+ "data": {
+  "cancellable": true,
+  "paid": 93000,
+  "refund": 81000,
+  "fee": 9000,
+  "non_refundable": 3000,
+  "reason": null,
+  "message_en": "10% cancellation fee (24+ hours before departure); the service charge is not refunded.",
+  "message_bn": "১০% বাতিল ফি (যাত্রার ২৪+ ঘণ্টা আগে); সার্ভিস চার্জ ফেরত হয় না।",
+  "deadline": "2026-12-02T15:45:00Z"
+ },
+ "error": null
+}

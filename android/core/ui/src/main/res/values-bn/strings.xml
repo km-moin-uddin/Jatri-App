@@ -125,4 +125,6 @@
     <string name="ui_clear_filters">ফিল্টার মুছুন</string>
     <string name="ui_total_for">%1$s জনের মোট</string>
     <string name="ui_total_incl_tax">ট্যাক্সসহ</string>
+    <string name="ui_no_pdf_app">এই ফোনে পিডিএফ খোলার কোনো অ্যাপ নেই।</string>
+    <string name="ui_no_calendar_app">এই ফোনে কোনো ক্যালেন্ডার অ্যাপ পাওয়া যায়নি।</string>
 </resources>

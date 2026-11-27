@@ -8,7 +8,7 @@ import secrets
 import uuid
 
 from app.core.config import Settings
-from app.payments.base import CheckoutRequest, CheckoutSession, InvalidCallback, VerifiedCallback
+from app.payments.base import CheckoutRequest, CheckoutSession, InvalidCallback, RefundResult, VerifiedCallback
 
 
 class MockGateway:
@@ -49,3 +49,10 @@ class MockGateway:
         except ValueError as e:
             raise InvalidCallback("bad payment id") from e
         return VerifiedCallback(payment_id, status == "VALID", int(amount), txn or None, raw={"status": status, "txn_id": txn})
+
+    async def refund(self, gateway_txn_id: str, amount_paisa: int, remarks: str) -> RefundResult:
+        """Sandbox: the money "comes back" at once."""
+        return RefundResult(done=True, ref="MOCKRFD" + secrets.token_hex(5).upper(), raw={"amount": amount_paisa})
+
+    async def refund_status(self, ref: str) -> str:
+        return "refunded"

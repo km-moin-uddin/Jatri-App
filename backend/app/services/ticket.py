@@ -139,7 +139,12 @@ def render_pdf(booking: Booking, payload: str) -> bytes:
         dp = (seg.extra or {}).get("dropping_point") or {}
         row("Booking ref / বুকিং", booking.booking_ref)
         row("PNR", booking.provider_booking_ref or "-")
-        row("Operator / অপারেটর", f"{seg.carrier} ({seg.number})")
+        if booking.mode == "train":
+            klass = str(seg.travel_class).replace("_", " ").title()
+            row("Train / ট্রেন", f"{seg.carrier} ({seg.number})")
+            row("Class / শ্রেণি", f"{klass} · Coach {(seg.extra or {}).get('coach', '-')}")
+        else:
+            row("Operator / অপারেটর", f"{seg.carrier} ({seg.number})")
         row("Departure / যাত্রা", _bd(seg.depart_at))
         row("Arrival / পৌঁছানো", _bd(seg.arrive_at))
         if bp:
@@ -169,6 +174,8 @@ def render_pdf(booking: Booking, payload: str) -> bytes:
     hint = (
         "Show this at airline check-in with your ID. চেক-ইনের সময় পরিচয়পত্রসহ এটি দেখান।"
         if booking.mode == "flight"
+        else "Show this QR and the passengers' NID to the ticket checker. টিকিট চেকারকে এই কিউআর ও এনআইডি দেখান।"
+        if booking.mode == "train"
         else "Show this QR at the counter. কাউন্টারে এই কিউআর কোডটি দেখান।"
     )
     pdf.multi_cell(w, 4, hint, align="C", new_x="LMARGIN", new_y="NEXT")

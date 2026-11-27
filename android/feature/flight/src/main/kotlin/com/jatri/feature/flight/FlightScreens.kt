@@ -161,7 +161,10 @@ private fun FlightFilterSheet(state: FlightResultsUiState, onApply: (FlightFilte
     val lang = JatriTheme.language
     var draft by remember { mutableStateOf(state.filters) }
     JatriBottomSheet(title = stringResource(R.string.flight_filters), onDismiss = onDismiss) {
-        Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        Column(
+            Modifier.verticalScroll(rememberScrollState()).padding(horizontal = Spacing.screen),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
             state.priceRange?.let { range ->
                 val max = draft.maxPrice?.paisa ?: range.endInclusive
                 Text(

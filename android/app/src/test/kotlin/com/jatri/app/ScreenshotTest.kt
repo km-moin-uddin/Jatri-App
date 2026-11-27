@@ -52,7 +52,6 @@ import com.jatri.feature.payment.PaymentResultScreen
 import com.jatri.feature.payment.ReviewPayScreen
 import com.jatri.feature.payment.TicketResultScreen
 import com.jatri.core.model.Ticket
-import com.jatri.feature.trips.TripsScreen
 import com.jatri.core.model.AppLanguage
 import com.jatri.core.model.Booking
 import com.jatri.core.model.BookingPassenger
@@ -361,7 +360,179 @@ abstract class ScreenshotTest(private val name: String, private val dark: Boolea
         )
     }
 
-    @Test fun trips() = shot("08_trips") { TripsScreen(onSearchTickets = {}, onTicketClick = {}) }
+    // ---- Phase 6: trains -------------------------------------------------------------
+
+    private val rail get() = MockContent.popularRoutes.first { it.mode == TravelMode.TRAIN }
+
+    private fun trainSeatMap(): com.jatri.core.model.TrainSeatMap {
+        val trip = MockContent.trainTrips(today.plusDays(3), rail.from, rail.to).first()
+        fun coach(name: String, booked: Set<Int>, held: Set<Int>) = com.jatri.core.model.TrainCoach(
+            name, berth = false,
+            layout = com.jatri.core.model.SeatLayout(
+                (0 until 15).map { r ->
+                    (1..4).flatMap { c ->
+                        val n = r * 4 + c
+                        val state = when (n) {
+                            in booked -> com.jatri.core.model.SeatState.BOOKED
+                            in held -> com.jatri.core.model.SeatState.HELD
+                            else -> com.jatri.core.model.SeatState.AVAILABLE
+                        }
+                        val seat = com.jatri.core.model.Seat("$name-$n", state)
+                        if (c == 3) listOf(null, seat) else listOf(seat)
+                    }
+                },
+            ),
+        )
+        return com.jatri.core.model.TrainSeatMap(
+            trip, com.jatri.core.model.TrainClass.SNIGDHA, Money.taka(655),
+            listOf(coach("CHA", setOf(1, 2, 3, 5, 8, 9, 12, 13, 14, 20, 21, 26, 33, 40, 41, 47, 52, 55), setOf(17, 18)), coach("JA", (1..40).toSet(), emptySet())),
+            4, Money.taka(20),
+        )
+    }
+
+    @Test fun trainResults() = shot("18_train_results") {
+        com.jatri.feature.train.TrainResultsScreen(
+            state = com.jatri.feature.train.TrainResultsUiState(
+                args = com.jatri.feature.train.navigation.TrainResultsDestination(rail.from.id, rail.to.id, today.plusDays(3).toString(), "SNIGDHA", 2, 0),
+                from = rail.from, to = rail.to, loading = false,
+                trips = MockContent.trainTrips(today.plusDays(3), rail.from, rail.to),
+            ),
+            today = today,
+        )
+    }
+
+    @Test fun trainSeats() = shot("19_train_seats") {
+        com.jatri.feature.train.TrainSeatScreen(
+            state = com.jatri.feature.train.TrainSeatsUiState(loading = false, map = trainSeatMap(), selected = listOf("CHA-6", "CHA-7")),
+        )
+    }
+
+    @Test fun trainPassengers() = shot("20_train_passengers") {
+        com.jatri.feature.booking.TrainPassengerScreen(
+            state = com.jatri.feature.booking.TrainPassengerUiState(
+                loading = false, seatMap = trainSeatMap(), phone = "01712345678",
+                passengers = listOf(
+                    com.jatri.feature.booking.PassengerForm("CHA-6", false, "রহিম উদ্দিন", Gender.MALE, "34", "", nidError = true),
+                    com.jatri.feature.booking.PassengerForm("CHA-7", false, "Ayesha Rahman", Gender.FEMALE, "9"),
+                ),
+            ),
+        )
+    }
+
+    private fun trainBooking(status: BookingStatus): Booking {
+        val trip = MockContent.trainTrips(today.plusDays(3), rail.from, rail.to).first()
+        val ticketed = status == BookingStatus.TICKETED
+        return Booking(
+            id = "t1", ref = "JT8EU3", mode = TravelMode.TRAIN, status = status, holdExpiresAt = null,
+            baseFare = Money.taka(1310), serviceCharge = Money.taka(40), discount = Money.ZERO, total = Money.taka(1350),
+            contactPhone = "01712345678", contactEmail = null,
+            segments = listOf(
+                BookingSegment(trip.trainName, trip.trainNumber, trip.from.id, trip.to.id, trip.departAt, trip.arriveAt, "snigdha", listOf("CHA-6", "CHA-7"), null, null, coach = "CHA"),
+            ),
+            passengers = listOf(
+                BookingPassenger("রহিম উদ্দিন", Gender.MALE, 34, "CHA-6", "•••••••••6789", if (ticketed) "PNR-783E0218-1" else null),
+                BookingPassenger("Ayesha Rahman", Gender.FEMALE, 9, "CHA-7", null, if (ticketed) "PNR-783E0218-2" else null),
+            ),
+            ticket = if (ticketed) Ticket("JT1.JT8EU3.fc371ebba14b4d51af63ae46e00e19b4.Qm9vZ3Vz", "/pdf", java.time.Instant.EPOCH) else null,
+        )
+    }
+
+    @Test fun trainReviewPay() = shot("21_train_review_pay") {
+        ReviewPayScreen(onBack = {}, onPaid = {}, secondsLeft = 9 * 60 + 5, onCancel = {}, booking = trainBooking(BookingStatus.HELD))
+    }
+
+    @Test fun trainTicket() = shot("22_train_e_ticket") {
+        TicketResultScreen(
+            booking = trainBooking(BookingStatus.TICKETED), from = rail.from, to = rail.to, pdfBusy = false,
+            onOpenPdf = {}, onSharePdf = {}, onViewTrips = {}, onGoHome = {},
+        )
+    }
+
+    // ---- Phase 7: trips, cancellation, notifications --------------------------------
+
+    private fun tripsState(): com.jatri.feature.trips.TripsUiState {
+        val now = java.time.LocalDateTime.of(today, LocalTime.of(9, 0))
+        val bus = MockContent.busTrips(today.plusDays(1), dhakaCox.from, dhakaCox.to).first()
+        val cancelled = Booking(
+            id = "c1", ref = "JTM96Y", mode = TravelMode.BUS, status = BookingStatus.REFUNDED, holdExpiresAt = null,
+            baseFare = Money.taka(1400), serviceCharge = Money.taka(30), discount = Money.ZERO, total = Money.taka(1430),
+            contactPhone = "01712345678", contactEmail = null,
+            segments = listOf(BookingSegment(bus.operatorName, bus.coachNumber, bus.from.id, bus.to.id, bus.departAt.plusDays(3), bus.arriveAt.plusDays(3), "ac", listOf("C2"), null, null)),
+            passengers = listOf(BookingPassenger("রহিম উদ্দিন", Gender.MALE, 34, "C2", null)),
+            cancelledAt = java.time.Instant.EPOCH,
+            refund = com.jatri.core.model.Refund(Money.taka(1260), Money.taka(140), com.jatri.core.model.RefundStatus.REFUNDED, java.time.Instant.EPOCH),
+        )
+        val places = listOf(dhakaCox.from, dhakaCox.to, air.from, air.to, rail.from, rail.to).associateBy { it.id }
+        return com.jatri.feature.trips.TripsUiState(
+            loading = false,
+            bookings = listOf(flightBooking(BookingStatus.TICKETED), trainBooking(BookingStatus.TICKETED), cancelled),
+            places = places,
+            now = now,
+        )
+    }
+
+    @Test fun trips() = shot("08_trips") {
+        com.jatri.feature.trips.TripsScreen(state = tripsState().copy(offline = true))
+    }
+
+    @Test fun tripsCancelled() = shot("08b_trips_cancelled") {
+        com.jatri.feature.trips.TripsScreen(state = tripsState().copy(tab = com.jatri.feature.trips.TripsTab.CANCELLED))
+    }
+
+    @Test fun ticketDetail() = shot("23_ticket_detail") {
+        val s = tripsState()
+        com.jatri.feature.trips.TicketDetailScreen(
+            state = com.jatri.feature.trips.TicketDetailUiState(loading = false, booking = s.bookings[1], places = s.places, now = s.now),
+        )
+    }
+
+    @Test fun cancelSheet() = shot("24_cancel_refund") {
+        val s = tripsState()
+        com.jatri.feature.trips.TicketDetailScreen(
+            state = com.jatri.feature.trips.TicketDetailUiState(
+                loading = false, booking = s.bookings[1], places = s.places, now = s.now,
+                cancel = com.jatri.feature.trips.CancelSheetState(
+                    loading = false,
+                    quote = com.jatri.core.model.CancelQuote(
+                        true, Money.taka(1350), Money.taka(1179), Money.taka(131), Money.taka(40), null,
+                        "10% cancellation fee (48+ hours before departure); the service charge is not refunded.",
+                        "১০% বাতিল ফি (যাত্রার ৪৮+ ঘণ্টা আগে); সার্ভিস চার্জ ফেরত হয় না।",
+                        java.time.Instant.parse("2026-11-28T13:00:00Z"),
+                    ),
+                ),
+            ),
+        )
+    }
+
+    @Test fun refundedTicket() = shot("25_refunded_ticket") {
+        val s = tripsState()
+        com.jatri.feature.trips.TicketDetailScreen(
+            state = com.jatri.feature.trips.TicketDetailUiState(loading = false, booking = s.bookings[2], places = s.places, now = s.now),
+        )
+    }
+
+    @Test fun notifications() = shot("26_notifications") {
+        fun n(id: String, type: String, en: Pair<String, String>, bn: Pair<String, String>, read: Boolean, minutesAgo: Long) =
+            com.jatri.core.model.AppNotification(
+                id, type, en.first, bn.first, en.second, bn.second, "b1", read,
+                java.time.LocalDateTime.of(today, LocalTime.of(9, 0)).minusMinutes(minutesAgo).atZone(java.time.ZoneId.of("Asia/Dhaka")).toInstant(),
+            )
+        com.jatri.feature.notifications.NotificationsScreen(
+            state = com.jatri.feature.notifications.NotificationsUiState(
+                loading = false,
+                items = listOf(
+                    n("1", "journey_reminder", "Your trip is in 3 hours" to "Dhaka → Chattogram at 07:00. Carry your NID.",
+                        "আপনার যাত্রা ৩ ঘণ্টা পর" to "ঢাকা → চট্টগ্রাম, ০৭:০০। এনআইডি সাথে রাখুন।", false, 5),
+                    n("2", "flight_changed", "Flight D2 433 is delayed" to "New departure: 10:15 (45 min later). Booking JTKZ5H.",
+                        "ফ্লাইট D2 433 দেরিতে ছাড়বে" to "নতুন সময়: ১০:১৫ (৪৫ মিনিট পরে)। বুকিং JTKZ5H।", false, 60),
+                    n("3", "refund_processed", "Refund sent" to "৳ 1,260 for booking JTM96Y has been refunded.",
+                        "রিফান্ড পাঠানো হয়েছে" to "বুকিং JTM96Y-এর ৳ ১,২৬০ ফেরত দেওয়া হয়েছে।", true, 200),
+                    n("4", "booking_confirmed", "Ticket confirmed 🎉" to "Booking JT8EU3. Your e-ticket is in My Trips.",
+                        "টিকিট কনফার্ম হয়েছে 🎉" to "বুকিং JT8EU3। ই-টিকিট আমার যাত্রায় আছে।", true, 1500),
+                ),
+            ),
+        )
+    }
 
     @Test fun offers() = shot("09_offers") { OffersScreen(MockContent.offers(today)) }
 

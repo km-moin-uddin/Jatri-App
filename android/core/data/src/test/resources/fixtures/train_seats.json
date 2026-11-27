@@ -1,0 +1,335 @@
+{
+ "success": true,
+ "data": {
+  "trip": {
+   "id": "mt~stn_dhaka~stn_sylhet~2026-12-01~3",
+   "train_name": "Mock Nishitha",
+   "train_number": "729",
+   "from_id": "stn_dhaka",
+   "to_id": "stn_sylhet",
+   "depart_at": "2026-12-01T22:15:00+06:00",
+   "arrive_at": "2026-12-02T04:55:00+06:00",
+   "off_day": null,
+   "classes": [
+    {
+     "travel_class": "shovan_chair",
+     "fare": 34500,
+     "seats_available": 33
+    },
+    {
+     "travel_class": "snigdha",
+     "fare": 65500,
+     "seats_available": 17
+    },
+    {
+     "travel_class": "f_berth",
+     "fare": 84000,
+     "seats_available": 20
+    },
+    {
+     "travel_class": "ac_berth",
+     "fare": 118000,
+     "seats_available": 14
+    }
+   ]
+  },
+  "travel_class": "snigdha",
+  "fare": 65500,
+  "coaches": [
+   {
+    "name": "CHA",
+    "layout": "2+2",
+    "rows": [
+     [
+      {
+       "number": "CHA-1",
+       "state": "available"
+      },
+      {
+       "number": "CHA-2",
+       "state": "booked"
+      },
+      null,
+      {
+       "number": "CHA-3",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-4",
+       "state": "booked"
+      }
+     ],
+     [
+      {
+       "number": "CHA-5",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-6",
+       "state": "booked"
+      },
+      null,
+      {
+       "number": "CHA-7",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-8",
+       "state": "booked"
+      }
+     ],
+     [
+      {
+       "number": "CHA-9",
+       "state": "available"
+      },
+      {
+       "number": "CHA-10",
+       "state": "available"
+      },
+      null,
+      {
+       "number": "CHA-11",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-12",
+       "state": "booked"
+      }
+     ],
+     [
+      {
+       "number": "CHA-13",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-14",
+       "state": "booked"
+      },
+      null,
+      {
+       "number": "CHA-15",
+       "state": "available"
+      },
+      {
+       "number": "CHA-16",
+       "state": "booked"
+      }
+     ],
+     [
+      {
+       "number": "CHA-17",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-18",
+       "state": "booked"
+      },
+      null,
+      {
+       "number": "CHA-19",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-20",
+       "state": "booked"
+      }
+     ],
+     [
+      {
+       "number": "CHA-21",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-22",
+       "state": "booked"
+      },
+      null,
+      {
+       "number": "CHA-23",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-24",
+       "state": "available"
+      }
+     ],
+     [
+      {
+       "number": "CHA-25",
+       "state": "available"
+      },
+      {
+       "number": "CHA-26",
+       "state": "available"
+      },
+      null,
+      {
+       "number": "CHA-27",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-28",
+       "state": "booked"
+      }
+     ],
+     [
+      {
+       "number": "CHA-29",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-30",
+       "state": "available"
+      },
+      null,
+      {
+       "number": "CHA-31",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-32",
+       "state": "available"
+      }
+     ],
+     [
+      {
+       "number": "CHA-33",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-34",
+       "state": "booked"
+      },
+      null,
+      {
+       "number": "CHA-35",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-36",
+       "state": "booked"
+      }
+     ],
+     [
+      {
+       "number": "CHA-37",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-38",
+       "state": "booked"
+      },
+      null,
+      {
+       "number": "CHA-39",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-40",
+       "state": "booked"
+      }
+     ],
+     [
+      {
+       "number": "CHA-41",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-42",
+       "state": "booked"
+      },
+      null,
+      {
+       "number": "CHA-43",
+       "state": "available"
+      },
+      {
+       "number": "CHA-44",
+       "state": "booked"
+      }
+     ],
+     [
+      {
+       "number": "CHA-45",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-46",
+       "state": "booked"
+      },
+      null,
+      {
+       "number": "CHA-47",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-48",
+       "state": "available"
+      }
+     ],
+     [
+      {
+       "number": "CHA-49",
+       "state": "available"
+      },
+      {
+       "number": "CHA-50",
+       "state": "available"
+      },
+      null,
+      {
+       "number": "CHA-51",
+       "state": "available"
+      },
+      {
+       "number": "CHA-52",
+       "state": "booked"
+      }
+     ],
+     [
+      {
+       "number": "CHA-53",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-54",
+       "state": "available"
+      },
+      null,
+      {
+       "number": "CHA-55",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-56",
+       "state": "available"
+      }
+     ],
+     [
+      {
+       "number": "CHA-57",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-58",
+       "state": "available"
+      },
+      null,
+      {
+       "number": "CHA-59",
+       "state": "booked"
+      },
+      {
+       "number": "CHA-60",
+       "state": "booked"
+      }
+     ]
+    ]
+   }
+  ],
+  "max_selectable": 4,
+  "service_charge_per_seat": 2000
+ },
+ "error": null
+}

@@ -1,16 +1,19 @@
 """Background worker (ARQ on Redis). Run: `arq app.worker.WorkerSettings`.
 
-Phase 4 jobs: release unpaid holds every minute. Ticket e-mails/SMS, journey reminders and
-refund processing join in Phase 7."""
+Jobs: release unpaid holds (every minute), send/follow refunds (every 5 minutes), journey reminders
+24 h and 3 h before departure (every 10 minutes), flight schedule changes (every 30 minutes)."""
 
 from arq import cron
 from arq.connections import RedisSettings
 
 from app.core.config import get_settings
 from app.db.session import SessionLocal
+from app.payments import get_gateway
 from app.providers.registry import default_providers
 from app.services.booking import sweep_expired_holds
 from app.services.cache import get_store
+from app.services.cancellation import process_refunds
+from app.services.journeys import check_flight_changes, send_journey_reminders
 
 
 async def expire_holds(ctx) -> int:
@@ -18,7 +21,28 @@ async def expire_holds(ctx) -> int:
         return await sweep_expired_holds(db, default_providers(), get_store())
 
 
+async def refunds(ctx) -> int:
+    settings = get_settings()
+    async with SessionLocal() as db:
+        return await process_refunds(db, get_gateway(settings), settings)
+
+
+async def reminders(ctx) -> int:
+    async with SessionLocal() as db:
+        return await send_journey_reminders(db, get_settings())
+
+
+async def flight_changes(ctx) -> int:
+    async with SessionLocal() as db:
+        return await check_flight_changes(db, default_providers(), get_settings())
+
+
 class WorkerSettings:
-    functions = [expire_holds]
-    cron_jobs = [cron(expire_holds, second=0)]  # every minute
+    functions = [expire_holds, refunds, reminders, flight_changes]
+    cron_jobs = [
+        cron(expire_holds, second=0),  # every minute
+        cron(refunds, minute=set(range(0, 60, 5)), second=10),
+        cron(reminders, minute=set(range(0, 60, 10)), second=20),
+        cron(flight_changes, minute={0, 30}, second=30),
+    ]
     redis_settings = RedisSettings.from_dsn(get_settings().redis_url or "redis://localhost:6379/0")

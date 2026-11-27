@@ -3,7 +3,7 @@
     "info": {
         "title": "Jatri API",
         "description": "Flight, bus and train ticket booking for Bangladesh. All responses use the `{success, data, error}` envelope.",
-        "version": "0.2.0"
+        "version": "0.7.0"
     },
     "paths": {
         "/api/v1/auth/otp/send": {
@@ -564,13 +564,116 @@
                 }
             }
         },
+        "/api/v1/trains/search": {
+            "post": {
+                "tags": [
+                    "train"
+                ],
+                "summary": "Search",
+                "description": "Trains for one day, with seats left and fare per class. Only dates up to 10 days ahead\n(`outside_sale_window` otherwise); trains on their weekly off day are left out.",
+                "operationId": "search_api_v1_trains_search_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TrainSearchIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_list_TrainTripOut__"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/trains/{trip_id}/seats": {
+            "get": {
+                "tags": [
+                    "train"
+                ],
+                "summary": "Seats",
+                "description": "Coaches of one class with their seat maps; seats someone else is paying for show as `held`.",
+                "operationId": "seats_api_v1_trains__trip_id__seats_get",
+                "parameters": [
+                    {
+                        "name": "trip_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Trip Id"
+                        }
+                    },
+                    {
+                        "name": "travel_class",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "enum": [
+                                "shovan",
+                                "shovan_chair",
+                                "snigdha",
+                                "ac_seat",
+                                "f_seat",
+                                "f_berth",
+                                "ac_berth"
+                            ],
+                            "type": "string",
+                            "title": "Travel Class"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_TrainSeatMapOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/bookings": {
             "post": {
                 "tags": [
                     "bookings"
                 ],
                 "summary": "Create",
-                "description": "Holds the seats (bus) or the fare (flight, with a PNR) for `hold_minutes` (status `held`).\n`mode` picks the body shape. Send an `Idempotency-Key` header so a retried request returns the\nsame booking instead of holding twice.",
+                "description": "Holds the seats (bus, train) or the fare (flight, with a PNR) for `hold_minutes` (status `held`).\n`mode` picks the body shape. Send an `Idempotency-Key` header so a retried request returns the\nsame booking instead of holding twice.",
                 "operationId": "create_api_v1_bookings_post",
                 "parameters": [
                     {
@@ -618,6 +721,9 @@
                                     },
                                     {
                                         "$ref": "#/components/schemas/FlightBookingIn"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/TrainBookingIn"
                                     }
                                 ],
                                 "title": "Body"
@@ -653,6 +759,7 @@
                     "bookings"
                 ],
                 "summary": "List Bookings",
+                "description": "Newest first, all modes (My Trips splits them into upcoming, completed and cancelled).",
                 "operationId": "list_bookings_api_v1_bookings_get",
                 "parameters": [
                     {
@@ -755,13 +862,73 @@
                 }
             }
         },
+        "/api/v1/bookings/{booking_id}/cancel-quote": {
+            "get": {
+                "tags": [
+                    "bookings"
+                ],
+                "summary": "Cancel Quote",
+                "description": "What cancelling now would give back (refund), keep (fee) and why, before the user confirms.",
+                "operationId": "cancel_quote_api_v1_bookings__booking_id__cancel_quote_get",
+                "parameters": [
+                    {
+                        "name": "booking_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Booking Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_CancelQuoteOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/bookings/{booking_id}/cancel": {
             "post": {
                 "tags": [
                     "bookings"
                 ],
                 "summary": "Cancel",
-                "description": "Phase 3: releases an unpaid hold. Paid bookings get cancellation + refund in Phase 7.",
+                "description": "An unpaid hold is released. A ticket is cancelled with the provider by its quote (send\n`expected_refund` from the quote; `refund_changed` if it moved), and the refund is started.",
                 "operationId": "cancel_api_v1_bookings__booking_id__cancel_post",
                 "parameters": [
                     {
@@ -791,6 +958,23 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/components/schemas/CancelIn"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ],
+                                "title": "Body"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1049,6 +1233,313 @@
                 }
             }
         },
+        "/api/v1/notifications": {
+            "get": {
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Inbox",
+                "operationId": "inbox_api_v1_notifications_get",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 30,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "before",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "date-time"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "created_at of the last item seen, for the next page",
+                            "title": "Before"
+                        },
+                        "description": "created_at of the last item seen, for the next page"
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NotificationPage_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications/{notification_id}/read": {
+            "post": {
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Mark Read",
+                "operationId": "mark_read_api_v1_notifications__notification_id__read_post",
+                "parameters": [
+                    {
+                        "name": "notification_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Notification Id"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NotificationOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications/read-all": {
+            "post": {
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Mark All Read",
+                "operationId": "mark_all_read_api_v1_notifications_read_all_post",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NoneType_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/devices": {
+            "post": {
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Register Device",
+                "description": "Registers this phone for push. A token moves to the account that registered it last.",
+                "operationId": "register_device_api_v1_devices_post",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeviceIn"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NoneType_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/devices/{token}": {
+            "delete": {
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Unregister Device",
+                "description": "On logout: stop pushing to this phone.",
+                "operationId": "unregister_device_api_v1_devices__token__delete",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Token"
+                        }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_NoneType_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "tags": [
@@ -1242,6 +1733,28 @@
                         "anyOf": [
                             {
                                 "$ref": "#/components/schemas/FareRulesOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "cancelled_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Cancelled At"
+                    },
+                    "refund": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/RefundInfo"
                             },
                             {
                                 "type": "null"
@@ -1488,6 +2001,159 @@
                 ],
                 "title": "BusTripOut"
             },
+            "CancelIn": {
+                "properties": {
+                    "expected_refund": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Expected Refund",
+                        "description": "The quote's refund; a different live amount returns refund_changed"
+                    }
+                },
+                "type": "object",
+                "title": "CancelIn"
+            },
+            "CancelQuoteOut": {
+                "properties": {
+                    "cancellable": {
+                        "type": "boolean",
+                        "title": "Cancellable"
+                    },
+                    "paid": {
+                        "type": "integer",
+                        "title": "Paid"
+                    },
+                    "refund": {
+                        "type": "integer",
+                        "title": "Refund",
+                        "description": "What goes back to the customer, paisa"
+                    },
+                    "fee": {
+                        "type": "integer",
+                        "title": "Fee",
+                        "description": "Cancellation fee kept, paisa"
+                    },
+                    "non_refundable": {
+                        "type": "integer",
+                        "title": "Non Refundable",
+                        "description": "Service charge, never refunded"
+                    },
+                    "reason": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Reason",
+                        "description": "too_late | already_departed | non_refundable | not_cancellable"
+                    },
+                    "message_en": {
+                        "type": "string",
+                        "title": "Message En"
+                    },
+                    "message_bn": {
+                        "type": "string",
+                        "title": "Message Bn"
+                    },
+                    "deadline": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Deadline",
+                        "description": "Last moment the booking can be cancelled"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "cancellable",
+                    "paid",
+                    "refund",
+                    "fee",
+                    "non_refundable",
+                    "reason",
+                    "message_en",
+                    "message_bn",
+                    "deadline"
+                ],
+                "title": "CancelQuoteOut"
+            },
+            "CoachOut": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "layout": {
+                        "type": "string",
+                        "enum": [
+                            "2+2",
+                            "berth"
+                        ],
+                        "title": "Layout"
+                    },
+                    "rows": {
+                        "items": {
+                            "items": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/components/schemas/SeatOut"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ]
+                            },
+                            "type": "array"
+                        },
+                        "type": "array",
+                        "title": "Rows"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "layout",
+                    "rows"
+                ],
+                "title": "CoachOut"
+            },
+            "DeviceIn": {
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 20,
+                        "title": "Token",
+                        "description": "FCM registration token"
+                    },
+                    "platform": {
+                        "type": "string",
+                        "const": "android",
+                        "title": "Platform",
+                        "default": "android"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "token"
+                ],
+                "title": "DeviceIn"
+            },
             "Envelope_AuthOut_": {
                 "properties": {
                     "success": {
@@ -1554,6 +2220,39 @@
                 ],
                 "title": "Envelope[BookingOut]"
             },
+            "Envelope_CancelQuoteOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/CancelQuoteOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[CancelQuoteOut]"
+            },
             "Envelope_FlightOfferOut_": {
                 "properties": {
                     "success": {
@@ -1613,6 +2312,72 @@
                     "success"
                 ],
                 "title": "Envelope[NoneType]"
+            },
+            "Envelope_NotificationOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/NotificationOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[NotificationOut]"
+            },
+            "Envelope_NotificationPage_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/NotificationPage"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[NotificationPage]"
             },
             "Envelope_OtpSendOut_": {
                 "properties": {
@@ -1778,6 +2543,39 @@
                     "success"
                 ],
                 "title": "Envelope[TokenPair]"
+            },
+            "Envelope_TrainSeatMapOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TrainSeatMapOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[TrainSeatMapOut]"
             },
             "Envelope_UserOut_": {
                 "properties": {
@@ -1959,6 +2757,43 @@
                     "success"
                 ],
                 "title": "Envelope[list[LocationOut]]"
+            },
+            "Envelope_list_TrainTripOut__": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/TrainTripOut"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Data"
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[list[TrainTripOut]]"
             },
             "FareRulesOut": {
                 "properties": {
@@ -2503,6 +3338,83 @@
                 ],
                 "title": "LogoutIn"
             },
+            "NotificationOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type"
+                    },
+                    "title_en": {
+                        "type": "string",
+                        "title": "Title En"
+                    },
+                    "title_bn": {
+                        "type": "string",
+                        "title": "Title Bn"
+                    },
+                    "body_en": {
+                        "type": "string",
+                        "title": "Body En"
+                    },
+                    "body_bn": {
+                        "type": "string",
+                        "title": "Body Bn"
+                    },
+                    "data": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Data"
+                    },
+                    "is_read": {
+                        "type": "boolean",
+                        "title": "Is Read"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "type",
+                    "title_en",
+                    "title_bn",
+                    "body_en",
+                    "body_bn",
+                    "data",
+                    "is_read",
+                    "created_at"
+                ],
+                "title": "NotificationOut"
+            },
+            "NotificationPage": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "$ref": "#/components/schemas/NotificationOut"
+                        },
+                        "type": "array",
+                        "title": "Items"
+                    },
+                    "unread": {
+                        "type": "integer",
+                        "title": "Unread"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "items",
+                    "unread"
+                ],
+                "title": "NotificationPage"
+            },
             "OtpSendIn": {
                 "properties": {
                     "phone": {
@@ -2875,6 +3787,48 @@
                 ],
                 "title": "RefreshIn"
             },
+            "RefundInfo": {
+                "properties": {
+                    "amount": {
+                        "type": "integer",
+                        "title": "Amount"
+                    },
+                    "fee": {
+                        "type": "integer",
+                        "title": "Fee"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "processing",
+                            "refunded",
+                            "failed"
+                        ],
+                        "title": "Status"
+                    },
+                    "processed_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Processed At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "amount",
+                    "fee",
+                    "status",
+                    "processed_at"
+                ],
+                "title": "RefundInfo"
+            },
             "SeatMapOut": {
                 "properties": {
                     "trip": {
@@ -3010,6 +3964,17 @@
                             }
                         ],
                         "title": "Dropping Point"
+                    },
+                    "coach": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Coach"
                     },
                     "slice_index": {
                         "anyOf": [
@@ -3193,6 +4158,350 @@
                     "expires_in"
                 ],
                 "title": "TokenPair"
+            },
+            "TrainBookingIn": {
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "const": "train",
+                        "title": "Mode"
+                    },
+                    "trip_id": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "title": "Trip Id"
+                    },
+                    "travel_class": {
+                        "type": "string",
+                        "enum": [
+                            "shovan",
+                            "shovan_chair",
+                            "snigdha",
+                            "ac_seat",
+                            "f_seat",
+                            "f_berth",
+                            "ac_berth"
+                        ],
+                        "title": "Travel Class"
+                    },
+                    "seats": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "maxItems": 4,
+                        "minItems": 1,
+                        "title": "Seats"
+                    },
+                    "passengers": {
+                        "items": {
+                            "$ref": "#/components/schemas/TrainPassengerIn"
+                        },
+                        "type": "array",
+                        "maxItems": 4,
+                        "minItems": 1,
+                        "title": "Passengers"
+                    },
+                    "contact_phone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 10,
+                        "title": "Contact Phone"
+                    },
+                    "contact_email": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Contact Email"
+                    },
+                    "expected_total": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Expected Total"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "mode",
+                    "trip_id",
+                    "travel_class",
+                    "seats",
+                    "passengers",
+                    "contact_phone"
+                ],
+                "title": "TrainBookingIn"
+            },
+            "TrainClassOut": {
+                "properties": {
+                    "travel_class": {
+                        "type": "string",
+                        "enum": [
+                            "shovan",
+                            "shovan_chair",
+                            "snigdha",
+                            "ac_seat",
+                            "f_seat",
+                            "f_berth",
+                            "ac_berth"
+                        ],
+                        "title": "Travel Class"
+                    },
+                    "fare": {
+                        "type": "integer",
+                        "title": "Fare",
+                        "description": "Per seat, paisa"
+                    },
+                    "seats_available": {
+                        "type": "integer",
+                        "title": "Seats Available"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "travel_class",
+                    "fare",
+                    "seats_available"
+                ],
+                "title": "TrainClassOut"
+            },
+            "TrainPassengerIn": {
+                "properties": {
+                    "full_name": {
+                        "type": "string",
+                        "maxLength": 80,
+                        "minLength": 2,
+                        "title": "Full Name"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female",
+                            "other"
+                        ],
+                        "title": "Gender"
+                    },
+                    "age": {
+                        "type": "integer",
+                        "maximum": 120.0,
+                        "minimum": 1.0,
+                        "title": "Age"
+                    },
+                    "seat_no": {
+                        "type": "string",
+                        "maxLength": 12,
+                        "title": "Seat No"
+                    },
+                    "document_no": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^\\d{10}$|^\\d{13}$|^\\d{17}$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Document No"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "full_name",
+                    "gender",
+                    "age",
+                    "seat_no"
+                ],
+                "title": "TrainPassengerIn"
+            },
+            "TrainSearchIn": {
+                "properties": {
+                    "from_id": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "title": "From Id",
+                        "examples": [
+                            "stn_dhaka"
+                        ]
+                    },
+                    "to_id": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "title": "To Id",
+                        "examples": [
+                            "stn_chattogram"
+                        ]
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Date"
+                    },
+                    "travel_class": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "shovan",
+                                    "shovan_chair",
+                                    "snigdha",
+                                    "ac_seat",
+                                    "f_seat",
+                                    "f_berth",
+                                    "ac_berth"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Travel Class",
+                        "description": "Only trains that have this class"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "from_id",
+                    "to_id",
+                    "date"
+                ],
+                "title": "TrainSearchIn"
+            },
+            "TrainSeatMapOut": {
+                "properties": {
+                    "trip": {
+                        "$ref": "#/components/schemas/TrainTripOut"
+                    },
+                    "travel_class": {
+                        "type": "string",
+                        "enum": [
+                            "shovan",
+                            "shovan_chair",
+                            "snigdha",
+                            "ac_seat",
+                            "f_seat",
+                            "f_berth",
+                            "ac_berth"
+                        ],
+                        "title": "Travel Class"
+                    },
+                    "fare": {
+                        "type": "integer",
+                        "title": "Fare"
+                    },
+                    "coaches": {
+                        "items": {
+                            "$ref": "#/components/schemas/CoachOut"
+                        },
+                        "type": "array",
+                        "title": "Coaches"
+                    },
+                    "max_selectable": {
+                        "type": "integer",
+                        "title": "Max Selectable"
+                    },
+                    "service_charge_per_seat": {
+                        "type": "integer",
+                        "title": "Service Charge Per Seat"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "trip",
+                    "travel_class",
+                    "fare",
+                    "coaches",
+                    "max_selectable",
+                    "service_charge_per_seat"
+                ],
+                "title": "TrainSeatMapOut"
+            },
+            "TrainTripOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "train_name": {
+                        "type": "string",
+                        "title": "Train Name"
+                    },
+                    "train_number": {
+                        "type": "string",
+                        "title": "Train Number"
+                    },
+                    "from_id": {
+                        "type": "string",
+                        "title": "From Id"
+                    },
+                    "to_id": {
+                        "type": "string",
+                        "title": "To Id"
+                    },
+                    "depart_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Depart At"
+                    },
+                    "arrive_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Arrive At"
+                    },
+                    "off_day": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "monday",
+                                    "tuesday",
+                                    "wednesday",
+                                    "thursday",
+                                    "friday",
+                                    "saturday",
+                                    "sunday"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Off Day",
+                        "description": "Weekly day the train doesn't run; null = daily"
+                    },
+                    "classes": {
+                        "items": {
+                            "$ref": "#/components/schemas/TrainClassOut"
+                        },
+                        "type": "array",
+                        "title": "Classes"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "train_name",
+                    "train_number",
+                    "from_id",
+                    "to_id",
+                    "depart_at",
+                    "arrive_at",
+                    "off_day",
+                    "classes"
+                ],
+                "title": "TrainTripOut"
             },
             "UserOut": {
                 "properties": {

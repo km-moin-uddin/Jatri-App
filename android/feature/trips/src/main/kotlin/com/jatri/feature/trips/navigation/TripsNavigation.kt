@@ -4,8 +4,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
-import com.jatri.feature.trips.TicketDetailScreen
-import com.jatri.feature.trips.TripsScreen
+import com.jatri.feature.trips.TicketDetailRoute
+import com.jatri.feature.trips.TripsRoute
 import kotlinx.serialization.Serializable
 
 @Serializable data object TripsDestination
@@ -13,14 +13,17 @@ import kotlinx.serialization.Serializable
 
 fun NavController.navigateToTrips(navOptions: NavOptions? = null) = navigate(TripsDestination, navOptions)
 
-fun NavGraphBuilder.tripsScreens(navController: NavController, onSearchTickets: () -> Unit) {
+fun NavController.navigateToTicket(bookingId: String) = navigate(TicketDetailDestination(bookingId))
+
+fun NavGraphBuilder.tripsScreens(navController: NavController, onSearchTickets: () -> Unit, onLogin: () -> Unit) {
     composable<TripsDestination> {
-        TripsScreen(
+        TripsRoute(
             onSearchTickets = onSearchTickets,
-            onTicketClick = { navController.navigate(TicketDetailDestination(it)) },
+            onTicketClick = { navController.navigateToTicket(it) },
+            onLogin = onLogin,
         )
     }
     composable<TicketDetailDestination> {
-        TicketDetailScreen(onBack = { navController.popBackStack() })
+        TicketDetailRoute(onBack = { navController.popBackStack() })
     }
 }

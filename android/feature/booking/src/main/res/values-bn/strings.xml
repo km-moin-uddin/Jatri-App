@@ -53,4 +53,9 @@
     <string name="booking_passport_expiry_short">যাত্রার পর অন্তত ৬ মাস মেয়াদ থাকতে হবে</string>
     <string name="booking_document_invalid">১০, ১৩ বা ১৭ সংখ্যার এনআইডি অথবা পাসপোর্ট নম্বর দিন</string>
     <string name="booking_flight_total">%1$s জন যাত্রীর মোট ভাড়া</string>
+    <string name="booking_train_note">বাংলাদেশ রেলওয়ে যাত্রীর এনআইডি দিয়ে টিকিট যাচাই করে। এনআইডিতে যেভাবে আছে সেভাবে নাম লিখুন।</string>
+    <string name="booking_age_required">বয়স</string>
+    <string name="booking_train_nid">এনআইডি নম্বর (আবশ্যক)</string>
+    <string name="booking_train_nid_child">এনআইডি বা জন্মনিবন্ধন নম্বর (১৮-এর কম বয়সে ঐচ্ছিক)</string>
+    <string name="booking_train_nid_required">১৮ বছর বা তার বেশি বয়সী যাত্রীর এনআইডি নম্বর লাগবে</string>
 </resources>

@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jatri.core.common.format.DateTimeFormats
+import com.jatri.core.common.format.localizeKeepingCodes
 import com.jatri.core.common.format.format
 import com.jatri.core.common.format.localized
 import com.jatri.core.common.format.localizeDigits
@@ -80,7 +81,7 @@ fun FlightResultCard(offer: FlightOffer, onClick: () -> Unit, modifier: Modifier
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    offer.journeys.joinToString(", ") { j -> j.legs.joinToString(" / ") { it.flightNumber } }.localizeDigits(lang),
+                    offer.journeys.joinToString(", ") { j -> j.legs.joinToString(" / ") { it.flightNumber } }.localizeKeepingCodes(lang),
                     style = MaterialTheme.typography.bodySmall,
                     color = JatriTheme.colors.textSecondary,
                     maxLines = 1,
@@ -226,7 +227,7 @@ fun TrainResultCard(
         )
         Spacer(Modifier.height(Spacing.md))
         Text(
-            "${trip.trainName} (${trip.trainNumber.localizeDigits(lang)})",
+            "${trip.trainName} (${trip.trainNumber.localizeKeepingCodes(lang)})",
             style = MaterialTheme.typography.titleMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

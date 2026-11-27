@@ -4,6 +4,11 @@ import com.jatri.core.model.AppError
 import com.jatri.core.model.AppException
 import com.jatri.core.network.model.BookingCreateRequest
 import com.jatri.core.network.model.BookingDto
+import com.jatri.core.network.model.CancelQuoteDto
+import com.jatri.core.network.model.NotificationDto
+import com.jatri.core.network.model.RefundDto
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import com.jatri.core.network.model.BusTripDto
 import com.jatri.core.network.model.PassengerOutDto
 import com.jatri.core.network.model.PaymentInitDto
@@ -180,7 +185,15 @@ internal class MockBus {
         return dto
     }
 
-    /** Shared booking store: the mock flight provider keeps its holds here too. */
+    /** Seat locks shared with the mock train provider ("trip|seat" -> booking id). */
+    fun isHeld(tripId: String, seat: String): Boolean {
+        expireHolds()
+        return held.containsKey("$tripId|$seat")
+    }
+
+    fun lockSeats(tripId: String, seats: List<String>, bookingId: String) = seats.forEach { held["$tripId|$it"] = bookingId }
+
+    /** Shared booking store: the mock flight and train providers keep their holds here too. */
     fun existing(phone: String, key: String): BookingDto? = idempotency["$phone|$key"]?.let { bookings[it] }
 
     fun register(dto: BookingDto, phone: String, key: String): BookingDto {
@@ -199,11 +212,96 @@ internal class MockBus {
         return bookings.values.sortedByDescending { it.createdAt }
     }
 
-    fun cancel(id: String): BookingDto {
+    fun cancel(id: String, expectedRefund: Long? = null): BookingDto {
         val b = get(id)
-        if (b.status != "held") return b
-        release(id)
-        return b.copy(status = "cancelled").also { bookings[id] = it }
+        if (b.status == "held") {
+            release(id)
+            return b.copy(status = "cancelled").also { bookings[id] = it }
+        }
+        if (b.status == "cancelled" || b.status == "refunded") return b
+        val q = quote(id)
+        if (!q.cancellable) throw api(q.reason ?: "not_cancellable", q.messageEn, q.messageBn)
+        if (expectedRefund != null && expectedRefund != q.refund) {
+            val taka = "%,d".format(q.refund / 100)
+            throw api("refund_changed", "The refund has changed. You would now get ৳ $taka.", "রিফান্ডের পরিমাণ বদলেছে। এখন আপনি পাবেন ৳ ${bn(taka)}।")
+        }
+        val now = OffsetDateTime.now(ZoneOffset.UTC).toString()
+        // The demo gateway gives the money back at once, like the backend's mock gateway.
+        val refund = if (q.refund > 0) RefundDto(q.refund, q.fee, "refunded", now) else null
+        val updated = b.copy(status = if (refund != null) "refunded" else "cancelled", cancelledAt = now, refund = refund)
+        bookings[id] = updated
+        val tailEn = if (q.refund > 0) " ৳ ${"%,d".format(q.refund / 100)} will be refunded to your payment account." else " No refund applies to this fare."
+        val tailBn = if (q.refund > 0) " ৳ ${bn("%,d".format(q.refund / 100))} আপনার পেমেন্ট অ্যাকাউন্টে ফেরত যাবে।" else " এই ভাড়ায় কোনো রিফান্ড নেই।"
+        notify("booking_cancelled", "Booking cancelled", "Booking ${b.bookingRef} is cancelled.$tailEn", "বুকিং বাতিল হয়েছে", "বুকিং ${b.bookingRef} বাতিল হয়েছে।$tailBn", id)
+        if (refund != null) {
+            notify(
+                "refund_processed", "Refund sent", "৳ ${"%,d".format(q.refund / 100)} for booking ${b.bookingRef} has been refunded.",
+                "রিফান্ড পাঠানো হয়েছে", "বুকিং ${b.bookingRef}-এর ৳ ${bn("%,d".format(q.refund / 100))} ফেরত দেওয়া হয়েছে।", id,
+            )
+        }
+        return updated
+    }
+
+    /** Same policies as the backend: bus 24h+/12h+, train 48h+/24h+/12h+, flights by fare rules. */
+    fun quote(id: String): CancelQuoteDto {
+        val b = get(id)
+        val first = b.segments.minOf { OffsetDateTime.parse(it.departAt) }
+        val hours = java.time.Duration.between(OffsetDateTime.now(), first).toMinutes() / 60.0
+        fun no(reason: String, en: String, bnText: String) = CancelQuoteDto(false, b.totalAmount, 0, 0, 0, reason, en, bn(bnText))
+        if (b.status == "held") {
+            return CancelQuoteDto(true, 0, 0, 0, 0, null, "Nothing has been paid yet; the seats are simply released.", "এখনো কোনো টাকা দেওয়া হয়নি; সিটগুলো ছেড়ে দেওয়া হবে।")
+        }
+        if (b.status != "ticketed") return no("not_cancellable", "This booking can't be cancelled.", "এই বুকিংটি বাতিল করা যাবে না।")
+        if (hours <= 0) return no("already_departed", "This trip has already started.", "এই যাত্রা ইতিমধ্যে শুরু হয়ে গেছে।")
+        val service = b.serviceCharge
+        val refundable = maxOf(0, b.totalAmount - service)
+        if (b.mode == "flight") {
+            val rules = b.fareRules
+            val deadlineH = rules?.deadlineHours ?: 3
+            val deadline = first.minusHours(deadlineH.toLong()).toString()
+            if (hours < deadlineH) {
+                return no("too_late", "Flights on this fare can only be cancelled up to $deadlineH hours before departure.", "এই ভাড়ার ফ্লাইট যাত্রার $deadlineH ঘণ্টা আগে পর্যন্ত বাতিল করা যায়।")
+            }
+            if (rules?.refundable != true) {
+                return CancelQuoteDto(true, b.totalAmount, 0, refundable, service, "non_refundable",
+                    "This fare is non-refundable: you can cancel, but no money comes back.", "এই ভাড়া রিফান্ডযোগ্য নয়: বাতিল করা যাবে, কিন্তু কোনো টাকা ফেরত আসবে না।", deadline)
+            }
+            val fee = minOf(refundable, (rules.refundFee ?: 0) * b.passengers.size)
+            return CancelQuoteDto(true, b.totalAmount, refundable - fee, fee, service, null,
+                "Refund fee per passenger from the fare rules; the service charge is not refunded.", "ভাড়ার নিয়ম অনুযায়ী প্রতি যাত্রী রিফান্ড ফি কাটা হবে; সার্ভিস চার্জ ফেরত হয় না।", deadline)
+        }
+        val policy = if (b.mode == "train") listOf(48 to 0.10, 24 to 0.25, 12 to 0.50) else listOf(24 to 0.10, 12 to 0.50)
+        val lastH = policy.last().first
+        val deadline = first.minusHours(lastH.toLong()).toString()
+        for ((minHours, fraction) in policy) {
+            if (hours >= minHours) {
+                val fee = Math.round(refundable * fraction / 100) * 100
+                val pct = (fraction * 100).toInt()
+                return CancelQuoteDto(true, b.totalAmount, refundable - fee, fee, service, null,
+                    "$pct% cancellation fee ($minHours+ hours before departure); the service charge is not refunded.",
+                    bn("$pct% বাতিল ফি (যাত্রার $minHours+ ঘণ্টা আগে); সার্ভিস চার্জ ফেরত হয় না।"), deadline)
+            }
+        }
+        return no("too_late", "Tickets can be cancelled up to $lastH hours before departure.", "যাত্রার $lastH ঘণ্টা আগে পর্যন্ত টিকিট বাতিল করা যায়।")
+    }
+
+    // ---- inbox (the backend's notifications) ----
+
+    val inbox = mutableListOf<NotificationDto>()
+
+    private fun notify(type: String, titleEn: String, bodyEn: String, titleBn: String, bodyBn: String, bookingId: String) {
+        inbox.add(
+            0,
+            NotificationDto(
+                UUID.randomUUID().toString(), type, titleEn, bn(titleBn), bodyEn, bn(bodyBn),
+                JsonObject(mapOf("booking_id" to JsonPrimitive(bookingId))), false, OffsetDateTime.now(ZoneOffset.UTC).toString(),
+            ),
+        )
+    }
+
+    /** Bangla digits, but codes with letters ("JTM96Y") stay as printed. */
+    private fun bn(text: String): String = Regex("[A-Za-z0-9]*\\d[A-Za-z0-9]*").replace(text) { m ->
+        if (m.value.any { it.isLetter() }) m.value else m.value.map { if (it.isDigit()) '০' + (it - '0') else it }.joinToString("")
     }
 
     private val payments = mutableMapOf<String, PaymentStatusDto>()
@@ -231,6 +329,9 @@ internal class MockBus {
         if (p.status != "initiated") return
         if (!success) {
             payments[id] = p.copy(status = "failed", failureReason = "declined")
+            val b = get(p.bookingId)
+            notify("payment_failed", "Payment didn't go through", "Booking ${b.bookingRef} is still held. You can try paying again.",
+                "পেমেন্ট সম্পন্ন হয়নি", "বুকিং ${b.bookingRef} এখনো সংরক্ষিত আছে। আবার পেমেন্ট করতে পারেন।", b.id)
             return
         }
         val b = get(p.bookingId)
@@ -247,6 +348,8 @@ internal class MockBus {
         )
         release(b.id)
         payments[id] = p.copy(status = "success", bookingStatus = "ticketed")
+        notify("booking_confirmed", "Ticket confirmed 🎉", "Booking ${b.bookingRef}. Your e-ticket is in My Trips.",
+            "টিকিট কনফার্ম হয়েছে 🎉", "বুকিং ${b.bookingRef}। ই-টিকিট আমার যাত্রায় আছে।", b.id)
     }
 
     private fun expireHolds() {

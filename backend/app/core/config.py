@@ -49,10 +49,26 @@ class Settings(BaseSettings):
     public_base_url: str = "http://localhost:8000"
     app_return_url: str = "jatri://payment/return"
 
+    # Push (FCM HTTP v1). "console" logs instead. The service-account JSON is a secret: set it in the
+    # deploy platform (the whole JSON, or a path to the file), never commit it.
+    push_provider: str = Field(default="console", description="console | fcm")
+    fcm_project_id: str | None = None
+    fcm_service_account: str | None = None
+
+    # E-mail with the PDF ticket. "console" logs instead; "smtp" uses the settings below.
+    email_provider: str = Field(default="console", description="console | smtp")
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None  # secret
+    email_from: str = "Jatri <tickets@example.com>"
+
     # Booking
     hold_minutes: int = 10
     max_bus_seats: int = 4
     bus_service_charge_paisa: int = 3000  # ৳30 per seat
+    max_train_seats: int = 4
+    train_service_charge_paisa: int = 2000  # ৳20 per seat
     flight_service_charge_paisa: int = 20000  # ৳200 per passenger with a seat (infants free)
 
     @property

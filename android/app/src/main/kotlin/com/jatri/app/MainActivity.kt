@@ -1,6 +1,13 @@
 package com.jatri.app
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Color
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.core.content.edit
+import kotlinx.coroutines.flow.MutableStateFlow
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.SystemBarStyle
@@ -48,10 +55,16 @@ class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainActivityViewModel by viewModels()
 
+    /** A ticket to open (tapped reminder notification). */
+    private val openBooking = MutableStateFlow<String?>(null)
+
+    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
         handlePaymentReturn(intent)
+        handleOpenBooking(intent)
         // Keep the splash until settings are read (DataStore is fast, well under the ~1 s budget).
         splash.setKeepOnScreenCondition { viewModel.uiState.value is MainUiState.Loading }
 
@@ -62,6 +75,12 @@ class MainActivity : AppCompatActivity() {
                 viewModel.uiState.collect { state ->
                     if (state is MainUiState.Ready) applyLanguage(state.settings.language)
                 }
+            }
+        }
+        // Ask once, after login: reminders and booking updates need it on Android 13+.
+        lifecycleScope.launch {
+            authRepository.session.collect { session ->
+                if (session is SessionState.LoggedIn) askForNotifications()
             }
         }
 
@@ -86,6 +105,8 @@ class MainActivity : AppCompatActivity() {
                     startDestination = start,
                     networkMonitor = networkMonitor,
                     isLoggedIn = { authRepository.session.value is SessionState.LoggedIn },
+                    openBooking = openBooking,
+                    onBookingOpened = { openBooking.value = null },
                 )
             }
         }
@@ -94,6 +115,24 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handlePaymentReturn(intent)
+        handleOpenBooking(intent)
+    }
+
+    private fun handleOpenBooking(intent: Intent?) {
+        intent?.getStringExtra(EXTRA_OPEN_BOOKING)?.let { openBooking.value = it }
+    }
+
+    private fun askForNotifications() {
+        if (Build.VERSION.SDK_INT < 33) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        val prefs = getSharedPreferences("permissions", MODE_PRIVATE)
+        if (prefs.getBoolean("notifications_asked", false)) return
+        prefs.edit { putBoolean("notifications_asked", true) }
+        notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    companion object {
+        const val EXTRA_OPEN_BOOKING = "open_booking"
     }
 
     /** jatri://payment/return?payment_id=… : the payment screen re-checks the status at once. */

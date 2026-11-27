@@ -20,7 +20,7 @@ from app.providers.base import BusTrip, ProviderError
 from app.providers.mock_bus import MockBusProvider
 from app.providers.mock_flight import local_time
 from app.providers.registry import Providers
-from app.schemas.booking import BookingOut, BusBookingIn, PassengerOut, SegmentOut, TicketInfo
+from app.schemas.booking import BookingOut, BusBookingIn, PassengerOut, RefundInfo, SegmentOut, TicketInfo
 from app.schemas.bus import BusTripOut, SeatMapOut, SeatOut, StopPointOut
 from app.services.cache import KeyValueStore, seat_key
 
@@ -353,7 +353,7 @@ def _shown_time(seg: BookingSegment, location_id: str, at: datetime) -> datetime
     return at
 
 
-def booking_out(b: Booking, ticket=None) -> BookingOut:
+def booking_out(b: Booking, ticket=None, refund=None) -> BookingOut:
     return BookingOut(
         id=b.id,
         booking_ref=b.booking_ref,
@@ -373,6 +373,10 @@ def booking_out(b: Booking, ticket=None) -> BookingOut:
         cabin=(b.details or {}).get("cabin"),
         fare_brand=(b.details or {}).get("fare_brand"),
         fare_rules=(b.details or {}).get("rules"),
+        cancelled_at=(b.details or {}).get("cancelled_at"),
+        refund=RefundInfo(amount=refund.amount, fee=refund.fee, status=refund.status, processed_at=refund.processed_at)
+        if refund
+        else None,
         segments=[
             SegmentOut(
                 trip_id=s.trip_id,
@@ -386,6 +390,7 @@ def booking_out(b: Booking, ticket=None) -> BookingOut:
                 seat_numbers=list(s.seat_numbers),
                 boarding_point=(s.extra or {}).get("boarding_point"),
                 dropping_point=(s.extra or {}).get("dropping_point"),
+                coach=(s.extra or {}).get("coach"),
                 slice_index=(s.extra or {}).get("slice_index"),
                 from_code=(s.extra or {}).get("from_code"),
                 to_code=(s.extra or {}).get("to_code"),
@@ -415,6 +420,14 @@ async def ticket_of(db: AsyncSession, booking: Booking):
     from app.models import Ticket
 
     return await db.scalar(select(Ticket).where(Ticket.booking_id == booking.id))
+
+
+async def full_out(db: AsyncSession, booking: Booking) -> BookingOut:
+    """Booking with its ticket and latest refund."""
+    from app.models import Refund
+
+    refund = await db.scalar(select(Refund).where(Refund.booking_id == booking.id).order_by(Refund.created_at.desc()).limit(1))
+    return booking_out(booking, await ticket_of(db, booking), refund)
 
 
 async def sweep_expired_holds(db: AsyncSession, providers: Providers, store: KeyValueStore) -> int:

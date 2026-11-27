@@ -39,6 +39,7 @@ import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jatri.core.common.format.DateTimeFormats
+import com.jatri.core.common.format.localizeKeepingCodes
 import com.jatri.core.common.format.format
 import com.jatri.core.common.format.localizeDigits
 import com.jatri.core.designsystem.component.JatriBottomSheet
@@ -203,7 +204,7 @@ fun TicketResultScreen(
                     booking.passengers.forEach { p ->
                         Text("${p.fullName} · ${p.type.label()}", style = MaterialTheme.typography.titleSmall)
                         p.ticketNumber?.let {
-                            Text(stringResource(R.string.pay_eticket_no, it.localizeDigits(lang)), style = MaterialTheme.typography.labelSmall, color = JatriTheme.colors.textSecondary)
+                            Text(stringResource(R.string.pay_eticket_no, it.localizeKeepingCodes(lang)), style = MaterialTheme.typography.labelSmall, color = JatriTheme.colors.textSecondary)
                         }
                     }
                 } else {
@@ -214,6 +215,12 @@ fun TicketResultScreen(
                             color = JatriTheme.colors.textSecondary,
                         )
                         Text("${seg.carrier} · ${seg.number}", style = MaterialTheme.typography.bodyMedium, color = JatriTheme.colors.textSecondary)
+                        if (booking.mode == com.jatri.core.model.TravelMode.TRAIN) {
+                            Text(
+                                stringResource(R.string.pay_class_coach, trainClassLabel(seg.travelClass), seg.coach.orEmpty()),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
                         seg.boardingPoint?.let {
                             Text(it.name(lang) + " · " + DateTimeFormats.time(it.time, lang), style = MaterialTheme.typography.bodyMedium)
                         }

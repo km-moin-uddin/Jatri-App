@@ -45,7 +45,7 @@ class DemoPaymentFlowTest {
     private val api = MockJatriApi()
     private val locations = SeedLocationRepositoryForTest()
     private val buses = NetworkBusRepository(api, locations)
-    private val bookings = NetworkBookingRepository(api)
+    private val bookings = NetworkBookingRepository(api, com.jatri.core.data.repository.BookingCache(ApplicationProvider.getApplicationContext()))
     private val payments = NetworkPaymentRepository(api, ApplicationProvider.getApplicationContext())
 
     @Test

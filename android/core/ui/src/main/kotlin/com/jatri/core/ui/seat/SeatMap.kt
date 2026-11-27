@@ -53,15 +53,23 @@ fun SeatMap(
     onSeatToggle: (Seat) -> Unit,
     modifier: Modifier = Modifier,
     maxSelectable: Int = SeatLayout.MAX_SEATS_PER_BOOKING,
+    /** Buses show the driver at the front; train coaches don't. */
+    showDriver: Boolean = true,
+    /** What is printed on a seat (a train seat "CHA-25" shows just "25"). */
+    seatLabel: (Seat) -> String = { it.number },
+    /** Train coaches have no ladies seats. */
+    showLadies: Boolean = true,
 ) {
     JatriCard(modifier = modifier) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(JatriIcons.Support, contentDescription = null, tint = JatriTheme.colors.textSecondary)
-                Text(stringResource(R.string.ui_seat_driver), style = MaterialTheme.typography.labelSmall, color = JatriTheme.colors.textSecondary)
+        if (showDriver) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(JatriIcons.Support, contentDescription = null, tint = JatriTheme.colors.textSecondary)
+                    Text(stringResource(R.string.ui_seat_driver), style = MaterialTheme.typography.labelSmall, color = JatriTheme.colors.textSecondary)
+                }
             }
+            Spacer(Modifier.size(Spacing.sm))
         }
-        Spacer(Modifier.size(Spacing.sm))
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs), modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             layout.rows.forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
@@ -72,19 +80,19 @@ fun SeatMap(
                             val isSelected = seat.number in selected
                             val limitReached = selected.size >= maxSelectable && !isSelected
                             val taken = seat.state == SeatState.BOOKED || seat.state == SeatState.HELD
-                            SeatCell(seat, isSelected, enabled = !taken && !limitReached) { onSeatToggle(seat) }
+                            SeatCell(seat, seatLabel(seat), isSelected, enabled = !taken && !limitReached) { onSeatToggle(seat) }
                         }
                     }
                 }
             }
         }
         Spacer(Modifier.size(Spacing.md))
-        SeatLegend()
+        SeatLegend(showLadies)
     }
 }
 
 @Composable
-private fun SeatCell(seat: Seat, isSelected: Boolean, enabled: Boolean, onToggle: () -> Unit) {
+private fun SeatCell(seat: Seat, label: String, isSelected: Boolean, enabled: Boolean, onToggle: () -> Unit) {
     val primary = MaterialTheme.colorScheme.primary
     val (container, content, border) = when {
         isSelected -> Triple(primary, MaterialTheme.colorScheme.onPrimary, primary)
@@ -113,19 +121,19 @@ private fun SeatCell(seat: Seat, isSelected: Boolean, enabled: Boolean, onToggle
             .semantics { contentDescription = description },
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(seat.number, style = MaterialTheme.typography.labelMedium)
+            Text(label, style = MaterialTheme.typography.labelMedium)
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SeatLegend() {
+private fun SeatLegend(showLadies: Boolean) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         LegendItem(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline, stringResource(R.string.ui_seat_available))
         LegendItem(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary, stringResource(R.string.ui_seat_selected))
         LegendItem(MaterialTheme.colorScheme.surfaceVariant, Color.Transparent, stringResource(R.string.ui_seat_booked))
-        LegendItem(LadiesColor.copy(alpha = 0.10f), LadiesColor, stringResource(R.string.ui_seat_ladies))
+        if (showLadies) LegendItem(LadiesColor.copy(alpha = 0.10f), LadiesColor, stringResource(R.string.ui_seat_ladies))
     }
 }
 

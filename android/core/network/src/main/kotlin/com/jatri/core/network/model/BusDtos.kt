@@ -84,6 +84,7 @@ data class SegmentDto(
     @SerialName("seat_numbers") val seatNumbers: List<String>,
     @SerialName("boarding_point") val boardingPoint: StopPointDto? = null,
     @SerialName("dropping_point") val droppingPoint: StopPointDto? = null,
+    val coach: String? = null,
     @SerialName("slice_index") val sliceIndex: Int? = null,
     @SerialName("from_code") val fromCode: String? = null,
     @SerialName("to_code") val toCode: String? = null,
@@ -126,6 +127,16 @@ data class BookingDto(
     val cabin: String? = null,
     @SerialName("fare_brand") val fareBrand: String? = null,
     @SerialName("fare_rules") val fareRules: FareRulesDto? = null,
+    @SerialName("cancelled_at") val cancelledAt: String? = null,
+    val refund: RefundDto? = null,
+)
+
+@Serializable
+data class RefundDto(
+    val amount: Long,
+    val fee: Long,
+    val status: String,
+    @SerialName("processed_at") val processedAt: String? = null,
 )
 
 @Serializable

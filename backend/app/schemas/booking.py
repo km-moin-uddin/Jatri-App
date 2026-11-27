@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Discriminator, EmailStr, Field, Tag, model_validator
 
 from app.schemas.flight import FareRulesOut, FlightBookingIn
+from app.schemas.train import TrainBookingIn
 
 
 class PassengerIn(BaseModel):
@@ -44,7 +45,7 @@ def _mode(v) -> str:
 
 # `mode` picks the shape: "bus" (the default, so Phase 3 apps keep working) or "flight".
 BookingCreateIn = Annotated[
-    Annotated[BusBookingIn, Tag("bus")] | Annotated[FlightBookingIn, Tag("flight")],
+    Annotated[BusBookingIn, Tag("bus")] | Annotated[FlightBookingIn, Tag("flight")] | Annotated[TrainBookingIn, Tag("train")],
     Discriminator(_mode),
 ]
 
@@ -61,6 +62,8 @@ class SegmentOut(BaseModel):
     seat_numbers: list[str]
     boarding_point: dict | None = None
     dropping_point: dict | None = None
+    # Trains: the coach of the seats.
+    coach: str | None = None
     # Flights: which journey this flight belongs to (0 = outbound), airport codes and baggage.
     slice_index: int | None = None
     from_code: str | None = None
@@ -87,6 +90,31 @@ class TicketInfo(BaseModel):
     issued_at: datetime
 
 
+class RefundInfo(BaseModel):
+    amount: int
+    fee: int
+    status: Literal["pending", "processing", "refunded", "failed"]
+    processed_at: datetime | None
+
+
+class CancelQuoteOut(BaseModel):
+    cancellable: bool
+    paid: int
+    refund: int = Field(description="What goes back to the customer, paisa")
+    fee: int = Field(description="Cancellation fee kept, paisa")
+    non_refundable: int = Field(description="Service charge, never refunded")
+    reason: str | None = Field(description="too_late | already_departed | non_refundable | not_cancellable")
+    message_en: str
+    message_bn: str
+    deadline: datetime | None = Field(description="Last moment the booking can be cancelled")
+
+
+class CancelIn(BaseModel):
+    expected_refund: int | None = Field(
+        default=None, description="The quote's refund; a different live amount returns refund_changed"
+    )
+
+
 class BookingOut(BaseModel):
     id: uuid.UUID
     booking_ref: str
@@ -109,3 +137,5 @@ class BookingOut(BaseModel):
     cabin: str | None = None
     fare_brand: str | None = None
     fare_rules: FareRulesOut | None = None
+    cancelled_at: datetime | None = None
+    refund: RefundInfo | None = None

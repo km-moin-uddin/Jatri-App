@@ -1,0 +1,81 @@
+{
+ "success": true,
+ "data": {
+  "id": "6fcbc879-8f8c-49b0-a186-f3ca7d45a6d9",
+  "booking_ref": "JTM96Y",
+  "mode": "bus",
+  "status": "refunded",
+  "hold_expires_at": null,
+  "base_fare": 90000,
+  "taxes": 0,
+  "service_charge": 3000,
+  "discount": 0,
+  "total_amount": 93000,
+  "currency": "BDT",
+  "contact_phone": "01912345678",
+  "contact_email": null,
+  "segments": [
+   {
+    "trip_id": "mb~bus_dhaka~bus_coxsbazar~2026-12-03~1",
+    "carrier": "Demo Travels",
+    "number": "DE-34",
+    "from_id": "bus_dhaka",
+    "to_id": "bus_coxsbazar",
+    "depart_at": "2026-12-03T03:45:00Z",
+    "arrive_at": "2026-12-03T14:15:00Z",
+    "travel_class": "non_ac",
+    "seat_numbers": [
+     "A1"
+    ],
+    "boarding_point": {
+     "id": "bus_dhaka:0",
+     "name_en": "Gabtoli",
+     "name_bn": "গাবতলী",
+     "time": "2026-12-03T09:15:00+06:00"
+    },
+    "dropping_point": {
+     "id": "bus_coxsbazar:0",
+     "name_en": "Kolatoli",
+     "name_bn": "কলাতলী",
+     "time": "2026-12-03T20:15:00+06:00"
+    },
+    "coach": null,
+    "slice_index": null,
+    "from_code": null,
+    "to_code": null,
+    "aircraft": null,
+    "baggage": null
+   }
+  ],
+  "passengers": [
+   {
+    "full_name": "Rahim Uddin",
+    "ticket_number": "PNR-65E2ED63-1",
+    "type": "adult",
+    "gender": "male",
+    "age": 34,
+    "seat_no": "A1",
+    "document_masked": null,
+    "date_of_birth": null,
+    "nationality": null
+   }
+  ],
+  "created_at": "2026-11-27T11:52:38.848633Z",
+  "ticket": {
+   "qr_payload": "JT1.JTM96Y.6fcbc8798f8c49b0a186f3ca7d45a6d9.bAhHLRcczJkIC1qI",
+   "pdf_url": "/api/v1/tickets/6fcbc879-8f8c-49b0-a186-f3ca7d45a6d9/pdf",
+   "issued_at": "2026-11-27T11:52:38.952030Z"
+  },
+  "cabin": null,
+  "fare_brand": null,
+  "fare_rules": null,
+  "cancelled_at": "2026-11-27T11:52:39.048223Z",
+  "refund": {
+   "amount": 81000,
+   "fee": 9000,
+   "status": "refunded",
+   "processed_at": "2026-11-27T11:52:39.085026Z"
+  }
+ },
+ "error": null
+}

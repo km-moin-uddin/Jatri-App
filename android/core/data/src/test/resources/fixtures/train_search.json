@@ -1,0 +1,92 @@
+{
+ "success": true,
+ "data": [
+  {
+   "id": "mt~stn_dhaka~stn_sylhet~2026-12-01~1",
+   "train_name": "Demo Intercity",
+   "train_number": "841",
+   "from_id": "stn_dhaka",
+   "to_id": "stn_sylhet",
+   "depart_at": "2026-12-01T09:45:00+06:00",
+   "arrive_at": "2026-12-01T16:45:00+06:00",
+   "off_day": null,
+   "classes": [
+    {
+     "travel_class": "shovan",
+     "fare": 28500,
+     "seats_available": 4
+    },
+    {
+     "travel_class": "shovan_chair",
+     "fare": 34500,
+     "seats_available": 78
+    },
+    {
+     "travel_class": "ac_seat",
+     "fare": 78500,
+     "seats_available": 28
+    }
+   ]
+  },
+  {
+   "id": "mt~stn_dhaka~stn_sylhet~2026-12-01~2",
+   "train_name": "Test Mail",
+   "train_number": "765",
+   "from_id": "stn_dhaka",
+   "to_id": "stn_sylhet",
+   "depart_at": "2026-12-01T15:15:00+06:00",
+   "arrive_at": "2026-12-02T00:08:00+06:00",
+   "off_day": "friday",
+   "classes": [
+    {
+     "travel_class": "shovan",
+     "fare": 28500,
+     "seats_available": 48
+    },
+    {
+     "travel_class": "shovan_chair",
+     "fare": 34500,
+     "seats_available": 23
+    },
+    {
+     "travel_class": "f_seat",
+     "fare": 52500,
+     "seats_available": 41
+    }
+   ]
+  },
+  {
+   "id": "mt~stn_dhaka~stn_sylhet~2026-12-01~3",
+   "train_name": "Mock Nishitha",
+   "train_number": "729",
+   "from_id": "stn_dhaka",
+   "to_id": "stn_sylhet",
+   "depart_at": "2026-12-01T22:15:00+06:00",
+   "arrive_at": "2026-12-02T04:55:00+06:00",
+   "off_day": null,
+   "classes": [
+    {
+     "travel_class": "shovan_chair",
+     "fare": 34500,
+     "seats_available": 33
+    },
+    {
+     "travel_class": "snigdha",
+     "fare": 65500,
+     "seats_available": 17
+    },
+    {
+     "travel_class": "f_berth",
+     "fare": 84000,
+     "seats_available": 20
+    },
+    {
+     "travel_class": "ac_berth",
+     "fare": 118000,
+     "seats_available": 14
+    }
+   ]
+  }
+ ],
+ "error": null
+}

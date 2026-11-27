@@ -105,3 +105,21 @@ class Ticket(IdMixin, Base):
     qr_payload: Mapped[str] = mapped_column(String(200))
     pdf_url: Mapped[str] = mapped_column(String(200))
     issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class Refund(IdMixin, Base):
+    """Money going back to the customer. Created on cancellation (or when the provider refused a paid
+    booking); a background job sends it to the gateway and follows it until `refunded`."""
+
+    __tablename__ = "refunds"
+
+    booking_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("bookings.id", ondelete="CASCADE"), index=True)
+    payment_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("payments.id", ondelete="CASCADE"), index=True)
+    amount: Mapped[int] = mapped_column(BigInteger)  # paisa going back
+    fee: Mapped[int] = mapped_column(BigInteger, default=0)  # cancellation fee kept (paisa)
+    reason: Mapped[str] = mapped_column(String(30))  # user_cancel | provider_refused
+    # pending → processing (gateway accepted, money on its way) → refunded | failed
+    status: Mapped[str] = mapped_column(String(16), index=True)
+    gateway_ref: Mapped[str | None] = mapped_column(String(120))
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

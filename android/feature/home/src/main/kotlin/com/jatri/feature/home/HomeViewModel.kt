@@ -3,7 +3,10 @@ package com.jatri.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jatri.core.data.repository.HomeContentRepository
+import com.jatri.core.data.repository.AuthRepository
 import com.jatri.core.data.repository.LocationRepository
+import com.jatri.core.data.repository.NotificationRepository
+import com.jatri.core.model.SessionState
 import com.jatri.core.data.repository.RecentSearchRepository
 import com.jatri.core.model.LegQuery
 import com.jatri.core.model.Location
@@ -45,6 +48,8 @@ data class HomeUiState(
     /** -1 = the main from/to/date; 0.. = that extra multi-city flight. */
     val sheetLeg: Int = -1,
     val error: SearchError? = null,
+    /** Unread notifications (bell badge). */
+    val unread: Int = 0,
 ) {
     /** The date the open date sheet should show as selected. */
     val sheetDate: LocalDate
@@ -70,6 +75,8 @@ class HomeViewModel @Inject constructor(
     locationRepository: LocationRepository,
     private val recentSearchRepository: RecentSearchRepository,
     homeContentRepository: HomeContentRepository,
+    private val notifications: NotificationRepository,
+    private val auth: AuthRepository,
     clock: Clock,
 ) : ViewModel() {
 
@@ -96,14 +103,15 @@ class HomeViewModel @Inject constructor(
     }
 
     val uiState: StateFlow<HomeUiState> = combine(
-        combine(drafts, mode) { d, m -> d.getValue(m) },
+        combine(drafts, mode, notifications.unread) { d, m, u -> d.getValue(m) to u },
         modeContent,
         recent,
         homeContentRepository.observeOffers(),
         combine(sheet, sheetLeg, error) { s, l, e -> Triple(s, l, e) },
-    ) { query, content, recentList, offers, sheetAndError ->
+    ) { queryAndUnread, content, recentList, offers, sheetAndError ->
         HomeUiState(
-            query = query,
+            query = queryAndUnread.first,
+            unread = queryAndUnread.second,
             today = today,
             locations = content.first,
             recentSearches = recentList,
@@ -118,6 +126,12 @@ class HomeViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = HomeUiState(query = drafts.value.getValue(TravelMode.BUS), today = today),
     )
+
+    /** Refreshes the bell badge (on Home's resume). */
+    fun refreshUnread() {
+        if (auth.session.value !is SessionState.LoggedIn) return
+        viewModelScope.launch { runCatching { notifications.inbox() } }
+    }
 
     fun selectMode(newMode: TravelMode) {
         mode.value = newMode

@@ -3,12 +3,14 @@
 One Android app to search, compare, book and pay for **flight, bus and train tickets in Bangladesh**.
 "Jatri" is a working name.
 
-> **Status: Phase 5 (Flights) is done.** Built so far:
+> **Status: Phase 7 (My Trips, cancellation & refunds, notifications) is done.** Built so far:
 > - Phase 1: foundation and the v2 "soft neutral" style.
 > - Phase 2: phone OTP login and the FastAPI backend.
 > - Phase 3: bus search, seat map and booking hold.
 > - Phase 4: payment gateway sandbox, verified callbacks, e-ticket with QR and PDF.
 > - Phase 5: flight search (one way, round trip, multi-city), filters, fare rules, passengers, PNR hold, e-tickets.
+> - Phase 6: train search with classes and off days, coach & seat selection, NID-checked passengers, hold, pay, e-ticket.
+> - Phase 7: My Trips (offline), ticket timeline, cancellation with refund preview, refunds, notifications, reminders.
 
 | Bangla · light | English · light | Bangla · dark |
 |---|---|---|
@@ -73,6 +75,62 @@ cd android
 The first launch shows onboarding (choose Bangla or English), then Home. Walk through it: pick
 cities, then Search, a result, a seat or class, passenger details, Review & pay, and the success
 screen. Every step in that flow can be reached.
+
+## Phase 7 — My Trips, cancellation & refunds, notifications
+
+| My Trips (offline) | Cancel & refund | Refunded ticket | Notifications |
+|---|---|---|---|
+| ![](docs/screenshots/phase7/bn_light_08_trips.png) | ![](docs/screenshots/phase7/bn_light_24_cancel_refund.png) | ![](docs/screenshots/phase7/en_light_25_refunded_ticket.png) | ![](docs/screenshots/phase7/bn_light_26_notifications.png) |
+
+- **My Trips**: Upcoming / Completed / Cancelled from the server. The list and every ticket (with its
+  QR code) are **saved on the phone**, so they open without internet; an offline banner says so.
+  Cleared on logout.
+- **Ticket detail**: QR, PNR, passengers and ticket numbers, a **timeline** (booked → paid → journey,
+  or → cancelled → refund on its way → refunded), PDF/share, and **add to calendar**.
+- **Cancellation with a refund preview** (`GET /bookings/{id}/cancel-quote`): what you paid, the
+  cancellation fee, the non-refundable service charge, what comes back, the reason and the deadline.
+  The app sends the quoted amount back with the cancel; if it moved, the server says `refund_changed`
+  and the app shows the new quote.
+  - Bus: 24 h+ before → 10% fee, 12–24 h → 50%, under 12 h → no cancellation.
+  - Train: 48 h+ → 10%, 24–48 h → 25%, 12–24 h → 50%, under 12 h → no cancellation.
+  - Flight: the fare rules (refund fee per passenger; non-refundable fares give nothing back; closed
+    inside the fare's deadline).
+- **Refunds**: a background job sends them to the gateway (mock: instant; SSLCommerz refund API and
+  status follow-up), retries, and raises an alert after 5 failures. Paid bookings the provider
+  refused are refunded in full.
+- **Notifications**: inbox (`GET /notifications`, mark read / all read), unread dot on the Home bell.
+  Messages: ticket confirmed (plus SMS and e-mail with the PDF), payment failed, ticket not issued,
+  cancelled, refund sent, journey reminders, flight delays. Bangla messages use Bangla digits but
+  keep codes as printed (JTM96Y, D2).
+- **Push**: FCM HTTP v1 on the server (`POST /devices` registers a phone). **Reminders 24 h and 3 h
+  before departure** are also scheduled on the phone (AlarmManager), so they arrive without push or
+  internet; tapping one opens the ticket.
+- **Flight changes**: a job asks the airline about each upcoming flight; a delay moves the times on
+  the ticket and tells the traveller.
+
+## Phase 6 — trains
+
+| Results | Coach & seats | Passengers (NID) | E-ticket |
+|---|---|---|---|
+| ![](docs/screenshots/phase6/en_light_18_train_results.png) | ![](docs/screenshots/phase6/bn_light_19_train_seats.png) | ![](docs/screenshots/phase6/bn_light_20_train_passengers.png) | ![](docs/screenshots/phase6/en_light_22_train_e_ticket.png) |
+
+- **TrainProvider adapter** (`search`, `get_details`, `get_coaches`, `hold`, `confirm`, `cancel`, `get_status`)
+  with a **mock provider**. Bangladesh Railway tickets can only be sold through the railway or an
+  authorised partner, so the real adapter is plugged in once such an API is available.
+- **Railway rules**:
+  - Sales open **10 days** before the journey (`outside_sale_window` otherwise; the app limits the dates too).
+  - Each train can have a **weekly off day**; it is shown on the card and the train is left out on that day.
+  - Classes: Shovan, Shovan Chair, Snigdha, AC Seat, F Seat, F Berth, AC Berth, priced by the
+    railway's per-km class ratios (placeholder trains like "Sample Express").
+  - Every passenger aged **18+ needs an NID**; under 18 may give a birth registration number.
+- **Results**: train name and number, times, duration, off day, and every class with its fare and
+  seats left (sold out greyed). Tapping a class opens its coaches.
+- **Coach & seat**: coach pills (CHA, JA, KA… with free seats), a 2+2 seat map per coach, up to 4
+  seats across coaches; seats someone else is paying for show as taken.
+- **Booking**: `POST /bookings` with `mode: "train"` re-checks the fare (`price_changed`), locks the
+  seats in Redis and holds them with the provider for 10 minutes; then the same payment flow issues
+  the ticket and a PDF with train, class and coach.
+- Endpoints: `POST /trains/search`, `GET /trains/{trip_id}/seats?travel_class=`.
 
 ## Phase 5 — flights
 
@@ -210,9 +268,10 @@ to `10.0.2.2` and `localhost`. Release builds are HTTPS-only.
 | Payment gateway | Mock gateway by default; SSLCommerz adapter needs a sandbox store id/password | When you create the SSLCommerz sandbox account |
 | PDF in the demo APK | The demo backend has no PDF renderer (QR ticket works) | Works with the real backend |
 | Flights | Real API flow, **mock flight provider** with placeholder airlines ("Sample Air") and approximate prices | When a Duffel (or other) sandbox key is added |
-| Train passenger form | Layout preview with disabled fields | Phase 6 |
-| Train results | `MockContent` ("Sample Express") | Phase 6 |
-| My Trips, ticket detail | One sample ticket, clearly labelled | Phase 7 |
+| Trains | Real API flow, **mock train provider** with placeholder trains and approximate fares | When an authorised railway ticketing partner API is available |
+| Push messages on the phone | The server sends FCM pushes when `JATRI_PUSH_PROVIDER=fcm`; the app doesn't include Firebase yet, so it has no token to register (reminders still work, scheduled on the phone) | When a Firebase project (`google-services.json`) is added |
+| E-mail with the PDF | Logged by the server unless SMTP is configured | When SMTP settings are added |
+| Refunds | Mock gateway refunds at once; SSLCommerz refund API is ready | With the SSLCommerz sandbox |
 | Offers, popular routes | Sample promo codes | Phase 8 |
 | Hotline number | Placeholder `+8809600000000` in `HelpScreen` | Before release |
 
@@ -298,4 +357,24 @@ big bold left-aligned headlines.
 
 এয়ারলাইনের ডেটা এখনো নমুনা (mock provider)। Duffel-এর key দিলে আসল স্যান্ডবক্স যুক্ত হবে।
 
-**পরের ধাপ:** Phase 6। এতে ট্রেন মডিউল আসবে।
+**Phase 6 সম্পন্ন:**
+- ট্রেন সার্চ: প্রতিটি শ্রেণির (শোভন, শোভন চেয়ার, স্নিগ্ধা, এসি সিট, এসি বার্থ...) ভাড়া আর খালি সিট।
+- সাপ্তাহিক বন্ধের দিন দেখায়, আর সেদিন ট্রেনটি তালিকায় আসে না।
+- রেলওয়ের নিয়মে শুধু আগামী ১০ দিনের টিকিট।
+- কোচ বেছে সিট ম্যাপ থেকে সর্বোচ্চ ৪টি সিট।
+- ১৮ বছর বা তার বেশি বয়সী প্রত্যেক যাত্রীর এনআইডি আবশ্যক।
+- ১০ মিনিটের হোল্ড, পেমেন্ট, তারপর ট্রেন, শ্রেণি ও কোচসহ ই-টিকিট আর PDF।
+
+ট্রেনের ডেটা এখনো নমুনা (mock provider)। রেলওয়ের অনুমোদিত পার্টনারের API পেলে আসলটা যুক্ত হবে।
+
+**Phase 7 সম্পন্ন:**
+- আমার যাত্রা: আসন্ন, সম্পন্ন আর বাতিল ট্যাব। টিকিট ফোনে সংরক্ষিত থাকে, তাই ইন্টারনেট ছাড়াও খোলে।
+- টিকিটের বিস্তারিত: কিউআর, টাইমলাইন, পিডিএফ, শেয়ার আর ক্যালেন্ডারে যোগ করা।
+- বাতিলের আগে রিফান্ডের হিসাব: কত দিয়েছেন, কত ফি কাটবে, কত ফেরত পাবেন, আর কতক্ষণ পর্যন্ত বাতিল করা যাবে।
+- রিফান্ড: গেটওয়ের মাধ্যমে টাকা ফেরত যায়, ব্যর্থ হলে বারবার চেষ্টা করে।
+- নোটিফিকেশন: টিকিট কনফার্ম, পেমেন্ট ব্যর্থ, বাতিল, রিফান্ড, যাত্রার রিমাইন্ডার আর ফ্লাইট দেরি।
+- যাত্রার ২৪ ঘণ্টা আর ৩ ঘণ্টা আগে ফোনেই রিমাইন্ডার আসে।
+
+ফোনে পুশ নোটিফিকেশনের জন্য Firebase প্রজেক্ট লাগবে।
+
+**পরের ধাপ:** Phase 8। এতে অফার ও প্রোমো কোড, সংরক্ষিত যাত্রী আর ভাড়া কমার সতর্কবার্তা আসবে।

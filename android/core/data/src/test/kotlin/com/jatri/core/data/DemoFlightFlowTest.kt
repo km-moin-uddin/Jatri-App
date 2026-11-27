@@ -44,7 +44,7 @@ class DemoFlightFlowTest {
 
     private val api = MockJatriApi()
     private val flights = NetworkFlightRepository(api, SeedLocationRepositoryForTest())
-    private val bookings = NetworkBookingRepository(api)
+    private val bookings = NetworkBookingRepository(api, com.jatri.core.data.repository.BookingCache(ApplicationProvider.getApplicationContext()))
     private val payments = NetworkPaymentRepository(api, ApplicationProvider.getApplicationContext())
     private val day = LocalDate.now().plusDays(15)
 

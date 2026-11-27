@@ -5,4 +5,11 @@
     <string name="nav_trips">আমার যাত্রা</string>
     <string name="nav_offers">অফার</string>
     <string name="nav_account">অ্যাকাউন্ট</string>
+    <string name="reminder_channel">যাত্রার রিমাইন্ডার</string>
+    <string name="reminder_channel_desc">প্রতিটি যাত্রার ২৪ ঘণ্টা ও ৩ ঘণ্টা আগে</string>
+    <string name="reminder_body">যাত্রা %1$s · বুকিং %2$s। টিকিট অফলাইনেও খুলবে।</string>
+    <plurals name="reminder_title">
+        <item quantity="one">আপনার যাত্রা %1$d ঘণ্টা পর</item>
+        <item quantity="other">আপনার যাত্রা %1$d ঘণ্টা পর</item>
+    </plurals>
 </resources>

@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Journey reminders and booking updates (asked for on Android 13+). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".JatriApplication"
@@ -48,6 +50,11 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- Journey reminders scheduled with AlarmManager (not exported: only our alarms reach it). -->
+        <receiver
+            android:name=".reminder.ReminderReceiver"
+            android:exported="false" />
 
         <!-- Stores the per-app language on Android 12 and lower (AppCompat backport). -->
         <service

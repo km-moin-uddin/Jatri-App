@@ -9,9 +9,18 @@ import com.jatri.core.network.model.BookingCreateRequest
 import com.jatri.core.network.model.BookingDto
 import com.jatri.core.network.model.BusSearchRequest
 import com.jatri.core.network.model.BusTripDto
+import com.jatri.core.network.model.CancelQuoteDto
+import com.jatri.core.network.model.CancelRequest
+import com.jatri.core.network.model.DeviceRequest
+import com.jatri.core.network.model.NotificationDto
+import com.jatri.core.network.model.NotificationPageDto
 import com.jatri.core.network.model.FlightBookingRequest
 import com.jatri.core.network.model.FlightOfferDto
 import com.jatri.core.network.model.FlightSearchRequest
+import com.jatri.core.network.model.TrainBookingRequest
+import com.jatri.core.network.model.TrainSearchRequest
+import com.jatri.core.network.model.TrainSeatMapDto
+import com.jatri.core.network.model.TrainTripDto
 import com.jatri.core.network.model.SeatMapDto
 import com.jatri.core.network.model.LocationDto
 import com.jatri.core.network.model.OtpSendRequest
@@ -96,6 +105,22 @@ class MockJatriApi @Inject constructor() : JatriApi {
 
     private val bus = MockBus()
     private val flight = MockFlight(bus)
+    private val train = MockTrain(bus)
+
+    override suspend fun searchTrains(body: TrainSearchRequest): ApiEnvelope<List<TrainTripDto>> {
+        delay(LATENCY)
+        return ApiEnvelope(true, train.search(body.fromId, body.toId, body.date, body.travelClass))
+    }
+
+    override suspend fun trainSeats(tripId: String, travelClass: String): ApiEnvelope<TrainSeatMapDto> {
+        delay(LATENCY / 2)
+        return ApiEnvelope(true, train.seatMap(tripId, travelClass))
+    }
+
+    override suspend fun createTrainBooking(body: TrainBookingRequest, idempotencyKey: String): ApiEnvelope<BookingDto> {
+        delay(LATENCY)
+        return ApiEnvelope(true, train.create(body, idempotencyKey, currentUser().phone))
+    }
 
     override suspend fun searchFlights(body: FlightSearchRequest): ApiEnvelope<List<FlightOfferDto>> {
         delay(LATENCY * 2) // flight search is slower than bus search on real providers too
@@ -137,11 +162,42 @@ class MockJatriApi @Inject constructor() : JatriApi {
         return ApiEnvelope(true, bus.get(id))
     }
 
-    override suspend fun cancelBooking(id: String): ApiEnvelope<BookingDto> {
+    override suspend fun cancelBooking(id: String, body: CancelRequest): ApiEnvelope<BookingDto> {
         currentUser()
         delay(LATENCY / 2)
-        return ApiEnvelope(true, bus.cancel(id))
+        return ApiEnvelope(true, bus.cancel(id, body.expectedRefund))
     }
+
+    override suspend fun cancelQuote(id: String): ApiEnvelope<CancelQuoteDto> {
+        currentUser()
+        delay(LATENCY / 2)
+        return ApiEnvelope(true, bus.quote(id))
+    }
+
+    override suspend fun notifications(limit: Int, before: String?): ApiEnvelope<NotificationPageDto> {
+        currentUser()
+        val items = bus.inbox.filter { before == null || it.createdAt < before }.take(limit)
+        return ApiEnvelope(true, NotificationPageDto(items, bus.inbox.count { !it.isRead }))
+    }
+
+    override suspend fun markNotificationRead(id: String): ApiEnvelope<NotificationDto> {
+        currentUser()
+        val i = bus.inbox.indexOfFirst { it.id == id }
+        if (i < 0) throw api("notification_not_found", "Notification not found.", "নোটিফিকেশন পাওয়া যায়নি।")
+        bus.inbox[i] = bus.inbox[i].copy(isRead = true)
+        return ApiEnvelope(true, bus.inbox[i])
+    }
+
+    override suspend fun markAllNotificationsRead(): ApiEnvelope<JsonElement?> {
+        currentUser()
+        bus.inbox.replaceAll { it.copy(isRead = true) }
+        return ApiEnvelope(true, null)
+    }
+
+    /** No push in demo mode. */
+    override suspend fun registerDevice(body: DeviceRequest): ApiEnvelope<JsonElement?> = ApiEnvelope(true, null)
+
+    override suspend fun unregisterDevice(token: String): ApiEnvelope<JsonElement?> = ApiEnvelope(true, null)
 
     override suspend fun initPayment(body: PaymentInitRequest, idempotencyKey: String): ApiEnvelope<PaymentInitDto> {
         currentUser()

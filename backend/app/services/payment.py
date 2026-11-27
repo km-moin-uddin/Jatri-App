@@ -16,6 +16,7 @@ from app.models import Booking, Payment, Ticket, User
 from app.payments.base import CheckoutRequest, InvalidCallback
 from app.providers.base import ProviderError
 from app.providers.registry import Providers
+from app.services import notify
 from app.services.booking import BookingErrors, expire_if_needed, get_owned
 from app.services.cache import KeyValueStore, seat_key
 from app.services.ticket import qr_payload
@@ -133,6 +134,7 @@ async def process_callback(
     if not result.success:
         payment.status = "failed"
         payment.failure_reason = "declined"
+        await notify.payment_failed(db, settings, await db.get(Booking, payment.booking_id))
         await db.commit()
         return payment
 
@@ -146,8 +148,37 @@ async def process_callback(
     payment.status = "success"
     booking = await db.get(Booking, payment.booking_id)
     await _confirm_and_ticket(db, providers, store, settings, booking, payment)
+    if booking.status == "ticketed":
+        await notify.booking_confirmed(db, settings, booking)
+    elif booking.status == "failed":
+        await notify.booking_failed(db, settings, booking)
     await db.commit()
+    if booking.status == "ticketed":
+        await _send_ticket(db, settings, booking)
     return payment
+
+
+async def _send_ticket(db: AsyncSession, settings: Settings, booking: Booking) -> None:
+    """SMS with the booking ref and e-mail with the PDF. Best effort: the ticket is already issued."""
+    from app.services.email import get_email_sender
+    from app.services.sms import get_sms_sender
+    from app.services.ticket import render_pdf
+
+    r_en, _ = notify.route(booking)
+    try:
+        await get_sms_sender(settings).send(
+            booking.contact_phone, f"Jatri: ticket confirmed. {r_en}, {notify.when(booking)}. Ref {booking.booking_ref}."
+        )
+        if booking.contact_email:
+            ticket = await db.scalar(select(Ticket).where(Ticket.booking_id == booking.id))
+            await get_email_sender(settings).send(
+                booking.contact_email,
+                f"Your Jatri e-ticket {booking.booking_ref}",
+                f"Your ticket for {r_en} on {notify.when(booking)} is attached. Show the QR code when you travel.",
+                (f"jatri-{booking.booking_ref}.pdf", render_pdf(booking, ticket.qr_payload)),
+            )
+    except Exception:  # noqa: BLE001
+        log.exception("could not send ticket SMS/e-mail for %s", booking.booking_ref)
 
 
 async def _confirm_and_ticket(

@@ -33,3 +33,9 @@ def test_phone_normalisation():
     assert normalize_bd_phone("৮৮০১৭১২৩৪৫৬৭৮") == "01712345678"
     assert normalize_bd_phone("01212345678") is None
     assert normalize_bd_phone("1712345678") is None
+
+
+def test_bangla_digits_keep_codes():
+    from app.core.text import bn_digits
+
+    assert bn_digits("বুকিং JTM96Y-এর ৳ 1,260, 24+ ঘণ্টা, S1 488") == "বুকিং JTM96Y-এর ৳ ১,২৬০, ২৪+ ঘণ্টা, S1 ৪৮৮"

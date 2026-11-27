@@ -12,7 +12,7 @@ import uuid
 import httpx
 
 from app.core.config import Settings
-from app.payments.base import CheckoutRequest, CheckoutSession, GatewayError, InvalidCallback, VerifiedCallback
+from app.payments.base import CheckoutRequest, CheckoutSession, GatewayError, InvalidCallback, RefundResult, VerifiedCallback
 
 _SANDBOX = "https://sandbox.sslcommerz.com"
 _LIVE = "https://securepay.sslcommerz.com"
@@ -101,6 +101,38 @@ class SslCommerzGateway:
             v.get("bank_tran_id") or val_id,
             raw={"status": v.get("status"), "card_type": v.get("card_type"), "val_id": val_id},
         )
+
+    async def refund(self, gateway_txn_id: str, amount_paisa: int, remarks: str) -> RefundResult:
+        """Refund API: SSLCommerz accepts it and pays it back to the card/wallet within a few days."""
+        r = await self._client.get(
+            f"{self._base}/validator/api/merchantTransIDvalidationAPI.php",
+            params={
+                "bank_tran_id": gateway_txn_id,
+                "refund_amount": _taka(amount_paisa),
+                "refund_remarks": remarks[:250],
+                "store_id": self._s.sslcommerz_store_id,
+                "store_passwd": self._s.sslcommerz_store_password,
+                "v": 1,
+                "format": "json",
+            },
+        )
+        data = r.json()
+        if data.get("APIConnect") != "DONE" or data.get("status") != "success":
+            raise GatewayError(data.get("errorReason") or "refund refused")
+        return RefundResult(done=False, ref=data.get("refund_ref_id"), raw={"status": data.get("status")})
+
+    async def refund_status(self, ref: str) -> str:
+        r = await self._client.get(
+            f"{self._base}/validator/api/merchantTransIDvalidationAPI.php",
+            params={
+                "refund_ref_id": ref,
+                "store_id": self._s.sslcommerz_store_id,
+                "store_passwd": self._s.sslcommerz_store_password,
+                "format": "json",
+            },
+        )
+        status = r.json().get("status")
+        return {"refunded": "refunded", "processing": "processing", "cancelled": "failed"}.get(status, "processing")
 
 
 def get_gateway(settings: Settings):
