@@ -18,6 +18,8 @@ from app.db.session import engine  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import Location  # noqa: E402
 from app.providers.mock_bus import MockBusProvider, get_bus_provider  # noqa: E402
+from app.providers.mock_flight import MockFlightProvider, get_flight_provider  # noqa: E402
+from app.providers.registry import Providers  # noqa: E402
 from app.seed import load_locations  # noqa: E402
 from app.services.cache import MemoryStore, RedisStore, get_store  # noqa: E402
 
@@ -73,11 +75,15 @@ async def store():
 async def client(db_schema, settings, sms, store):
     app = create_app()
     provider = MockBusProvider()
+    flight = MockFlightProvider()
     app.state.test_provider = provider
+    app.state.test_flight_provider = flight
+    app.state.test_providers = Providers(provider, flight)
     app.dependency_overrides[get_settings] = lambda: settings
     app.dependency_overrides[sms_sender] = lambda: sms
     app.dependency_overrides[get_store] = lambda: store
     app.dependency_overrides[get_bus_provider] = lambda: provider
+    app.dependency_overrides[get_flight_provider] = lambda: flight
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         c.app = app
         yield c

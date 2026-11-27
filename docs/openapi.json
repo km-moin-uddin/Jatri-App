@@ -479,13 +479,98 @@
                 }
             }
         },
+        "/api/v1/flights/search": {
+            "post": {
+                "tags": [
+                    "flight"
+                ],
+                "summary": "Search",
+                "description": "One-way (1 slice), round trip (2) or multi-city (up to 4). Cached a few minutes; prices are\nre-checked live on the offer details screen and again at booking time.",
+                "operationId": "search_api_v1_flights_search_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FlightSearchIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_list_FlightOfferOut__"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/flights/{offer_id}": {
+            "get": {
+                "tags": [
+                    "flight"
+                ],
+                "summary": "Details",
+                "description": "Live price, fare rules and baggage for one offer. `offer_expired` (409) if it's gone.",
+                "operationId": "details_api_v1_flights__offer_id__get",
+                "parameters": [
+                    {
+                        "name": "offer_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Offer Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Envelope_FlightOfferOut_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/bookings": {
             "post": {
                 "tags": [
                     "bookings"
                 ],
                 "summary": "Create",
-                "description": "Holds the seats for `hold_minutes` (status `held`). Send an `Idempotency-Key` header so a\nretried request returns the same booking instead of holding seats twice.",
+                "description": "Holds the seats (bus) or the fare (flight, with a PNR) for `hold_minutes` (status `held`).\n`mode` picks the body shape. Send an `Idempotency-Key` header so a retried request returns the\nsame booking instead of holding twice.",
                 "operationId": "create_api_v1_bookings_post",
                 "parameters": [
                     {
@@ -527,7 +612,15 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/BookingCreateIn"
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/BusBookingIn"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/FlightBookingIn"
+                                    }
+                                ],
+                                "title": "Body"
                             }
                         }
                     }
@@ -1022,7 +1115,161 @@
                 ],
                 "title": "AuthOut"
             },
-            "BookingCreateIn": {
+            "BookingOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "booking_ref": {
+                        "type": "string",
+                        "title": "Booking Ref"
+                    },
+                    "mode": {
+                        "type": "string",
+                        "title": "Mode"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    },
+                    "hold_expires_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Hold Expires At"
+                    },
+                    "base_fare": {
+                        "type": "integer",
+                        "title": "Base Fare"
+                    },
+                    "taxes": {
+                        "type": "integer",
+                        "title": "Taxes",
+                        "description": "Flights: airport/government taxes, paisa",
+                        "default": 0
+                    },
+                    "service_charge": {
+                        "type": "integer",
+                        "title": "Service Charge"
+                    },
+                    "discount": {
+                        "type": "integer",
+                        "title": "Discount"
+                    },
+                    "total_amount": {
+                        "type": "integer",
+                        "title": "Total Amount"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "title": "Currency"
+                    },
+                    "contact_phone": {
+                        "type": "string",
+                        "title": "Contact Phone"
+                    },
+                    "contact_email": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Contact Email"
+                    },
+                    "segments": {
+                        "items": {
+                            "$ref": "#/components/schemas/SegmentOut"
+                        },
+                        "type": "array",
+                        "title": "Segments"
+                    },
+                    "passengers": {
+                        "items": {
+                            "$ref": "#/components/schemas/PassengerOut"
+                        },
+                        "type": "array",
+                        "title": "Passengers"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "ticket": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/TicketInfo"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "cabin": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Cabin"
+                    },
+                    "fare_brand": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Fare Brand"
+                    },
+                    "fare_rules": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/FareRulesOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "booking_ref",
+                    "mode",
+                    "status",
+                    "hold_expires_at",
+                    "base_fare",
+                    "service_charge",
+                    "discount",
+                    "total_amount",
+                    "currency",
+                    "contact_phone",
+                    "contact_email",
+                    "segments",
+                    "passengers",
+                    "created_at"
+                ],
+                "title": "BookingOut"
+            },
+            "BusBookingIn": {
                 "properties": {
                     "mode": {
                         "type": "string",
@@ -1103,123 +1350,7 @@
                     "passengers",
                     "contact_phone"
                 ],
-                "title": "BookingCreateIn"
-            },
-            "BookingOut": {
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "title": "Id"
-                    },
-                    "booking_ref": {
-                        "type": "string",
-                        "title": "Booking Ref"
-                    },
-                    "mode": {
-                        "type": "string",
-                        "title": "Mode"
-                    },
-                    "status": {
-                        "type": "string",
-                        "title": "Status"
-                    },
-                    "hold_expires_at": {
-                        "anyOf": [
-                            {
-                                "type": "string",
-                                "format": "date-time"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "title": "Hold Expires At"
-                    },
-                    "base_fare": {
-                        "type": "integer",
-                        "title": "Base Fare"
-                    },
-                    "service_charge": {
-                        "type": "integer",
-                        "title": "Service Charge"
-                    },
-                    "discount": {
-                        "type": "integer",
-                        "title": "Discount"
-                    },
-                    "total_amount": {
-                        "type": "integer",
-                        "title": "Total Amount"
-                    },
-                    "currency": {
-                        "type": "string",
-                        "title": "Currency"
-                    },
-                    "contact_phone": {
-                        "type": "string",
-                        "title": "Contact Phone"
-                    },
-                    "contact_email": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "title": "Contact Email"
-                    },
-                    "segments": {
-                        "items": {
-                            "$ref": "#/components/schemas/SegmentOut"
-                        },
-                        "type": "array",
-                        "title": "Segments"
-                    },
-                    "passengers": {
-                        "items": {
-                            "$ref": "#/components/schemas/PassengerOut"
-                        },
-                        "type": "array",
-                        "title": "Passengers"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "title": "Created At"
-                    },
-                    "ticket": {
-                        "anyOf": [
-                            {
-                                "$ref": "#/components/schemas/TicketInfo"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ]
-                    }
-                },
-                "type": "object",
-                "required": [
-                    "id",
-                    "booking_ref",
-                    "mode",
-                    "status",
-                    "hold_expires_at",
-                    "base_fare",
-                    "service_charge",
-                    "discount",
-                    "total_amount",
-                    "currency",
-                    "contact_phone",
-                    "contact_email",
-                    "segments",
-                    "passengers",
-                    "created_at"
-                ],
-                "title": "BookingOut"
+                "title": "BusBookingIn"
             },
             "BusSearchIn": {
                 "properties": {
@@ -1422,6 +1553,39 @@
                     "success"
                 ],
                 "title": "Envelope[BookingOut]"
+            },
+            "Envelope_FlightOfferOut_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/FlightOfferOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[FlightOfferOut]"
             },
             "Envelope_NoneType_": {
                 "properties": {
@@ -1722,6 +1886,43 @@
                 ],
                 "title": "Envelope[list[BusTripOut]]"
             },
+            "Envelope_list_FlightOfferOut__": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/FlightOfferOut"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Data"
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ApiError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success"
+                ],
+                "title": "Envelope[list[FlightOfferOut]]"
+            },
             "Envelope_list_LocationOut__": {
                 "properties": {
                     "success": {
@@ -1758,6 +1959,468 @@
                     "success"
                 ],
                 "title": "Envelope[list[LocationOut]]"
+            },
+            "FareRulesOut": {
+                "properties": {
+                    "refundable": {
+                        "type": "boolean",
+                        "title": "Refundable"
+                    },
+                    "refund_fee": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Refund Fee",
+                        "description": "Per passenger, paisa; null = not refundable"
+                    },
+                    "change_fee": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Change Fee",
+                        "description": "Per passenger, paisa, plus any fare difference; null = no changes"
+                    },
+                    "deadline_hours": {
+                        "type": "integer",
+                        "title": "Deadline Hours",
+                        "description": "Refunds/changes close this many hours before departure"
+                    },
+                    "checked_baggage_kg": {
+                        "type": "integer",
+                        "title": "Checked Baggage Kg"
+                    },
+                    "cabin_baggage_kg": {
+                        "type": "integer",
+                        "title": "Cabin Baggage Kg"
+                    },
+                    "no_show": {
+                        "type": "string",
+                        "title": "No Show",
+                        "description": "What happens on a no-show: forfeit | refund_minus_fee"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "refundable",
+                    "refund_fee",
+                    "change_fee",
+                    "deadline_hours",
+                    "checked_baggage_kg",
+                    "cabin_baggage_kg",
+                    "no_show"
+                ],
+                "title": "FareRulesOut"
+            },
+            "FlightBookingIn": {
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "const": "flight",
+                        "title": "Mode"
+                    },
+                    "offer_id": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Offer Id"
+                    },
+                    "passengers": {
+                        "items": {
+                            "$ref": "#/components/schemas/FlightPassengerIn"
+                        },
+                        "type": "array",
+                        "maxItems": 13,
+                        "minItems": 1,
+                        "title": "Passengers"
+                    },
+                    "contact_phone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 10,
+                        "title": "Contact Phone"
+                    },
+                    "contact_email": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Contact Email"
+                    },
+                    "expected_total": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Expected Total",
+                        "description": "Total (paisa) the app showed; a different live price returns price_changed"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "mode",
+                    "offer_id",
+                    "passengers",
+                    "contact_phone"
+                ],
+                "title": "FlightBookingIn"
+            },
+            "FlightLegOut": {
+                "properties": {
+                    "carrier_code": {
+                        "type": "string",
+                        "title": "Carrier Code"
+                    },
+                    "carrier_name": {
+                        "type": "string",
+                        "title": "Carrier Name"
+                    },
+                    "carrier_logo_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Carrier Logo Url"
+                    },
+                    "flight_number": {
+                        "type": "string",
+                        "title": "Flight Number"
+                    },
+                    "aircraft": {
+                        "type": "string",
+                        "title": "Aircraft"
+                    },
+                    "from_id": {
+                        "type": "string",
+                        "title": "From Id"
+                    },
+                    "to_id": {
+                        "type": "string",
+                        "title": "To Id"
+                    },
+                    "from_code": {
+                        "type": "string",
+                        "title": "From Code"
+                    },
+                    "to_code": {
+                        "type": "string",
+                        "title": "To Code"
+                    },
+                    "depart_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Depart At",
+                        "description": "Local time at the departure airport (with its UTC offset)"
+                    },
+                    "arrive_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Arrive At",
+                        "description": "Local time at the arrival airport (with its UTC offset)"
+                    },
+                    "duration_minutes": {
+                        "type": "integer",
+                        "title": "Duration Minutes"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "carrier_code",
+                    "carrier_name",
+                    "flight_number",
+                    "aircraft",
+                    "from_id",
+                    "to_id",
+                    "from_code",
+                    "to_code",
+                    "depart_at",
+                    "arrive_at",
+                    "duration_minutes"
+                ],
+                "title": "FlightLegOut"
+            },
+            "FlightOfferOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "slices": {
+                        "items": {
+                            "$ref": "#/components/schemas/FlightSliceOut"
+                        },
+                        "type": "array",
+                        "title": "Slices"
+                    },
+                    "cabin": {
+                        "type": "string",
+                        "enum": [
+                            "economy",
+                            "premium_economy",
+                            "business"
+                        ],
+                        "title": "Cabin"
+                    },
+                    "fare_brand": {
+                        "type": "string",
+                        "enum": [
+                            "saver",
+                            "flex",
+                            "business"
+                        ],
+                        "title": "Fare Brand"
+                    },
+                    "rules": {
+                        "$ref": "#/components/schemas/FareRulesOut"
+                    },
+                    "fares": {
+                        "items": {
+                            "$ref": "#/components/schemas/PaxFareOut"
+                        },
+                        "type": "array",
+                        "title": "Fares"
+                    },
+                    "base_total": {
+                        "type": "integer",
+                        "title": "Base Total"
+                    },
+                    "tax_total": {
+                        "type": "integer",
+                        "title": "Tax Total"
+                    },
+                    "service_charge": {
+                        "type": "integer",
+                        "title": "Service Charge"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total",
+                        "description": "Everything the customer pays, paisa"
+                    },
+                    "seats_left": {
+                        "type": "integer",
+                        "title": "Seats Left"
+                    },
+                    "international": {
+                        "type": "boolean",
+                        "title": "International",
+                        "description": "True = passport number + expiry needed for every passenger"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "slices",
+                    "cabin",
+                    "fare_brand",
+                    "rules",
+                    "fares",
+                    "base_total",
+                    "tax_total",
+                    "service_charge",
+                    "total",
+                    "seats_left",
+                    "international"
+                ],
+                "title": "FlightOfferOut"
+            },
+            "FlightPassengerIn": {
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "adult",
+                            "child",
+                            "infant"
+                        ],
+                        "title": "Type"
+                    },
+                    "given_name": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "minLength": 1,
+                        "pattern": "^[A-Za-z][A-Za-z .'-]*$",
+                        "title": "Given Name"
+                    },
+                    "surname": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "minLength": 1,
+                        "pattern": "^[A-Za-z][A-Za-z .'-]*$",
+                        "title": "Surname"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female"
+                        ],
+                        "title": "Gender"
+                    },
+                    "date_of_birth": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Date Of Birth"
+                    },
+                    "nationality": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{2}$",
+                        "title": "Nationality",
+                        "default": "BD"
+                    },
+                    "document_no": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^[A-Z0-9]{6,9}$|^\\d{10}$|^\\d{13}$|^\\d{17}$"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Document No"
+                    },
+                    "document_expiry": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Document Expiry"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "type",
+                    "given_name",
+                    "surname",
+                    "gender",
+                    "date_of_birth"
+                ],
+                "title": "FlightPassengerIn"
+            },
+            "FlightSearchIn": {
+                "properties": {
+                    "slices": {
+                        "items": {
+                            "$ref": "#/components/schemas/SliceIn"
+                        },
+                        "type": "array",
+                        "maxItems": 4,
+                        "minItems": 1,
+                        "title": "Slices"
+                    },
+                    "adults": {
+                        "type": "integer",
+                        "maximum": 9.0,
+                        "minimum": 1.0,
+                        "title": "Adults",
+                        "default": 1
+                    },
+                    "children": {
+                        "type": "integer",
+                        "maximum": 8.0,
+                        "minimum": 0.0,
+                        "title": "Children",
+                        "default": 0
+                    },
+                    "infants": {
+                        "type": "integer",
+                        "maximum": 4.0,
+                        "minimum": 0.0,
+                        "title": "Infants",
+                        "default": 0
+                    },
+                    "cabin": {
+                        "type": "string",
+                        "enum": [
+                            "economy",
+                            "premium_economy",
+                            "business"
+                        ],
+                        "title": "Cabin",
+                        "default": "economy"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "slices"
+                ],
+                "title": "FlightSearchIn",
+                "description": "One slice = one-way, two (A→B, B→A) = round trip, up to four = multi-city."
+            },
+            "FlightSliceOut": {
+                "properties": {
+                    "from_id": {
+                        "type": "string",
+                        "title": "From Id"
+                    },
+                    "to_id": {
+                        "type": "string",
+                        "title": "To Id"
+                    },
+                    "depart_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Depart At"
+                    },
+                    "arrive_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Arrive At"
+                    },
+                    "duration_minutes": {
+                        "type": "integer",
+                        "title": "Duration Minutes"
+                    },
+                    "stops": {
+                        "type": "integer",
+                        "title": "Stops"
+                    },
+                    "legs": {
+                        "items": {
+                            "$ref": "#/components/schemas/FlightLegOut"
+                        },
+                        "type": "array",
+                        "title": "Legs"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "from_id",
+                    "to_id",
+                    "depart_at",
+                    "arrive_at",
+                    "duration_minutes",
+                    "stops",
+                    "legs"
+                ],
+                "title": "FlightSliceOut"
             },
             "HTTPValidationError": {
                 "properties": {
@@ -2027,6 +2690,29 @@
                             }
                         ],
                         "title": "Document Masked"
+                    },
+                    "date_of_birth": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Date Of Birth"
+                    },
+                    "nationality": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Nationality"
                     }
                 },
                 "type": "object",
@@ -2039,6 +2725,39 @@
                     "document_masked"
                 ],
                 "title": "PassengerOut"
+            },
+            "PaxFareOut": {
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "adult",
+                            "child",
+                            "infant"
+                        ],
+                        "title": "Type"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "title": "Count"
+                    },
+                    "base": {
+                        "type": "integer",
+                        "title": "Base"
+                    },
+                    "tax": {
+                        "type": "integer",
+                        "title": "Tax"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "type",
+                    "count",
+                    "base",
+                    "tax"
+                ],
+                "title": "PaxFareOut"
             },
             "PaymentInitIn": {
                 "properties": {
@@ -2291,6 +3010,61 @@
                             }
                         ],
                         "title": "Dropping Point"
+                    },
+                    "slice_index": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Slice Index"
+                    },
+                    "from_code": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "From Code"
+                    },
+                    "to_code": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "To Code"
+                    },
+                    "aircraft": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Aircraft"
+                    },
+                    "baggage": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Baggage"
                     }
                 },
                 "type": "object",
@@ -2306,6 +3080,38 @@
                     "seat_numbers"
                 ],
                 "title": "SegmentOut"
+            },
+            "SliceIn": {
+                "properties": {
+                    "from_id": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "title": "From Id",
+                        "examples": [
+                            "air_DAC"
+                        ]
+                    },
+                    "to_id": {
+                        "type": "string",
+                        "maxLength": 40,
+                        "title": "To Id",
+                        "examples": [
+                            "air_CXB"
+                        ]
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "title": "Date"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "from_id",
+                    "to_id",
+                    "date"
+                ],
+                "title": "SliceIn"
             },
             "StopPointOut": {
                 "properties": {

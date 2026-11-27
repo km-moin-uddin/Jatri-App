@@ -135,7 +135,7 @@ private fun JatriNavHost(navController: NavHostController, startDestination: Any
             onSeeAllOffers = { navController.navigateToTab(TopLevelDestination.OFFERS) },
             onAccountClick = { navController.navigateToTab(TopLevelDestination.ACCOUNT) },
         )
-        flightScreens(navController, onContinueToPassengers = { toPassengers(PassengerDetailsDestination(mode = "flight")) })
+        flightScreens(navController, onContinueToPassengers = { offerId -> toPassengers(PassengerDetailsDestination(mode = "flight", tripId = offerId)) })
         busScreens(
             navController,
             onContinueToPassengers = { sel ->

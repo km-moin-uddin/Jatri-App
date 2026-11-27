@@ -1,6 +1,8 @@
 package com.jatri.core.designsystem.icon
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
@@ -105,6 +107,8 @@ object JatriIcons {
     val Help = Icons.Rounded.Help
     val Policy = Icons.Rounded.Policy
     val Document = Icons.Rounded.Description
+    val Info = Icons.Rounded.Info
+    val Tune = Icons.Rounded.Tune
     val Phone = Icons.Rounded.Phone
     val Lock = Icons.Rounded.Lock
     val Delete = Icons.Rounded.Delete

@@ -1,8 +1,10 @@
 import uuid
-from datetime import datetime
-from typing import Literal
+from datetime import date, datetime
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, EmailStr, Field, model_validator
+from pydantic import BaseModel, Discriminator, EmailStr, Field, Tag, model_validator
+
+from app.schemas.flight import FareRulesOut, FlightBookingIn
 
 
 class PassengerIn(BaseModel):
@@ -14,7 +16,7 @@ class PassengerIn(BaseModel):
     document_no: str | None = Field(default=None, pattern=r"^\d{10}$|^\d{13}$|^\d{17}$")
 
 
-class BookingCreateIn(BaseModel):
+class BusBookingIn(BaseModel):
     mode: Literal["bus"] = "bus"
     trip_id: str = Field(max_length=120)
     seats: list[str] = Field(min_length=1, max_length=4)
@@ -36,6 +38,17 @@ class BookingCreateIn(BaseModel):
         return self
 
 
+def _mode(v) -> str:
+    return (v.get("mode") if isinstance(v, dict) else getattr(v, "mode", None)) or "bus"
+
+
+# `mode` picks the shape: "bus" (the default, so Phase 3 apps keep working) or "flight".
+BookingCreateIn = Annotated[
+    Annotated[BusBookingIn, Tag("bus")] | Annotated[FlightBookingIn, Tag("flight")],
+    Discriminator(_mode),
+]
+
+
 class SegmentOut(BaseModel):
     trip_id: str
     carrier: str
@@ -48,6 +61,12 @@ class SegmentOut(BaseModel):
     seat_numbers: list[str]
     boarding_point: dict | None = None
     dropping_point: dict | None = None
+    # Flights: which journey this flight belongs to (0 = outbound), airport codes and baggage.
+    slice_index: int | None = None
+    from_code: str | None = None
+    to_code: str | None = None
+    aircraft: str | None = None
+    baggage: str | None = None
 
 
 class PassengerOut(BaseModel):
@@ -58,6 +77,8 @@ class PassengerOut(BaseModel):
     age: int | None
     seat_no: str | None
     document_masked: str | None
+    date_of_birth: date | None = None
+    nationality: str | None = None
 
 
 class TicketInfo(BaseModel):
@@ -73,6 +94,7 @@ class BookingOut(BaseModel):
     status: str
     hold_expires_at: datetime | None
     base_fare: int
+    taxes: int = Field(default=0, description="Flights: airport/government taxes, paisa")
     service_charge: int
     discount: int
     total_amount: int
@@ -83,3 +105,7 @@ class BookingOut(BaseModel):
     passengers: list[PassengerOut]
     created_at: datetime
     ticket: TicketInfo | None = None
+    # Flights: cabin, fare brand and the fare rules that apply to this booking.
+    cabin: str | None = None
+    fare_brand: str | None = None
+    fare_rules: FareRulesOut | None = None

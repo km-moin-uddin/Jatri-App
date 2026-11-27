@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     hold_minutes: int = 10
     max_bus_seats: int = 4
     bus_service_charge_paisa: int = 3000  # ৳30 per seat
+    flight_service_charge_paisa: int = 20000  # ৳200 per passenger with a seat (infants free)
 
     @property
     def is_prod(self) -> bool:

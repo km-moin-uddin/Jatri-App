@@ -235,6 +235,132 @@ abstract class ScreenshotTest(private val name: String, private val dark: Boolea
         )
     }
 
+    // ---- Phase 5: flights ------------------------------------------------------------
+
+    private val air get() = MockContent.popularRoutes.first { it.mode == TravelMode.FLIGHT }
+
+    /** Round trips built from the sample one-way offers (outbound + return). */
+    private fun roundTrips(): List<com.jatri.core.model.FlightOffer> {
+        val out = MockContent.flightOffers(today.plusDays(10), air.from, air.to)
+        val back = MockContent.flightOffers(today.plusDays(14), air.to, air.from).reversed()
+        return out.mapIndexed { i, o ->
+            val b = back[i]
+            val base = o.baseTotal + b.baseTotal
+            val tax = o.taxTotal + b.taxTotal
+            o.copy(
+                id = "rt$i", journeys = o.journeys + b.journeys, baseTotal = base, taxTotal = tax, price = base + tax + o.serviceCharge,
+                fares = listOf(com.jatri.core.model.PaxFare(com.jatri.core.model.PassengerType.ADULT, 1, base, tax)),
+            )
+        }
+    }
+
+    @Test fun flightSearch() = shot("12_flight_search") {
+        HomeScreen(
+            state = HomeUiState(
+                query = SearchQuery(
+                    TravelMode.FLIGHT, air.from, air.to, today.plusDays(10), returnDate = today.plusDays(14),
+                    passengers = PassengerCount(2, 1), tripType = com.jatri.core.model.TripType.ROUND_TRIP,
+                ),
+                today = today,
+            ),
+            actions = HomeActions(),
+            now = LocalTime.of(9, 0),
+        )
+    }
+
+    @Test fun flightMultiCity() = shot("12b_flight_multi_city") {
+        val cgp = MockContent.popularRoutes.first { it.mode == TravelMode.FLIGHT && it.to.id == "air_CGP" }.to
+        HomeScreen(
+            state = HomeUiState(
+                query = SearchQuery(
+                    TravelMode.FLIGHT, air.from, air.to, today.plusDays(10), tripType = com.jatri.core.model.TripType.MULTI_CITY,
+                    extraLegs = listOf(com.jatri.core.model.LegQuery(air.to, cgp, today.plusDays(12)), com.jatri.core.model.LegQuery(cgp, null, today.plusDays(14))),
+                ),
+                today = today,
+            ),
+            actions = HomeActions(),
+            now = LocalTime.of(9, 0),
+        )
+    }
+
+    @Test fun flightResults() = shot("13_flight_results") {
+        com.jatri.feature.flight.FlightResultsScreen(
+            state = com.jatri.feature.flight.FlightResultsUiState(
+                args = com.jatri.feature.flight.navigation.FlightResultsDestination(
+                    "${air.from.id},${air.to.id},${today.plusDays(10)};${air.to.id},${air.from.id},${today.plusDays(14)}", 2, 1, 0, "ECONOMY", "ROUND_TRIP",
+                ),
+                places = listOf(air.from to air.to, air.to to air.from),
+                loading = false,
+                offers = roundTrips(),
+                filters = com.jatri.feature.flight.FlightFilters(refundableOnly = false, maxStops = 0),
+            ),
+        )
+    }
+
+    @Test fun flightDetails() = shot("14_flight_details") {
+        val offer = roundTrips()[1]
+        com.jatri.feature.flight.FlightDetailsScreen(
+            state = com.jatri.feature.flight.FlightDetailsUiState(loading = false, offer = offer, priceChangedFrom = offer.price - Money.taka(250)),
+        )
+    }
+
+    @Test fun flightPassengers() = shot("15_flight_passengers") {
+        val offer = roundTrips()[0].copy(international = true)
+        com.jatri.feature.booking.FlightPassengerScreen(
+            state = com.jatri.feature.booking.FlightPassengerUiState(
+                loading = false,
+                offer = offer,
+                phone = "01712345678",
+                passengers = listOf(
+                    com.jatri.feature.booking.FlightPassengerForm(
+                        com.jatri.core.model.PassengerType.ADULT, "RAHIM", "UDDIN", Gender.MALE, "15081990", "A01234567", "01022027",
+                        expiryError = com.jatri.feature.booking.FlightFieldError.PASSPORT_EXPIRY,
+                    ),
+                    com.jatri.feature.booking.FlightPassengerForm(
+                        com.jatri.core.model.PassengerType.CHILD, "নুসরাত", "", null, "0107",
+                        givenNameError = com.jatri.feature.booking.FlightFieldError.LATIN_ONLY,
+                        surnameError = com.jatri.feature.booking.FlightFieldError.REQUIRED,
+                        genderError = true,
+                        dobError = com.jatri.feature.booking.FlightFieldError.DATE_INVALID,
+                    ),
+                ),
+            ),
+        )
+    }
+
+    private fun flightBooking(status: BookingStatus): Booking {
+        val offer = roundTrips()[1]
+        val segs = offer.journeys.flatMapIndexed { j, journey ->
+            journey.legs.map { l ->
+                BookingSegment(l.carrierName, l.flightNumber, l.from.id, l.to.id, l.departAt, l.arriveAt, "economy", emptyList(), null, null,
+                    journeyIndex = j, aircraft = l.aircraft, baggage = "20 kg")
+            }
+        }
+        val ticketed = status == BookingStatus.TICKETED
+        return Booking(
+            id = "f1", ref = "JTKZ5H", mode = TravelMode.FLIGHT, status = status, holdExpiresAt = null,
+            baseFare = offer.baseTotal, taxes = offer.taxTotal, serviceCharge = offer.serviceCharge, discount = Money.ZERO, total = offer.price,
+            contactPhone = "01712345678", contactEmail = null, segments = segs,
+            passengers = listOf(
+                BookingPassenger("RAHIM UDDIN", Gender.MALE, 36, null, "•••••4567", if (ticketed) "000-7506468715" else null),
+                BookingPassenger("NUSRAT JAHAN", Gender.FEMALE, 8, null, null, if (ticketed) "000-9586562860" else null, com.jatri.core.model.PassengerType.CHILD),
+            ),
+            ticket = if (ticketed) Ticket("JT1.JTKZ5H.fc371ebba14b4d51af63ae46e00e19b4.Qm9vZ3Vz", "/pdf", java.time.Instant.EPOCH) else null,
+            cabinClass = offer.cabinClass, fareBrand = offer.fareBrand, fareRules = offer.rules,
+        )
+    }
+
+    @Test fun flightReviewPay() = shot("16_flight_review_pay") {
+        ReviewPayScreen(onBack = {}, onPaid = {}, secondsLeft = 8 * 60 + 40, onCancel = {}, booking = flightBooking(BookingStatus.HELD))
+    }
+
+    @Test fun flightTicket() = shot("17_flight_e_ticket") {
+        TicketResultScreen(
+            booking = flightBooking(BookingStatus.TICKETED), from = air.from, to = air.to, pdfBusy = false,
+            onOpenPdf = {}, onSharePdf = {}, onViewTrips = {}, onGoHome = {},
+        )
+    }
+
     @Test fun trips() = shot("08_trips") { TripsScreen(onSearchTickets = {}, onTicketClick = {}) }
 
     @Test fun offers() = shot("09_offers") { OffersScreen(MockContent.offers(today)) }

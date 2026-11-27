@@ -1,0 +1,88 @@
+{
+ "success": true,
+ "data": {
+  "id": "mf~DAC.DXB.20261216_DXB.DAC.20261223~1.1.0~economy~0~saver",
+  "slices": [
+   {
+    "from_id": "air_DAC",
+    "to_id": "air_DXB",
+    "depart_at": "2026-12-16T01:10:00+06:00",
+    "arrive_at": "2026-12-16T04:40:00+04:00",
+    "duration_minutes": 330,
+    "stops": 0,
+    "legs": [
+     {
+      "carrier_code": "T3",
+      "carrier_name": "Test Wings",
+      "carrier_logo_url": null,
+      "flight_number": "T3 398",
+      "aircraft": "Boeing 787-9",
+      "from_id": "air_DAC",
+      "to_id": "air_DXB",
+      "from_code": "DAC",
+      "to_code": "DXB",
+      "depart_at": "2026-12-16T01:10:00+06:00",
+      "arrive_at": "2026-12-16T04:40:00+04:00",
+      "duration_minutes": 330
+     }
+    ]
+   },
+   {
+    "from_id": "air_DXB",
+    "to_id": "air_DAC",
+    "depart_at": "2026-12-23T08:10:00+04:00",
+    "arrive_at": "2026-12-23T15:40:00+06:00",
+    "duration_minutes": 330,
+    "stops": 0,
+    "legs": [
+     {
+      "carrier_code": "S1",
+      "carrier_name": "Sample Air",
+      "carrier_logo_url": null,
+      "flight_number": "S1 805",
+      "aircraft": "Boeing 787-9",
+      "from_id": "air_DXB",
+      "to_id": "air_DAC",
+      "from_code": "DXB",
+      "to_code": "DAC",
+      "depart_at": "2026-12-23T08:10:00+04:00",
+      "arrive_at": "2026-12-23T15:40:00+06:00",
+      "duration_minutes": 330
+     }
+    ]
+   }
+  ],
+  "cabin": "economy",
+  "fare_brand": "saver",
+  "rules": {
+   "refundable": false,
+   "refund_fee": null,
+   "change_fee": 600000,
+   "deadline_hours": 24,
+   "checked_baggage_kg": 20,
+   "cabin_baggage_kg": 7,
+   "no_show": "forfeit"
+  },
+  "fares": [
+   {
+    "type": "adult",
+    "count": 1,
+    "base": 6750000,
+    "tax": 1310000
+   },
+   {
+    "type": "child",
+    "count": 1,
+    "base": 5062000,
+    "tax": 1310000
+   }
+  ],
+  "base_total": 11812000,
+  "tax_total": 2620000,
+  "service_charge": 40000,
+  "total": 14472000,
+  "seats_left": 4,
+  "international": true
+ },
+ "error": null
+}

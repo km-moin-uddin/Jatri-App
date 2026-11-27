@@ -36,6 +36,9 @@ import com.jatri.core.common.format.DateTimeFormats
 import com.jatri.core.designsystem.component.ErrorState
 import com.jatri.core.designsystem.component.LoadingState
 import com.jatri.core.model.Booking
+import com.jatri.core.ui.flight.BookedFlights
+import com.jatri.core.ui.flight.FareRulesCard
+import com.jatri.core.ui.flight.label
 import com.jatri.core.model.PaymentMethod
 import com.jatri.core.model.PaymentStart
 import com.jatri.core.ui.text
@@ -196,16 +199,23 @@ fun ReviewPayScreen(
         ) {
             val mmss = "%02d:%02d".format(left / 60, left % 60).localizeDigits(lang)
             StatusChip(
-                text = stringResource(R.string.pay_hold_timer, mmss),
+                text = stringResource(if (booking?.isFlight == true) R.string.pay_hold_timer_flight else R.string.pay_hold_timer, mmss),
                 tone = if (left < 120) StatusTone.Danger else StatusTone.Warning,
                 icon = JatriIcons.Time,
             )
-            PhaseBanner(stringResource(R.string.pay_phase), body = if (booking != null) stringResource(R.string.pay_demo_note) else null)
-            booking?.let { TripSummary(it) }
+            if (booking == null) {
+                PhaseBanner(stringResource(R.string.pay_phase))
+            } else {
+                // Payments run on the gateway's sandbox: say so plainly, no "coming soon" banner.
+                StatusChip(stringResource(R.string.pay_demo_note), StatusTone.Info, icon = JatriIcons.Info)
+            }
+            booking?.let { if (it.isFlight) FlightSummary(it) else TripSummary(it) }
+            booking?.fareRules?.let { FareRulesCard(rules = it, brand = booking.fareBrand, cabin = booking.cabinClass) }
             JatriCard {
                 Text(stringResource(R.string.pay_price_details), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(Spacing.xs))
                 PriceRow(stringResource(R.string.pay_base_fare), base.format(lang))
+                booking?.taxes?.takeIf { it != Money.ZERO }?.let { PriceRow(stringResource(R.string.pay_taxes), it.format(lang)) }
                 PriceRow(stringResource(R.string.pay_service_charge), service.format(lang))
                 if (discount != Money.ZERO) {
                     PriceRow(stringResource(R.string.pay_discount), (Money.ZERO - discount).format(lang), JatriTheme.colors.success)
@@ -259,6 +269,24 @@ fun ReviewPayScreen(
                 )
             }
             Spacer(Modifier.height(Spacing.md))
+        }
+    }
+}
+
+@Composable
+private fun FlightSummary(booking: Booking) {
+    val lang = JatriTheme.language
+    JatriCard {
+        Text(stringResource(R.string.pay_flights), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(Spacing.xs))
+        BookedFlights(booking, places = { null })
+        HorizontalDivider(Modifier.padding(vertical = Spacing.xs), color = JatriTheme.colors.divider)
+        Text(stringResource(R.string.pay_passengers), style = MaterialTheme.typography.titleSmall)
+        booking.passengers.forEach { p ->
+            Text("${p.fullName} · ${p.type.label()}", style = MaterialTheme.typography.bodyMedium)
+            p.documentMasked?.let {
+                Text(stringResource(R.string.pay_document, it.localizeDigits(lang)), style = MaterialTheme.typography.bodySmall, color = JatriTheme.colors.textSecondary)
+            }
         }
     }
 }

@@ -16,4 +16,6 @@
     <string name="home_offer_code">Code: %s</string>
     <string name="home_details">View details</string>
     <string name="home_account">Account</string>
+    <string name="home_leg_incomplete">Choose a different from and to airport for every flight.</string>
+    <string name="home_date_order">Each flight must be on or after the previous one.</string>
 </resources>

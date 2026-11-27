@@ -3,6 +3,8 @@ package com.jatri.core.data.di
 import com.jatri.core.data.repository.AuthRepository
 import com.jatri.core.data.repository.BookingRepository
 import com.jatri.core.data.repository.BusRepository
+import com.jatri.core.data.repository.FlightRepository
+import com.jatri.core.data.repository.NetworkFlightRepository
 import com.jatri.core.data.repository.NetworkBookingRepository
 import com.jatri.core.data.repository.NetworkBusRepository
 import com.jatri.core.data.repository.NetworkPaymentRepository
@@ -32,6 +34,7 @@ internal abstract class DataModule {
     @Binds abstract fun bindsHomeContentRepository(impl: MockHomeContentRepository): HomeContentRepository
     @Binds abstract fun bindsAuthRepository(impl: DefaultAuthRepository): AuthRepository
     @Binds abstract fun bindsBusRepository(impl: NetworkBusRepository): BusRepository
+    @Binds abstract fun bindsFlightRepository(impl: NetworkFlightRepository): FlightRepository
     @Binds abstract fun bindsBookingRepository(impl: NetworkBookingRepository): BookingRepository
     @Binds abstract fun bindsPaymentRepository(impl: NetworkPaymentRepository): PaymentRepository
 

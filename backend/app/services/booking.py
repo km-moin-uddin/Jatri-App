@@ -4,7 +4,7 @@ hold_expires_at → payment (Phase 4) → confirm/ticket. Unpaid holds expire an
 
 import secrets
 import uuid
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -18,7 +18,9 @@ from app.core.security import now
 from app.models import Booking, BookingPassenger, BookingSegment, User
 from app.providers.base import BusTrip, ProviderError
 from app.providers.mock_bus import MockBusProvider
-from app.schemas.booking import BookingCreateIn, BookingOut, PassengerOut, SegmentOut, TicketInfo
+from app.providers.mock_flight import local_time
+from app.providers.registry import Providers
+from app.schemas.booking import BookingOut, BusBookingIn, PassengerOut, SegmentOut, TicketInfo
 from app.schemas.bus import BusTripOut, SeatMapOut, SeatOut, StopPointOut
 from app.services.cache import KeyValueStore, seat_key
 
@@ -147,20 +149,33 @@ async def _new_ref(db: AsyncSession) -> str:
             return ref
 
 
+async def find_retry(
+    db: AsyncSession, providers: Providers, store: KeyValueStore, user: User, idempotency_key: str | None
+) -> Booking | None:
+    """Same request retried (bad network, double tap): the booking we already made, if any."""
+    if not idempotency_key:
+        return None
+    existing = await db.scalar(select(Booking).where(Booking.user_id == user.id, Booking.idempotency_key == idempotency_key))
+    return await expire_if_needed(db, providers, store, existing) if existing is not None else None
+
+
+async def new_ref(db: AsyncSession) -> str:
+    return await _new_ref(db)
+
+
 async def create_bus_hold(
     db: AsyncSession,
-    provider: MockBusProvider,
+    providers: Providers,
     store: KeyValueStore,
     settings: Settings,
     user: User,
-    body: BookingCreateIn,
+    body: BusBookingIn,
     idempotency_key: str | None,
 ) -> Booking:
-    # Same request retried (bad network, double tap): return the booking we already made.
-    if idempotency_key:
-        existing = await db.scalar(select(Booking).where(Booking.user_id == user.id, Booking.idempotency_key == idempotency_key))
-        if existing is not None:
-            return await expire_if_needed(db, provider, store, existing)
+    existing = await find_retry(db, providers, store, user, idempotency_key)
+    if existing is not None:
+        return existing
+    provider = providers.bus
 
     contact_phone = normalize_bd_phone(body.contact_phone)
     if contact_phone is None:
@@ -278,7 +293,7 @@ async def create_bus_hold(
     return booking
 
 
-async def expire_if_needed(db: AsyncSession, provider: MockBusProvider, store: KeyValueStore, booking: Booking) -> Booking:
+async def expire_if_needed(db: AsyncSession, providers: Providers, store: KeyValueStore, booking: Booking) -> Booking:
     """Unpaid hold past its deadline → cancelled, seats released. (A periodic job does the same
     for holds nobody looks at; it arrives with the background worker in Phase 4.)"""
     expires = booking.hold_expires_at
@@ -288,48 +303,54 @@ async def expire_if_needed(db: AsyncSession, provider: MockBusProvider, store: K
         expires = expires.replace(tzinfo=now().tzinfo)
     if expires > now():
         return booking
-    await _release_hold(provider, store, booking)
+    await _release_hold(providers, store, booking)
     booking.status = "cancelled"
     await db.commit()
     await db.refresh(booking)
     return booking
 
 
-async def _release_hold(provider: MockBusProvider, store: KeyValueStore, booking: Booking) -> None:
+async def _release_hold(providers: Providers, store: KeyValueStore, booking: Booking) -> None:
     for seg in booking.segments:
-        await store.release([seat_key(seg.trip_id, n) for n in seg.seat_numbers], str(booking.id))
+        if seg.seat_numbers:
+            await store.release([seat_key(seg.trip_id, n) for n in seg.seat_numbers], str(booking.id))
     if booking.provider_booking_ref:
-        await provider.cancel(booking.provider_booking_ref)
+        await providers.get(booking.provider).cancel(booking.provider_booking_ref)
 
 
-async def get_owned(
-    db: AsyncSession, provider: MockBusProvider, store: KeyValueStore, user: User, booking_id: uuid.UUID
-) -> Booking:
+async def get_owned(db: AsyncSession, providers: Providers, store: KeyValueStore, user: User, booking_id: uuid.UUID) -> Booking:
     booking = await db.get(Booking, booking_id)
     # Same 404 whether it doesn't exist or belongs to someone else (no IDOR, no existence leak).
     if booking is None or booking.user_id != user.id:
         raise BookingErrors.not_found()
-    return await expire_if_needed(db, provider, store, booking)
+    return await expire_if_needed(db, providers, store, booking)
 
 
-async def list_owned(db: AsyncSession, provider: MockBusProvider, store: KeyValueStore, user: User) -> list[Booking]:
+async def list_owned(db: AsyncSession, providers: Providers, store: KeyValueStore, user: User) -> list[Booking]:
     rows = (await db.scalars(select(Booking).where(Booking.user_id == user.id).order_by(Booking.created_at.desc()))).all()
-    return [await expire_if_needed(db, provider, store, b) for b in rows]
+    return [await expire_if_needed(db, providers, store, b) for b in rows]
 
 
-async def cancel_hold(
-    db: AsyncSession, provider: MockBusProvider, store: KeyValueStore, user: User, booking_id: uuid.UUID
-) -> Booking:
-    booking = await get_owned(db, provider, store, user, booking_id)
+async def cancel_hold(db: AsyncSession, providers: Providers, store: KeyValueStore, user: User, booking_id: uuid.UUID) -> Booking:
+    booking = await get_owned(db, providers, store, user, booking_id)
     if booking.status == "cancelled":
         return booking
     if booking.status != "held":
         raise BookingErrors.not_cancellable()  # paid bookings: cancellation + refund in Phase 7
-    await _release_hold(provider, store, booking)
+    await _release_hold(providers, store, booking)
     booking.status = "cancelled"
     await db.commit()
     await db.refresh(booking)
     return booking
+
+
+def _shown_time(seg: BookingSegment, location_id: str, at: datetime) -> datetime:
+    """Flights show the airport's local time; stored times are UTC (SQLite drops the offset)."""
+    if at.tzinfo is None:
+        at = at.replace(tzinfo=UTC)
+    if (seg.extra or {}).get("from_code"):
+        return local_time(location_id, at)
+    return at
 
 
 def booking_out(b: Booking, ticket=None) -> BookingOut:
@@ -340,6 +361,7 @@ def booking_out(b: Booking, ticket=None) -> BookingOut:
         status=b.status,
         hold_expires_at=b.hold_expires_at,
         base_fare=b.base_fare,
+        taxes=(b.details or {}).get("taxes", 0),
         service_charge=b.service_charge,
         discount=b.discount,
         total_amount=b.total_amount,
@@ -348,6 +370,9 @@ def booking_out(b: Booking, ticket=None) -> BookingOut:
         contact_email=b.contact_email,
         created_at=b.created_at,
         ticket=TicketInfo(qr_payload=ticket.qr_payload, pdf_url=ticket.pdf_url, issued_at=ticket.issued_at) if ticket else None,
+        cabin=(b.details or {}).get("cabin"),
+        fare_brand=(b.details or {}).get("fare_brand"),
+        fare_rules=(b.details or {}).get("rules"),
         segments=[
             SegmentOut(
                 trip_id=s.trip_id,
@@ -355,12 +380,17 @@ def booking_out(b: Booking, ticket=None) -> BookingOut:
                 number=s.number,
                 from_id=s.from_id,
                 to_id=s.to_id,
-                depart_at=s.depart_at,
-                arrive_at=s.arrive_at,
+                depart_at=_shown_time(s, s.from_id, s.depart_at),
+                arrive_at=_shown_time(s, s.to_id, s.arrive_at),
                 travel_class=s.travel_class,
                 seat_numbers=list(s.seat_numbers),
                 boarding_point=(s.extra or {}).get("boarding_point"),
                 dropping_point=(s.extra or {}).get("dropping_point"),
+                slice_index=(s.extra or {}).get("slice_index"),
+                from_code=(s.extra or {}).get("from_code"),
+                to_code=(s.extra or {}).get("to_code"),
+                aircraft=(s.extra or {}).get("aircraft"),
+                baggage=s.baggage,
             )
             for s in b.segments
         ],
@@ -373,6 +403,8 @@ def booking_out(b: Booking, ticket=None) -> BookingOut:
                 age=p.age,
                 seat_no=p.seat_no,
                 document_masked=mask_document(p.document_no),
+                date_of_birth=p.date_of_birth,
+                nationality=p.nationality,
             )
             for p in b.passengers
         ],
@@ -385,9 +417,9 @@ async def ticket_of(db: AsyncSession, booking: Booking):
     return await db.scalar(select(Ticket).where(Ticket.booking_id == booking.id))
 
 
-async def sweep_expired_holds(db: AsyncSession, provider: MockBusProvider, store: KeyValueStore) -> int:
+async def sweep_expired_holds(db: AsyncSession, providers: Providers, store: KeyValueStore) -> int:
     """Background job: cancel every unpaid hold past its deadline and free its seats."""
     rows = (await db.scalars(select(Booking).where(Booking.status == "held", Booking.hold_expires_at < now()))).all()
     for b in rows:
-        await expire_if_needed(db, provider, store, b)
+        await expire_if_needed(db, providers, store, b)
     return len(rows)

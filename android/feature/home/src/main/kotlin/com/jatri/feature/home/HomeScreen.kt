@@ -61,6 +61,7 @@ import com.jatri.core.ui.icon
 import com.jatri.core.ui.picker.CityPickerSheet
 import com.jatri.core.ui.picker.DatePickerSheet
 import com.jatri.core.ui.picker.PassengerClassSheet
+import com.jatri.core.ui.search.FlightSearchActions
 import com.jatri.core.ui.ModeIllustration
 import com.jatri.core.ui.search.SearchCard
 import com.jatri.core.ui.search.TravelModeTabs
@@ -85,6 +86,15 @@ internal fun HomeRoute(
             onOpenSheet = viewModel::openSheet,
             onSwap = viewModel::swap,
             onSearch = { viewModel.search(onSearch) },
+            flight = FlightSearchActions(
+                onTripTypeChange = viewModel::setTripType,
+                onReturnDateClick = { viewModel.openSheet(HomeSheet.RETURN_DATE) },
+                onLegFromClick = { viewModel.openLegSheet(HomeSheet.FROM, it) },
+                onLegToClick = { viewModel.openLegSheet(HomeSheet.TO, it) },
+                onLegDateClick = { viewModel.openLegSheet(HomeSheet.DATE, it) },
+                onAddLeg = viewModel::addLeg,
+                onRemoveLeg = viewModel::removeLeg,
+            ),
             onRecentClick = viewModel::applyRecent,
             onPopularClick = viewModel::applyPopular,
             onNotificationsClick = onNotificationsClick,
@@ -100,11 +110,11 @@ internal fun HomeRoute(
             onSelect = if (state.sheet == HomeSheet.FROM) viewModel::setFrom else viewModel::setTo,
             onDismiss = viewModel::closeSheet,
         )
-        HomeSheet.DATE -> DatePickerSheet(
-            selected = state.query.date,
+        HomeSheet.DATE, HomeSheet.RETURN_DATE -> DatePickerSheet(
+            selected = state.sheetDate,
             onSelect = viewModel::setDate,
             onDismiss = viewModel::closeSheet,
-            minDate = state.today,
+            minDate = state.sheetMinDate,
             // Bangladesh Railway sells tickets 10 days ahead; flights up to a year.
             maxDate = when (state.query.mode) {
                 TravelMode.TRAIN -> state.today.plusDays(10)
@@ -132,6 +142,7 @@ data class HomeActions(
     val onNotificationsClick: () -> Unit = {},
     val onSeeAllOffers: () -> Unit = {},
     val onAccountClick: () -> Unit = {},
+    val flight: FlightSearchActions = FlightSearchActions(),
 )
 
 /** Stateless Home screen — used directly by previews and screenshot tests. */
@@ -167,6 +178,7 @@ fun HomeScreen(
                 onSearch = actions.onSearch,
                 errorText = state.error?.let { errorText(it) },
                 modifier = Modifier.padding(horizontal = Spacing.screen),
+                flightActions = actions.flight,
             )
         }
 
@@ -267,6 +279,8 @@ private fun errorText(error: SearchError): String = when (error) {
     SearchError.MISSING_FROM -> stringResource(R.string.home_select_from)
     SearchError.MISSING_TO -> stringResource(R.string.home_select_to)
     SearchError.SAME_PLACE -> stringResource(com.jatri.core.ui.R.string.ui_same_city_error)
+    SearchError.LEG_INCOMPLETE -> stringResource(R.string.home_leg_incomplete)
+    SearchError.DATE_ORDER -> stringResource(R.string.home_date_order)
 }
 
 @Composable

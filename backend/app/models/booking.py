@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import JSON, BigInteger, Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.crypto import EncryptedString
@@ -30,6 +30,8 @@ class Booking(IdMixin, Base):
     contact_phone: Mapped[str] = mapped_column(String(11))
     contact_email: Mapped[str | None] = mapped_column(String(254))
     idempotency_key: Mapped[str | None] = mapped_column(String(64))
+    # Mode-specific facts fixed at booking time (flights: offer id, cabin, fare brand, fare rules).
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
 
     segments: Mapped[list["BookingSegment"]] = relationship(
         back_populates="booking", cascade="all, delete-orphan", lazy="selectin", order_by="BookingSegment.depart_at"
@@ -69,6 +71,9 @@ class BookingPassenger(IdMixin, Base):
     age: Mapped[int | None] = mapped_column(Integer)
     document_no: Mapped[str | None] = mapped_column(EncryptedString)  # NID/passport, encrypted at rest
     seat_no: Mapped[str | None] = mapped_column(String(10))
+    date_of_birth: Mapped[date | None] = mapped_column(Date)
+    nationality: Mapped[str | None] = mapped_column(String(2))
+    document_expiry: Mapped[date | None] = mapped_column(Date)
     ticket_number: Mapped[str | None] = mapped_column(String(40))
 
     booking: Mapped[Booking] = relationship(back_populates="passengers")

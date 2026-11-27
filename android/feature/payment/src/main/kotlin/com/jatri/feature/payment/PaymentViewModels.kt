@@ -149,12 +149,14 @@ class TicketViewModel @Inject constructor(
                 try {
                     val b = bookings.get(bookingId)
                     val seg = b.segments.firstOrNull()
+                    // A connecting flight's destination is where the first journey ends, not its first stop.
+                    val last = b.journeys.firstOrNull()?.lastOrNull()
                     _state.update {
                         it.copy(
                             loading = false,
                             booking = b,
                             from = seg?.let { s -> locations.getById(s.fromId) },
-                            to = seg?.let { s -> locations.getById(s.toId) },
+                            to = last?.let { s -> locations.getById(s.toId) },
                         )
                     }
                 } catch (e: AppException) {
