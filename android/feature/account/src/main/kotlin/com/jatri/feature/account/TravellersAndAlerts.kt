@@ -128,6 +128,7 @@ class TravellersViewModel @Inject constructor(private val repo: TravellerReposit
 @Composable
 internal fun TravellersRoute(onBack: () -> Unit, viewModel: TravellersViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    com.jatri.core.ui.SecureScreen() // full NID and passport numbers are on this screen
     TravellersScreen(state, onBack, viewModel::load, viewModel::edit)
     state.editing?.let { TravellerSheet(it, state.saving, state.saveError, viewModel::save, viewModel::delete, viewModel::close) }
 }

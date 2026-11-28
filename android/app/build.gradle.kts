@@ -11,12 +11,28 @@ android {
 
     defaultConfig {
         applicationId = "com.jatri.app"
-        versionCode = 1
-        versionName = "0.1.0"
+        // CI passes -Pjatri.versionCode=<run number>; Play needs it to grow with every upload.
+        versionCode = providers.gradleProperty("jatri.versionCode").getOrElse("9").toInt()
+        versionName = providers.gradleProperty("jatri.versionName").getOrElse("0.9.0")
+    }
+
+    // The upload key never lives in the repo: CI writes it from a GitHub secret and passes its
+    // path and passwords as environment variables. Without them release builds stay unsigned.
+    val keystore = providers.environmentVariable("JATRI_KEYSTORE_FILE").orNull
+    signingConfigs {
+        if (keystore != null) {
+            create("upload") {
+                storeFile = file(keystore)
+                storePassword = providers.environmentVariable("JATRI_KEYSTORE_PASSWORD").get()
+                keyAlias = providers.environmentVariable("JATRI_KEY_ALIAS").get()
+                keyPassword = providers.environmentVariable("JATRI_KEY_PASSWORD").get()
+            }
+        }
     }
 
     buildTypes {
         release {
+            if (keystore != null) signingConfig = signingConfigs.getByName("upload")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -36,6 +52,20 @@ android {
         unitTests.isIncludeAndroidResources = true
     }
 }
+
+// A Play Store bundle must talk to the real backend over HTTPS. `bundleRelease` fails otherwise.
+// (A minified release APK with the demo backend is still allowed for smoke tests.)
+val checkStoreRelease by tasks.registering {
+    val useMock = providers.gradleProperty("jatri.useMockApi").getOrElse("true").toBoolean()
+    val url = providers.gradleProperty("jatri.apiBaseUrl").getOrElse("")
+    val signed = providers.environmentVariable("JATRI_KEYSTORE_FILE").isPresent
+    doLast {
+        require(!useMock) { "Store builds need -Pjatri.useMockApi=false" }
+        require(url.startsWith("https://")) { "Store builds need -Pjatri.apiBaseUrl=https://…" }
+        require(signed) { "Store builds need the upload key: set JATRI_KEYSTORE_FILE and the passwords" }
+    }
+}
+tasks.matching { it.name == "bundleRelease" }.configureEach { dependsOn(checkStoreRelease) }
 
 dependencies {
     implementation(projects.core.designsystem)

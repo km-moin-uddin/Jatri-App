@@ -1,6 +1,7 @@
 package com.jatri.app
 
 import android.app.Application
+import android.os.StrictMode
 import com.jatri.app.reminder.AlarmTripReminders
 import com.jatri.core.data.reminder.TripReminders
 import com.jatri.core.data.repository.AuthRepository
@@ -27,6 +28,12 @@ class JatriApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        if (BuildConfig.DEBUG) {
+            // Debug builds log disk or network work on the main thread and leaked resources, so
+            // jank is caught while developing. Logged only: the demo APK must never crash on it.
+            StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build())
+            StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder().detectLeakedClosableObjects().detectLeakedSqlLiteObjects().penaltyLog().build())
+        }
         AlarmTripReminders.createChannel(this)
         // After logout, nobody else's tickets stay on the phone and no reminders fire for them.
         scope.launch {

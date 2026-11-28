@@ -1,11 +1,12 @@
 from fastapi import APIRouter
-from sqlalchemy import delete
 
 from app.api.deps import CurrentUser, DbSession
+from app.api.v1.buses import StoreDep
 from app.core.envelope import ok
-from app.models import RefreshToken
+from app.providers.registry import ProvidersDep
 from app.schemas.common import Envelope
 from app.schemas.user import UserOut, UserUpdateIn
+from app.services.account import delete_account
 
 router = APIRouter(prefix="/me", tags=["profile"])
 
@@ -27,10 +28,8 @@ async def update_me(body: UserUpdateIn, user: CurrentUser, db: DbSession):
 
 
 @router.delete("", response_model=Envelope[None])
-async def delete_me(user: CurrentUser, db: DbSession):
-    """In-app account deletion (Google Play requirement). Personal data is removed; bookings that
-    must be kept for accounting will be anonymised here once they exist (Phase 3+)."""
-    await db.execute(delete(RefreshToken).where(RefreshToken.user_id == user.id))
-    await db.delete(user)
-    await db.commit()
+async def delete_me(user: CurrentUser, db: DbSession, providers: ProvidersDep, store: StoreDep):
+    """In-app account deletion (Google Play requirement). Personal data is removed; bookings are
+    kept for accounting without anything that identifies the person (see services/account.py)."""
+    await delete_account(db, providers, store, user)
     return ok(None)

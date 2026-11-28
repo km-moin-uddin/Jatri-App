@@ -11,6 +11,8 @@ class Settings(BaseSettings):
 
     env: str = Field(default="dev", description="dev | test | prod")
     database_url: str = "postgresql+asyncpg://jatri:jatri@localhost:5432/jatri"
+    db_pool_size: int = 10
+    db_max_overflow: int = 20
 
     # Signing key for access tokens and pepper for hashing OTPs / refresh tokens.
     # Must be set to a long random value in production (e.g. `openssl rand -hex 32`).
@@ -62,6 +64,11 @@ class Settings(BaseSettings):
     smtp_user: str | None = None
     smtp_password: str | None = None  # secret
     email_from: str = "Jatri <tickets@example.com>"
+
+    # Per-IP / per-user request limits (app/core/ratelimit.py). Off only in tests that need bursts.
+    rate_limits: bool = True
+    # Browser origins allowed to call the API (none: the Android app doesn't need CORS).
+    cors_origins: list[str] = []
 
     # Booking
     hold_minutes: int = 10

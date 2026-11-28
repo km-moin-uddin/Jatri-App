@@ -7,6 +7,7 @@ from app.api.deps import AppSettings, CurrentUser, DbSession
 from app.api.v1.buses import StoreDep
 from app.api.v1.payments import Gateway
 from app.core.envelope import ok
+from app.core.ratelimit import limit
 from app.core.text import bn_digits
 from app.providers.registry import ProvidersDep
 from app.schemas.booking import BookingCreateIn, BookingOut, BusBookingIn, CancelIn, CancelQuoteOut
@@ -20,7 +21,7 @@ from app.services import train as train_service
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
-@router.post("", response_model=Envelope[BookingOut])
+@router.post("", response_model=Envelope[BookingOut], dependencies=[limit("hold", 20, 600, per="user")])
 async def create(
     body: BookingCreateIn,
     user: CurrentUser,

@@ -9,6 +9,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from app.api.deps import AppSettings, CurrentUser, DbSession
 from app.api.v1.buses import StoreDep
 from app.core.envelope import AppError, ok
+from app.core.ratelimit import limit
 from app.models import Booking, Payment
 from app.payments import get_gateway
 from app.payments.mock import MockGateway
@@ -28,7 +29,7 @@ def gateway_dep(settings: AppSettings):
 Gateway = Annotated[object, Depends(gateway_dep)]
 
 
-@router.post("/payments/init", response_model=Envelope[PaymentInitOut])
+@router.post("/payments/init", response_model=Envelope[PaymentInitOut], dependencies=[limit("pay", 20, 600, per="user")])
 async def init(
     body: PaymentInitIn,
     user: CurrentUser,

@@ -3,7 +3,7 @@
 One Android app to search, compare, book and pay for **flight, bus and train tickets in Bangladesh**.
 "Jatri" is a working name.
 
-> **Status: Phase 8 (offers & promo codes, saved travellers, price alerts) is done.** Built so far:
+> **Status: Phase 9 (testing, performance, security review, Play Store release build) is done.** Built so far:
 > - Phase 1: foundation and the v2 "soft neutral" style.
 > - Phase 2: phone OTP login and the FastAPI backend.
 > - Phase 3: bus search, seat map and booking hold.
@@ -12,6 +12,7 @@ One Android app to search, compare, book and pay for **flight, bus and train tic
 > - Phase 6: train search with classes and off days, coach & seat selection, NID-checked passengers, hold, pay, e-ticket.
 > - Phase 7: My Trips (offline), ticket timeline, cancellation with refund preview, refunds, notifications, reminders.
 > - Phase 8: offers and promo codes, saved travellers, price-drop alerts.
+> - Phase 9: security hardening, load test and indexes, minified release smoke-tested on an emulator, signed Play Store bundle.
 
 | Bangla · light | English · light | Bangla · dark |
 |---|---|---|
@@ -76,6 +77,74 @@ cd android
 The first launch shows onboarding (choose Bangla or English), then Home. Walk through it: pick
 cities, then Search, a result, a seat or class, passenger details, Review & pay, and the success
 screen. Every step in that flow can be reached.
+
+## Phase 9 — testing, performance, security, Play Store build
+
+**Security review (fixed in this phase)**
+- **Rate limits** (Redis, per IP or per user, `429` + `Retry-After`):
+  - OTP send: 10 per IP per 10 min, against SMS pumping (on top of the per-phone limits).
+  - OTP verify: 30 per IP per 10 min.
+  - Token refresh: 30 per minute.
+  - Searches: 60 per minute.
+  - Holds and payments: 20 per user per 10 min.
+  - Promo codes: 10 per user per 10 min, against code guessing.
+- **Account deletion** now really anonymises bookings:
+  - Unpaid holds are released.
+  - Bookings lose names, contact details, dates of birth and NID/passport numbers.
+  - Amounts and references stay for accounting.
+  - Saved travellers, alerts, notifications, sessions and push tokens are deleted.
+- **Security headers** on every response: `nosniff`, `X-Frame-Options: DENY`, `no-referrer`, a strict CSP, `Cache-Control: no-store`, and HSTS in production. Production hides `/docs` and the OpenAPI file.
+- OTPs are compared in constant time.
+- The Docker image honours `X-Forwarded-For` only from the configured proxy, so the rate limits see the real client IP.
+- Tests check:
+  - Nobody can read or change someone else's booking, payment, PDF or promo.
+  - Tampered tokens, `alg: none` tokens and refresh tokens used as access tokens are rejected.
+  - Wrong OTPs lock the code.
+- Already in place and re-checked:
+  - HTTPS only (cleartext blocked in release builds).
+  - Tokens encrypted with Android Keystore.
+  - No cloud backup.
+  - No body/header logging.
+  - NID/passport encrypted at rest.
+  - Signed QR codes.
+  - Payment callbacks verified server-side.
+  - IDOR-safe 404s.
+  - Refresh-token reuse logs the user out everywhere.
+  - Production refuses dev secrets and mock gateways.
+- New on the phone:
+  - The Saved travellers screen blocks screenshots.
+  - Optional **certificate pinning** (`-Pjatri.certPins=sha256/…,sha256/…`).
+- `pip-audit` runs in CI: no known vulnerable dependencies.
+
+**Testing**
+- 89 backend tests, **92% coverage** (CI fails under 85%), run on SQLite and on PostgreSQL + Redis.
+- Android: unit, contract, demo-flow and screenshot tests, plus lint.
+- New **release smoke test** in CI:
+  - Builds the **minified (R8) release APK** and boots an Android 14 emulator.
+  - Walks onboarding → Home → Dhaka–Cox's Bazar search → results, failing on any crash.
+  - Prints the cold-start time.
+
+**Performance**
+- New indexes for My Trips, the inbox, OTP checks, hold expiry and the reminders job (migration `0007`).
+- Database pool size is configurable.
+- Load test with `backend/scripts/loadtest.py`:
+  - Each user runs login → search → seats → hold → pay → My Trips.
+  - 100 users × 3 rounds (300 bookings) took 11 s on a 4-CPU machine with 3 workers. That machine was also running the load generator.
+  - p50 was 90–380 ms per step; p95 was about 1–1.4 s.
+  - No server errors. The only failed holds were seats someone else took first.
+- Release APK: 4.2 MB (R8 + resource shrinking; the debug APK is 27 MB), with library baseline profiles.
+- Debug builds log main-thread disk and network use (StrictMode).
+
+**Play Store**
+- `bundleRelease` builds a **signed `.aab`**. The upload key comes only from environment variables or GitHub secrets.
+- The release workflow builds the `.aab` automatically once the secrets are set, and keeps it with the R8 mapping as a private artifact.
+- The store build refuses the demo backend, plain-HTTP addresses and a missing key.
+- `versionCode` grows with every CI run.
+- [`docs/play-store/`](docs/play-store/) has:
+  - The release checklist.
+  - **Data safety** answers.
+  - Store listing texts (Bangla/English).
+  - A **privacy policy draft** with placeholders for the company details.
 
 ## Phase 8 — offers, saved travellers, price alerts
 
@@ -301,6 +370,9 @@ to `10.0.2.2` and `localhost`. Release builds are HTTPS-only.
 | Price alerts | Real job; fares come from the mock providers | With the real providers |
 | Popular routes on Home | Sample list in the app | Later (from search data) |
 | Hotline number | Placeholder `+8809600000000` in `HelpScreen` | Before release |
+| SMS for OTP and tickets | No real gateway adapter yet; production refuses to start with the console sender | When a BD SMS provider is chosen |
+| Play Store bundle | Built and signed only once the upload key and API address are set as GitHub secrets/variables | When you create the key and deploy the backend |
+| Privacy policy | Draft with `[placeholders]` | Fill in company details, review, publish on a web page |
 
 Every placeholder screen shows a "Coming in Phase N" banner, so sample data can't be mistaken for
 real data.
@@ -412,4 +484,22 @@ big bold left-aligned headlines.
 
 নমুনা কোড: JATRI150, FLY8, RAIL50, WELCOME100 (এগুলো mock)।
 
-**পরের ধাপ:** Phase 9। টেস্টিং, পারফরম্যান্স, নিরাপত্তা যাচাই আর Play Store রিলিজ বিল্ড।
+**Phase 9 সম্পন্ন:**
+- নিরাপত্তা:
+  - OTP, সার্চ, বুকিং, পেমেন্ট আর প্রোমো কোডে রেট লিমিট।
+  - অ্যাকাউন্ট মুছলে বুকিং থেকে নাম, ফোন আর এনআইডি মুছে যায়।
+  - সব উত্তরে নিরাপত্তা হেডার যায়।
+  - সংরক্ষিত যাত্রীর স্ক্রিনে স্ক্রিনশট নেওয়া যায় না।
+  - চাইলে certificate pinning চালু করা যায়।
+- টেস্ট:
+  - ব্যাকএন্ডের ৮৯টি টেস্ট, কোডের ৯২% টেস্টে ঢাকা।
+  - ছোট করা রিলিজ অ্যাপ CI-তে এমুলেটরে চালিয়ে দেখা হয়।
+- পারফরম্যান্স:
+  - নতুন ডেটাবেস ইনডেক্স।
+  - লোড টেস্টে ৩০০ জনের বুকিং ১১ সেকেন্ডে শেষ হয়েছে।
+  - রিলিজ APK মাত্র ৪.২ MB।
+- Play Store:
+  - সাইন করা `.aab` বানানোর ব্যবস্থা। চাবি শুধু GitHub secret-এ থাকে।
+  - রিলিজ চেকলিস্ট, Data safety-র উত্তর, স্টোরের লেখা আর গোপনীয়তা নীতির খসড়া।
+
+**প্রকাশের আগে আপনার যা লাগবে:** Play Console অ্যাকাউন্ট, upload key, ব্যাকএন্ড HTTPS-এ চালু করা, আসল SMS গেটওয়ে, SSLCommerz লাইভ স্টোর, আর বাস/ট্রেন/ফ্লাইটের আসল provider। বিস্তারিত `docs/play-store/README.md`-এ আছে।

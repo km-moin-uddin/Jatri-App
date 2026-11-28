@@ -4,3 +4,5 @@ __pycache__/
 .ruff_cache/
 .env
 *.db
+.coverage
+dump.rdb
